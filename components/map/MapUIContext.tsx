@@ -11,6 +11,8 @@ import {
   type MutableRefObject,
 } from "react";
 
+export type MapSeason = "mango" | "dry" | "flood";
+
 type MapUI = {
   explored: boolean;
   audioEnabled: boolean;
@@ -20,12 +22,14 @@ type MapUI = {
   selectedAttractionId: number | null;
   loadProgress: number;
   ready: boolean;
+  introOpen: boolean;
   activeChapter: number;
-  season: "mango" | "dry" | "flood";
-  setSeason: (v: "mango" | "dry" | "flood") => void;
+  season: MapSeason;
+  setSeason: (v: MapSeason) => void;
   setActiveChapter: (v: number) => void;
   journeyProgress: MutableRefObject<number>;
   explore: (withAudio: boolean) => void;
+  dismissIntro: () => void;
   setAudioEnabled: (v: boolean) => void;
   setInquireOpen: (v: boolean) => void;
   setMenuOpen: (v: boolean) => void;
@@ -48,14 +52,17 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
   >(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [ready, setReady] = useState(false);
+  const [introOpen, setIntroOpen] = useState(true);
   const journeyProgress = useRef(0);
   const [activeChapter, setActiveChapter] = useState(0);
-  const [season, setSeason] = useState<"mango" | "dry" | "flood">("mango");
+  const [season, setSeason] = useState<MapSeason>("mango");
 
   const explore = useCallback((withAudio: boolean) => {
     setAudioEnabled(withAudio);
     setExplored(true);
   }, []);
+
+  const dismissIntro = useCallback(() => setIntroOpen(false), []);
 
   const value = useMemo(
     () => ({
@@ -67,9 +74,11 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       selectedAttractionId,
       loadProgress,
       ready,
+      introOpen,
       journeyProgress,
       activeChapter, setActiveChapter, season, setSeason,
       explore,
+      dismissIntro,
       setAudioEnabled,
       setInquireOpen,
       setMenuOpen,
@@ -87,7 +96,9 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       selectedAttractionId,
       loadProgress,
       ready, activeChapter, season,
+      introOpen,
       explore,
+      dismissIntro,
     ],
   );
 
