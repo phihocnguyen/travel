@@ -1,6 +1,6 @@
 .journey-scroll-space { position: relative; width: 100%; height: 850dvh; overflow: visible; background: #08110d; }
 .journey-scroll-space--explored { height: 100dvh; }
-.journey-stage { position: sticky; top: 0; width: 100%; height: 100dvh; isolation: isolate; background: #08110d; }
+.journey-stage { position: fixed; inset: 0; width: 100%; height: 100dvh; isolation: isolate; overflow: hidden; background: #08110d; z-index: 0; }
 .journey-stage > .journey-map { position: absolute; inset: 0; }
 .journey-overlay { position: absolute; inset: 0; z-index: 35; pointer-events: none; color: #f5efdc; font-family: var(--font-sans, Inter, Arial, sans-serif); }
 .journey-overlay::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(4,13,11,.56), transparent 62%), linear-gradient(0deg, rgba(3,12,10,.58),transparent 25%,transparent 75%,rgba(3,12,10,.38)); }
@@ -37,3 +37,55 @@
   .journey-description { max-width: 90%; }
 }
 @media (prefers-reduced-motion: reduce) { .journey-mouse { animation: none; } .journey-cta { transition: none; } }
+
+/* Checkpoint spotlight: the clear center follows the projected 3D marker. */
+.journey-stage { --focus-strength: 0; --focus-x: 50%; --focus-y: 50%; }
+.cinematic-focus { position: absolute; inset: 0; z-index: 19; pointer-events: none; overflow: hidden; isolation: isolate; }
+.cinematic-focus__blur, .cinematic-focus__shade { position: absolute; inset: 0; opacity: var(--focus-strength); will-change: opacity; }
+.cinematic-focus__blur {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  mask-image: radial-gradient(ellipse 142px 112px at var(--focus-x) var(--focus-y), transparent 0%, transparent 38%, rgba(0,0,0,.6) 62%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 142px 112px at var(--focus-x) var(--focus-y), transparent 0%, transparent 38%, rgba(0,0,0,.6) 62%, black 100%);
+}
+.cinematic-focus__shade {
+  background: radial-gradient(ellipse 220px 175px at var(--focus-x) var(--focus-y), rgba(255,255,255,0) 0%, rgba(255,255,255,0) 22%, rgba(6,14,12,.22) 42%, rgba(4,10,10,.58) 70%, rgba(2,6,7,.86) 100%);
+}
+.cinematic-focus__ring {
+  position: absolute; left: var(--focus-x); top: var(--focus-y); width: 194px; height: 194px;
+  border: 1px solid rgba(246,229,168,.62); border-radius: 50%;
+  transform: translate(-50%,-50%) scale(calc(.82 + .18 * var(--focus-strength)));
+  opacity: var(--focus-strength); box-shadow: 0 0 72px rgba(251,218,134,.28), inset 0 0 54px rgba(236,211,145,.1);
+}
+.cinematic-focus__ring::after { content: ''; position: absolute; inset: 24px; border: 1px dashed rgba(241,231,195,.48); border-radius: 50%; }
+.cinematic-focus__crosshair { position: absolute; left: var(--focus-x); top: var(--focus-y); transform: translate(-50%,-50%); opacity: calc(var(--focus-strength) * .95); color: #f6eac2; font-size: 18px; text-shadow: 0 0 18px #ffe5a8; }
+.cinematic-focus__crosshair::before, .cinematic-focus__crosshair::after { content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(246,234,194,.72); }
+.cinematic-focus__crosshair::before { width:1px; height:34px; }
+.cinematic-focus__crosshair::after { width:34px; height:1px; }
+.journey-navigation { position: absolute; z-index: 50; right: clamp(16px,2.5vw,46px); top: 50%; transform: translateY(-50%); display:flex; flex-direction:column; gap:17px; align-items:flex-end; pointer-events:auto; }
+.journey-nav-point { display:flex; align-items:center; gap: 10px; color: rgba(248,245,227,.56); font-size:10px; letter-spacing:.07em; transition:color .25s; }
+.journey-nav-point.is-active, .journey-nav-point:hover { color:#fff4c8; }
+.journey-nav-dot { width:8px; height:8px; border:1px solid currentColor; border-radius:50%; transition: transform .3s, background .3s; }
+.journey-nav-point.is-active .journey-nav-dot { background:#e8daa5; transform:scale(1.35); box-shadow:0 0 15px rgba(235,218,165,.46); }
+.journey-nav-name { opacity:0; max-width:0; overflow:hidden; white-space:nowrap; transition: opacity .25s, max-width .25s; }
+.journey-nav-point:hover .journey-nav-name, .journey-nav-point.is-active .journey-nav-name { opacity:1; max-width:170px; }
+.journey-season-switcher { position:absolute; z-index:50; left:clamp(20px,4vw,70px); bottom:clamp(86px,11vh,125px); display:flex; gap:6px; padding:4px; border:1px solid rgba(255,255,255,.16); border-radius:50px; background:rgba(4,15,12,.5); backdrop-filter:blur(9px); pointer-events:auto; }
+.journey-season-switcher button { padding:9px 12px; font-size:10px; letter-spacing:.06em; border-radius:40px; color:rgba(248,239,216,.68); transition:all .25s; }
+.journey-season-switcher button.is-active { color:#16241c; background:#ecdfb6; }
+.journey-overlay--wow .journey-chapter__glass { max-width:min(610px,80vw); }
+.journey-overlay--wow .journey-heading { font-size:clamp(45px,7vw,110px); }
+.journey-overlay--wow .journey-description { max-width:470px; }
+.journey-chapter__number { font-size:11px; letter-spacing:.22em; color:#d9cda8; margin-top:16px; }
+@media(max-width:700px) {
+  .journey-navigation { right:15px; gap:13px; }
+  .journey-nav-name { display:none; }
+  .journey-season-switcher { left:18px; bottom:83px; }
+  .journey-season-switcher button { padding:8px; font-size:9px; }
+  .cinematic-focus__blur { backdrop-filter:none; -webkit-backdrop-filter:none; }
+  .journey-overlay--wow .journey-chapter__glass { max-width:84vw; }
+}
+@media(prefers-reduced-motion:reduce) { .cinematic-focus__blur { display:none; } }
+
+/* Keep satellite imagery crisp: depth is conveyed by a radial light falloff, never backdrop blur. */
+.cinematic-focus__blur { display: none !important; }
+.cinematic-focus__shade { background: radial-gradient(ellipse 250px 215px at var(--focus-x) var(--focus-y), transparent 0%, rgba(4,12,10,.05) 26%, rgba(4,12,10,.28) 66%, rgba(2,9,9,.57) 100%); }

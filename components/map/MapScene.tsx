@@ -1,18 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
 import {
   ACESFilmicToneMapping,
   CanvasTexture,
   SRGBColorSpace,
+  Vector3,
   type WebGLRenderer,
 } from "three";
 import { loadMapAssetsOnce, unsubscribeMapAssets } from "@/lib/map/assetLoader";
 import type { MapAssets } from "@/lib/map/assets";
 import { ATTRACTIONS } from "@/lib/map/attractions";
 import { useMapUI } from "./MapUIContext";
+import { JOURNEY_CHECKPOINTS } from "@/components/journey/journeyData";
 import { AdminOverlay } from "./AdminOverlay";
 import { Atmosphere } from "./Atmosphere";
 import { AttractionMarkers } from "./AttractionMarkers";
@@ -115,6 +117,30 @@ function SceneSync({ demand }: { demand: boolean }) {
   return null;
 }
 
+
+// Projects the geographic checkpoint to a stable screen-space focus mask.
+// DOM styles are written directly: no per-frame React state updates.
+const projected = new Vector3();
+function CheckpointScreenBridge({ assets }: { assets: MapAssets }) {
+  const { activeChapter, explored } = useMapUI();
+  const { camera, size } = useThree();
+  useFrame(() => {
+    if (explored || activeChapter < 1 || activeChapter > JOURNEY_CHECKPOINTS.length) return;
+    const attraction = JOURNEY_CHECKPOINTS[activeChapter - 1].attraction;
+    const [x, z] = assets.projector.toLocal(attraction.lon, attraction.lat);
+    projected.set(x, elevationToScene(assets.maxHeightMeters) + 1, z).project(camera);
+    const stage = document.querySelector<HTMLElement>("[data-journey-stage]");
+    if (!stage) return;
+    const px = (projected.x * 0.5 + 0.5) * size.width;
+    const py = (-projected.y * 0.5 + 0.5) * size.height;
+    const clampedX = Math.min(size.width * 0.85, Math.max(size.width * 0.15, px));
+    const clampedY = Math.min(size.height * 0.8, Math.max(size.height * 0.2, py));
+    stage.style.setProperty("--focus-x", `${clampedX}px`);
+    stage.style.setProperty("--focus-y", `${clampedY}px`);
+  });
+  return null;
+}
+
 function SceneContent() {
   const {
     explored,
@@ -189,6 +215,7 @@ function SceneContent() {
           <ProvinceOutline assets={assets} y={layers.outline} />
           <Atmosphere assets={assets} base={layers.base} />
           <AttractionMarkers assets={assets} y={layers.outline + 0.18} />
+          <CheckpointScreenBridge assets={assets} />
         </>
       ) : (
         <FallbackGround />

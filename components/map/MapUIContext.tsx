@@ -20,6 +20,10 @@ type MapUI = {
   selectedAttractionId: number | null;
   loadProgress: number;
   ready: boolean;
+  activeChapter: number;
+  season: "mango" | "dry" | "flood";
+  setSeason: (v: "mango" | "dry" | "flood") => void;
+  setActiveChapter: (v: number) => void;
   journeyProgress: MutableRefObject<number>;
   explore: (withAudio: boolean) => void;
   setAudioEnabled: (v: boolean) => void;
@@ -45,6 +49,8 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
   const [loadProgress, setLoadProgress] = useState(0);
   const [ready, setReady] = useState(false);
   const journeyProgress = useRef(0);
+  const [activeChapter, setActiveChapter] = useState(0);
+  const [season, setSeason] = useState<"mango" | "dry" | "flood">("mango");
 
   const explore = useCallback((withAudio: boolean) => {
     setAudioEnabled(withAudio);
@@ -62,6 +68,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       loadProgress,
       ready,
       journeyProgress,
+      activeChapter, setActiveChapter, season, setSeason,
       explore,
       setAudioEnabled,
       setInquireOpen,
@@ -79,7 +86,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       hoveredId,
       selectedAttractionId,
       loadProgress,
-      ready,
+      ready, activeChapter, season,
       explore,
     ],
   );

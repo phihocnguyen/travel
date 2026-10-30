@@ -63,6 +63,11 @@ const TERRAIN_FRAGMENT = /* glsl */ `
   uniform float uHoverId;
   uniform float uHoverFade;
   uniform float uTime;
+  uniform float uSeasonFrom;
+  uniform float uSeasonTo;
+  uniform vec2 uWaveOrigin;
+  uniform float uWaveRadius;
+  uniform float uWaveFeather;
   varying vec2 vUv;
   varying vec3 vNormal;
   varying vec3 vWorldPos;
@@ -140,6 +145,22 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     float cloudShadow = fbm(vUv * 7.5 + vec2(uTime * 0.018, -uTime * 0.011));
     color *= mix(0.92, 1.01, smoothstep(0.28, 0.82, cloudShadow));
 
+    // Geographic seasonal transition: a wave travels outward from its origin.
+    // The imagery stays intact. Only colour grading changes inside the wave.
+    vec3 mangoGrade = vec3(1.055, 1.032, 0.965);
+    vec3 dryGrade = vec3(1.095, 1.005, 0.86);
+    vec3 floodGrade = vec3(0.86, 1.02, 1.125);
+    vec3 oldGrade = uSeasonFrom < 0.5 ? mangoGrade : (uSeasonFrom < 1.5 ? dryGrade : floodGrade);
+    vec3 newGrade = uSeasonTo < 0.5 ? mangoGrade : (uSeasonTo < 1.5 ? dryGrade : floodGrade);
+    // Slight procedural scalloping prevents the wipe from resembling a hard circular mask.
+    float irregularity = (fbm(vUv * 10.0) - 0.5) * 0.062;
+    float radius = distance(vUv, uWaveOrigin) + irregularity;
+    float transitioned = 1.0 - smoothstep(uWaveRadius - uWaveFeather, uWaveRadius + uWaveFeather, radius);
+    color *= mix(oldGrade, newGrade, transitioned);
+    // A subtle travelling band of light gives the transition its cinematic sweep.
+    float rimDistance = abs(radius - uWaveRadius);
+    float waveGlow = exp(-rimDistance * 75.0) * step(uWaveRadius, 1.5);
+    color += vec3(0.028, 0.038, 0.031) * waveGlow * (1.0 - smoothstep(0.0, 1.5, uWaveRadius));
     float vignette = smoothstep(0.44, 0.92, distance(vUv, vec2(0.5)));
     color = mix(color, vec3(0.07, 0.13, 0.11), vignette * 0.18);
 
@@ -294,6 +315,11 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
         uHoverId: { value: 0 },
         uHoverFade: { value: 0 },
         uTime: { value: 0 },
+        uSeasonFrom: { value: 0 },
+        uSeasonTo: { value: 0 },
+        uWaveOrigin: { value: new Vector2(0.5, 0.5) },
+        uWaveRadius: { value: 3 },
+        uWaveFeather: { value: 0.095 },
       },
     ]);
     const next = new ShaderMaterial({
@@ -314,7 +340,30 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
   const materialRef = useRef<ShaderMaterial | null>(null);
   const hoverId = useRef(0);
   const hoverFade = useRef(0);
-  const { hoveredId } = useMapUI();
+  const { hoveredId, season } = useMapUI();
+  const wave = useRef({ from: 0, to: 0, start: -100, running: false });
+  const elapsedRef = useRef(0);
+  const SEASON_WAVE_DURATION = 2.1;
+  const seasonIndex = season === "mango" ? 0 : season === "dry" ? 1 : 2;
+
+  useEffect(() => {
+    if (seasonIndex === wave.current.to) return;
+    // Commit a previous transition before starting another. No abrupt colour changes
+    // when a user repeatedly clicks filters during the wave.
+    wave.current = {
+      from: wave.current.to,
+      to: seasonIndex,
+      start: elapsedRef.current,
+      running: true,
+    };
+    const current = materialRef.current;
+    if (current) {
+      // Trigger the wave from the middle of the terrain (UV coordinates).
+      // Other origins can be supplied later from a chosen checkpoint.
+      current.uniforms.uWaveOrigin.value.set(0.5, 0.5);
+    }
+    invalidate();
+  }, [seasonIndex, invalidate]);
 
   useEffect(() => {
     materialRef.current = material;
@@ -334,7 +383,23 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
       hoverFade.current + (target - hoverFade.current) * Math.min(1, dt * 12);
     const current = materialRef.current;
     if (current) {
-      current.uniforms.uTime.value = state.clock.elapsedTime;
+      elapsedRef.current = state.clock.elapsedTime;
+      current.uniforms.uTime.value = elapsedRef.current;
+      const transition = wave.current;
+      const elapsed = Math.max(0, elapsedRef.current - transition.start);
+      const fraction = transition.running
+        ? Math.min(1, elapsed / SEASON_WAVE_DURATION)
+        : 1;
+      const eased = fraction * fraction * (3 - 2 * fraction);
+      current.uniforms.uSeasonFrom.value = transition.from;
+      current.uniforms.uSeasonTo.value = transition.to;
+      // The maximum distance to any corner from center is sqrt(.5).
+      current.uniforms.uWaveRadius.value = transition.running ? -0.08 + 0.98 * eased : 3;
+      if (transition.running && fraction >= 1) {
+        transition.running = false;
+        transition.from = transition.to;
+      }
+      if (transition.running) invalidate();
       current.uniforms.uHoverId.value = next > 0.004 ? hoverId.current : 0;
       current.uniforms.uHoverFade.value = next;
     }

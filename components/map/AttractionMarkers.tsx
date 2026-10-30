@@ -23,18 +23,22 @@ import {
 import { ATTRACTIONS, CATEGORY_COLORS } from "@/lib/map/attractions";
 import type { MapAssets } from "@/lib/map/assets";
 import { useMapUI } from "./MapUIContext";
+import { JOURNEY_CHECKPOINTS } from "@/components/journey/journeyData";
 
 type Props = {
   assets: MapAssets;
   y: number;
 };
 
+type IconKind = "pagoda" | "lotus" | "market" | "mango" | "landmark";
+
 const FLAT = new Euler(-Math.PI / 2, 0, 0);
 const FLAT_QUAT = new Quaternion().setFromEuler(FLAT);
 const IDENTITY_QUAT = new Quaternion();
-const BEAM_HEIGHT = 5.2;
-const HIT_HEIGHT = 7;
-const HIT_RADIUS = 1.6;
+const BEAM_HEIGHT = 1.75;
+const HIT_HEIGHT = 3.8;
+const HIT_RADIUS = 0.9;
+const NO_RAYCAST = () => null;
 
 const BEAM_VERTEX = /* glsl */ `
   varying vec2 vUv;
@@ -89,9 +93,174 @@ function makeGlowTexture() {
   return texture;
 }
 
+function resolveIconKind(
+  attraction: (typeof ATTRACTIONS)[number],
+  season: "mango" | "dry" | "flood",
+): IconKind {
+  const hay = `${attraction.name} ${attraction.category}`.toLowerCase();
+  if (/chùa|pagoda|temple|phật|miếu|đền/.test(hay)) return "pagoda";
+  if (/sen|lotus|hoa|flower/.test(hay)) return "lotus";
+  if (/chợ|market|phố/.test(hay)) return "market";
+  if (/xoài|mango|vườn xoài|mango orchard/.test(hay)) {
+    return "mango";
+  }
+  return "landmark";
+}
+
+function IconMaterial({ color, opacity = 1 }: { color: string; opacity?: number }) {
+  return <meshBasicMaterial color={color} transparent={opacity < 1} opacity={opacity} toneMapped={false} />;
+}
+
+function PagodaIcon({ tint, emphasis }: { tint: string; emphasis: boolean }) {
+  return (
+    <group scale={emphasis ? 1.15 : 1}>
+      <mesh position={[0, 0.1, 0]} raycast={NO_RAYCAST}>
+        <cylinderGeometry args={[0.4, 0.48, 0.14, 6]} />
+        <IconMaterial color="#d8c9ab" />
+      </mesh>
+      <mesh position={[0, 0.34, 0]} raycast={NO_RAYCAST}>
+        <boxGeometry args={[0.55, 0.18, 0.55]} />
+        <IconMaterial color="#f1ead7" />
+      </mesh>
+      <mesh position={[0, 0.52, 0]} rotation={[0, Math.PI / 4, 0]} raycast={NO_RAYCAST}>
+        <coneGeometry args={[0.5, 0.18, 4]} />
+        <IconMaterial color={tint} />
+      </mesh>
+      <mesh position={[0, 0.74, 0]} raycast={NO_RAYCAST}>
+        <boxGeometry args={[0.32, 0.16, 0.32]} />
+        <IconMaterial color="#efe3c8" />
+      </mesh>
+      <mesh position={[0, 0.92, 0]} rotation={[0, Math.PI / 4, 0]} raycast={NO_RAYCAST}>
+        <coneGeometry args={[0.28, 0.15, 4]} />
+        <IconMaterial color={tint} />
+      </mesh>
+      <mesh position={[0, 1.08, 0]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.05, 10, 10]} />
+        <IconMaterial color="#ffe7a3" />
+      </mesh>
+    </group>
+  );
+}
+
+function MangoTreeIcon({ emphasis }: { tint: string; emphasis: boolean }) {
+  return (
+    <group scale={emphasis ? 1.15 : 1}>
+      <mesh position={[0, 0.22, 0]} raycast={NO_RAYCAST}>
+        <cylinderGeometry args={[0.09, 0.12, 0.46, 8]} />
+        <IconMaterial color="#8c6339" />
+      </mesh>
+      <mesh position={[0, 0.72, 0]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.36, 10, 10]} />
+        <IconMaterial color="#4e8c45" />
+      </mesh>
+      <mesh position={[0.23, 0.65, 0.06]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.24, 10, 10]} />
+        <IconMaterial color="#609d52" />
+      </mesh>
+      <mesh position={[-0.21, 0.63, -0.02]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.22, 10, 10]} />
+        <IconMaterial color="#437e3b" />
+      </mesh>
+      <mesh position={[0.07, 0.55, 0.18]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.045, 8, 8]} />
+        <IconMaterial color="#efc64a" />
+      </mesh>
+      <mesh position={[-0.14, 0.78, 0.08]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.045, 8, 8]} />
+        <IconMaterial color="#f0c74e" />
+      </mesh>
+      <mesh position={[0.16, 0.88, -0.04]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.045, 8, 8]} />
+        <IconMaterial color="#ffd761" />
+      </mesh>
+    </group>
+  );
+}
+
+function LotusIcon({ tint, emphasis }: { tint: string; emphasis: boolean }) {
+  const petals = Array.from({ length: 6 }, (_, i) => {
+    const angle = (i / 6) * Math.PI * 2;
+    return { x: Math.cos(angle) * 0.16, z: Math.sin(angle) * 0.16, r: angle };
+  });
+  return (
+    <group scale={emphasis ? 1.15 : 1}>
+      <mesh position={[0, 0.08, 0]} raycast={NO_RAYCAST}>
+        <cylinderGeometry args={[0.28, 0.34, 0.08, 14]} />
+        <IconMaterial color="#6e9e58" />
+      </mesh>
+      {petals.map((petal, index) => (
+        <mesh key={index} position={[petal.x, 0.22, petal.z]} rotation={[0, -petal.r, Math.PI / 2.6]} raycast={NO_RAYCAST}>
+          <coneGeometry args={[0.12, 0.3, 6]} />
+          <IconMaterial color={tint} opacity={0.95} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.28, 0]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.09, 10, 10]} />
+        <IconMaterial color="#fff3cb" />
+      </mesh>
+    </group>
+  );
+}
+
+function MarketIcon({ tint, emphasis }: { tint: string; emphasis: boolean }) {
+  return (
+    <group scale={emphasis ? 1.12 : 1}>
+      <mesh position={[0, 0.12, 0]} raycast={NO_RAYCAST}>
+        <boxGeometry args={[0.52, 0.22, 0.34]} />
+        <IconMaterial color="#f2ead5" />
+      </mesh>
+      <mesh position={[0, 0.34, 0]} raycast={NO_RAYCAST}>
+        <coneGeometry args={[0.42, 0.22, 4]} />
+        <IconMaterial color={tint} />
+      </mesh>
+      <mesh position={[-0.15, 0.03, 0]} raycast={NO_RAYCAST}>
+        <cylinderGeometry args={[0.03, 0.03, 0.16, 6]} />
+        <IconMaterial color="#d6c49f" />
+      </mesh>
+      <mesh position={[0.15, 0.03, 0]} raycast={NO_RAYCAST}>
+        <cylinderGeometry args={[0.03, 0.03, 0.16, 6]} />
+        <IconMaterial color="#d6c49f" />
+      </mesh>
+    </group>
+  );
+}
+
+function LandmarkIcon({ tint, emphasis }: { tint: string; emphasis: boolean }) {
+  return (
+    <group scale={emphasis ? 1.16 : 1}>
+      <mesh position={[0, 0.1, 0]} raycast={NO_RAYCAST}>
+        <cylinderGeometry args={[0.28, 0.34, 0.12, 10]} />
+        <IconMaterial color="#e4dcc8" />
+      </mesh>
+      <mesh position={[0, 0.42, 0]} raycast={NO_RAYCAST}>
+        <octahedronGeometry args={[0.26, 0]} />
+        <IconMaterial color={tint} />
+      </mesh>
+      <mesh position={[0, 0.74, 0]} raycast={NO_RAYCAST}>
+        <sphereGeometry args={[0.055, 8, 8]} />
+        <IconMaterial color="#fff0bf" />
+      </mesh>
+    </group>
+  );
+}
+
+function AttractionIcon3D({ kind, tint, emphasis }: { kind: IconKind; tint: string; emphasis: boolean }) {
+  if (kind === "pagoda") return <PagodaIcon tint={tint} emphasis={emphasis} />;
+  if (kind === "lotus") return <LotusIcon tint={tint} emphasis={emphasis} />;
+  if (kind === "market") return <MarketIcon tint={tint} emphasis={emphasis} />;
+  if (kind === "mango") return <MangoTreeIcon tint={tint} emphasis={emphasis} />;
+  return <LandmarkIcon tint={tint} emphasis={emphasis} />;
+}
+
 export function AttractionMarkers({ assets, y }: Props) {
-  const { selectedAttractionId, setSelectedAttractionId, setHoveredId } =
-    useMapUI();
+  const {
+    selectedAttractionId,
+    setSelectedAttractionId,
+    setHoveredId,
+    activeChapter,
+    explored,
+    season,
+  } = useMapUI();
   const [hovered, setHovered] = useState<number | null>(null);
   const ringRef = useRef<InstancedMesh>(null);
   const beamRef = useRef<InstancedMesh>(null);
@@ -121,10 +290,7 @@ export function AttractionMarkers({ assets, y }: Props) {
       positions[index * 3] = x;
       positions[index * 3 + 1] = y + BEAM_HEIGHT;
       positions[index * 3 + 2] = z;
-      color.set(CATEGORY_COLORS[attraction.category]).toArray(
-        colors,
-        index * 3,
-      );
+      color.set(CATEGORY_COLORS[attraction.category]).toArray(colors, index * 3);
     });
     const geometry = new BufferGeometry();
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
@@ -147,53 +313,36 @@ export function AttractionMarkers({ assets, y }: Props) {
       position.set(x, y, z);
       flatMatrix.compose(position, FLAT_QUAT, scale);
       ringRef.current?.setMatrixAt(index, flatMatrix);
-      ringRef.current?.setColorAt(
-        index,
-        color.set(CATEGORY_COLORS[attraction.category]),
-      );
+      ringRef.current?.setColorAt(index, color.set(CATEGORY_COLORS[attraction.category]));
 
       position.set(x, y + BEAM_HEIGHT / 2, z);
       beamMatrix.compose(position, IDENTITY_QUAT, beamScale);
       beamRef.current?.setMatrixAt(index, beamMatrix);
-      beamRef.current?.setColorAt(
-        index,
-        color.set(CATEGORY_COLORS[attraction.category]),
-      );
+      beamRef.current?.setColorAt(index, color.set(CATEGORY_COLORS[attraction.category]));
 
       position.set(x, y + BEAM_HEIGHT, z);
       flatMatrix.compose(position, IDENTITY_QUAT, scale);
       headRef.current?.setMatrixAt(index, flatMatrix);
-      headRef.current?.setColorAt(
-        index,
-        color.set(CATEGORY_COLORS[attraction.category]),
-      );
+      headRef.current?.setColorAt(index, color.set(CATEGORY_COLORS[attraction.category]));
 
-      // Generous invisible pick volume. It sits above the terrain, so the ray
-      // always reaches it before the ground and checkpoint hover wins over
-      // commune hover. The material is not rendered at all.
       position.set(x, y + HIT_HEIGHT / 2, z);
       hitMatrix.compose(position, IDENTITY_QUAT, scale);
       hitRef.current?.setMatrixAt(index, hitMatrix);
     });
 
-    for (const mesh of [
-      ringRef.current,
-      beamRef.current,
-      headRef.current,
-      hitRef.current,
-    ]) {
+    for (const mesh of [ringRef.current, beamRef.current, headRef.current, hitRef.current]) {
       if (!mesh) continue;
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
   }, [points, y]);
 
-  const activeIndex = hovered ?? selectedAttractionId;
-  const activePoint =
-    activeIndex == null ? null : points[activeIndex] ?? null;
+  const journeyIndex = !explored && activeChapter > 0 && activeChapter <= JOURNEY_CHECKPOINTS.length
+    ? JOURNEY_CHECKPOINTS[activeChapter - 1].index
+    : null;
+  const activeIndex = hovered ?? selectedAttractionId ?? journeyIndex;
+  const activePoint = activeIndex == null ? null : points[activeIndex] ?? null;
 
-  // Scale only the hovered/selected marker instances; the rest of the buffer
-  // stays untouched so hovering never rebuilds the whole instanced mesh.
   const prevActive = useRef<number | null>(null);
   useLayoutEffect(() => {
     const ring = ringRef.current;
@@ -214,11 +363,7 @@ export function AttractionMarkers({ assets, y }: Props) {
       ring.setMatrixAt(index, flatMatrix);
 
       position.set(point.x, y + BEAM_HEIGHT / 2, point.z);
-      matrix.compose(
-        position,
-        IDENTITY_QUAT,
-        scale.set(1, BEAM_HEIGHT * size, 1),
-      );
+      matrix.compose(position, IDENTITY_QUAT, scale.set(1, BEAM_HEIGHT * size, 1));
       beam.setMatrixAt(index, matrix);
 
       position.set(point.x, y + BEAM_HEIGHT, point.z);
@@ -245,17 +390,13 @@ export function AttractionMarkers({ assets, y }: Props) {
     focusRef.current.visible = true;
     focusRef.current.position.set(activePoint.x, y + 0.01, activePoint.z);
     if (focusMaterial.current) {
-      focusMaterial.current.color.set(
-        CATEGORY_COLORS[activePoint.attraction.category],
-      );
+      focusMaterial.current.color.set(CATEGORY_COLORS[activePoint.attraction.category]);
     }
   }, [activePoint, y]);
 
-  // Demand rendering needs an explicit frame when local hover/selection state
-  // changes; the focus ring itself stays static so an open panel costs no CPU.
   useEffect(() => {
     invalidate();
-  }, [hovered, selectedAttractionId, invalidate]);
+  }, [hovered, selectedAttractionId, season, invalidate]);
 
   useEffect(() => {
     document.body.style.cursor = hovered != null ? "pointer" : "";
@@ -287,8 +428,6 @@ export function AttractionMarkers({ assets, y }: Props) {
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
     if (typeof event.instanceId === "number") {
-      // The pick volume covers the terrain underneath, so explicitly drop the
-      // commune tooltip while a checkpoint is hovered.
       setHoveredId(null);
       setHovered(event.instanceId);
     }
@@ -298,40 +437,22 @@ export function AttractionMarkers({ assets, y }: Props) {
     event.stopPropagation();
     if (typeof event.instanceId !== "number") return;
     setHoveredId(null);
-    setSelectedAttractionId(
-      selectedAttractionId === event.instanceId ? null : event.instanceId,
-    );
+    setSelectedAttractionId(selectedAttractionId === event.instanceId ? null : event.instanceId);
   };
 
   return (
     <group>
-      <instancedMesh
-        ref={ringRef}
-        args={[undefined, undefined, points.length]}
-        frustumCulled={false}
-        matrixAutoUpdate={false}
-      >
-        <ringGeometry args={[0.56, 0.96, 28, 1]} />
-        <meshBasicMaterial
-          transparent
-          opacity={0.9}
-          depthWrite={false}
-          side={DoubleSide}
-          toneMapped={false}
-        />
+      <instancedMesh ref={ringRef} args={[undefined, undefined, points.length]} frustumCulled={false} matrixAutoUpdate={false}>
+        <ringGeometry args={[0.32, 0.48, 28, 1]} />
+        <meshBasicMaterial transparent opacity={0.52} depthWrite={false} side={DoubleSide} toneMapped={false} />
       </instancedMesh>
 
-      <instancedMesh
-        ref={beamRef}
-        args={[undefined, undefined, points.length]}
-        frustumCulled={false}
-        matrixAutoUpdate={false}
-      >
+      <instancedMesh ref={beamRef} args={[undefined, undefined, points.length]} frustumCulled={false} matrixAutoUpdate={false} visible={false}>
         <cylinderGeometry args={[0.1, 0.2, 1, 8, 1, true]} />
         <shaderMaterial
           vertexShader={BEAM_VERTEX}
           fragmentShader={BEAM_FRAGMENT}
-          uniforms={{ uOpacity: { value: 0.5 } }}
+          uniforms={{ uOpacity: { value: 0.22 } }}
           transparent
           depthWrite={false}
           side={DoubleSide}
@@ -341,12 +462,7 @@ export function AttractionMarkers({ assets, y }: Props) {
         />
       </instancedMesh>
 
-      <instancedMesh
-        ref={headRef}
-        args={[undefined, undefined, points.length]}
-        frustumCulled={false}
-        matrixAutoUpdate={false}
-      >
+      <instancedMesh ref={headRef} args={[undefined, undefined, points.length]} frustumCulled={false} matrixAutoUpdate={false}>
         <octahedronGeometry args={[0.3, 0]} />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
@@ -354,7 +470,7 @@ export function AttractionMarkers({ assets, y }: Props) {
       <points geometry={glowGeometry} frustumCulled={false}>
         <pointsMaterial
           map={glowTexture}
-          size={2.8}
+          size={1.5}
           sizeAttenuation
           vertexColors
           transparent
@@ -364,6 +480,21 @@ export function AttractionMarkers({ assets, y }: Props) {
           toneMapped={false}
         />
       </points>
+
+      {points.map(({ attraction, x, z }, index) => {
+        const accent = CATEGORY_COLORS[attraction.category];
+        const kind = resolveIconKind(attraction, season);
+        const emphasis = activeIndex === index;
+        return (
+          <group key={`${attraction.name}-${index}`} position={[x, y + BEAM_HEIGHT + 0.35, z]} scale={emphasis ? 0.65 : 0.43}>
+            <mesh position={[0, -0.12, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={NO_RAYCAST}>
+              <ringGeometry args={[0.52, 0.7, 22]} />
+              <meshBasicMaterial color={accent} transparent opacity={emphasis ? 0.46 : 0.26} toneMapped={false} />
+            </mesh>
+            <AttractionIcon3D kind={kind} tint={accent} emphasis={emphasis} />
+          </group>
+        );
+      })}
 
       <instancedMesh
         ref={hitRef}
@@ -378,42 +509,18 @@ export function AttractionMarkers({ assets, y }: Props) {
         <meshBasicMaterial visible={false} />
       </instancedMesh>
 
-      <mesh
-        ref={focusRef}
-        visible={false}
-        rotation={[-Math.PI / 2, 0, 0]}
-        raycast={() => null}
-      >
-        <ringGeometry args={[1.35, 1.55, 40]} />
-        <meshBasicMaterial
-          ref={focusMaterial}
-          transparent
-          opacity={0.85}
-          depthWrite={false}
-          side={DoubleSide}
-          toneMapped={false}
-        />
+      <mesh ref={focusRef} visible={false} rotation={[-Math.PI / 2, 0, 0]} raycast={NO_RAYCAST}>
+        <ringGeometry args={[0.68, 0.83, 40]} />
+        <meshBasicMaterial ref={focusMaterial} transparent opacity={0.85} depthWrite={false} side={DoubleSide} toneMapped={false} />
       </mesh>
 
       {activePoint && (
-        <Html
-          position={[activePoint.x, y + BEAM_HEIGHT + 0.7, activePoint.z]}
-          center
-          zIndexRange={[45, 0]}
-          style={{ pointerEvents: "none" }}
-        >
+        <Html position={[activePoint.x, y + BEAM_HEIGHT + 1.1, activePoint.z]} center zIndexRange={[45, 0]} style={{ pointerEvents: "none" }}>
           <div className="attraction-marker-label">
-            <span
-              className="attraction-marker-label__category"
-              style={{
-                color: CATEGORY_COLORS[activePoint.attraction.category],
-              }}
-            >
+            <span className="attraction-marker-label__category" style={{ color: CATEGORY_COLORS[activePoint.attraction.category] }}>
               {activePoint.attraction.category}
             </span>
-            <span className="attraction-marker-label__name">
-              {activePoint.attraction.name}
-            </span>
+            <span className="attraction-marker-label__name">{activePoint.attraction.name}</span>
           </div>
         </Html>
       )}

@@ -3,63 +3,71 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { JOURNEY_CHAPTERS } from "./journeyData";
+import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS } from "./journeyData";
 import { useMapUI } from "../map/MapUIContext";
 
-/**
- * A tall scroll-space owns the real scroll distance. The WebGL stage remains
- * sticky. ScrollTrigger only reads progress, so no pin spacer is required.
- * Every chapter shares the *same* WebGL map canvas.
- */
+/** One pinned-looking sticky map with native document scroll. One writer owns progress. */
 export default function JourneyOverlay() {
   const root = useRef<HTMLDivElement>(null);
-  const { explored, ready, explore, journeyProgress } = useMapUI();
+  const {
+    explored, ready, explore, journeyProgress,
+    setActiveChapter, activeChapter, season, setSeason,
+  } = useMapUI();
 
   useEffect(() => {
-    if (!ready || explored || !root.current) return;
+    if (explored || !root.current) return;
     gsap.registerPlugin(ScrollTrigger);
-    const rootEl = root.current;
-    const scrollSpace = rootEl.closest<HTMLElement>("[data-journey-scroll-space]");
-    if (!scrollSpace) return;
-    const chapters = gsap.utils.toArray<HTMLElement>("[data-journey-chapter]", rootEl);
-    const progressBar = rootEl.querySelector<HTMLElement>("[data-journey-progress]");
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.set(chapters, { autoAlpha: 0, yPercent: 12, filter: "blur(14px)" });
-    gsap.set(chapters[0], { autoAlpha: 1, yPercent: 0, filter: "blur(0px)" });
+    const container = root.current.closest<HTMLElement>("[data-journey-scroll-space]");
+    const stage = root.current.closest<HTMLElement>("[data-journey-stage]");
+    if (!container || !stage) return;
+    const chapters = gsap.utils.toArray<HTMLElement>("[data-journey-chapter]", root.current);
+    const bar = root.current.querySelector<HTMLElement>("[data-journey-progress]");
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const maxIndex = JOURNEY_CHAPTERS.length - 1;
+    let lastIndex = -1;
 
-    const total = JOURNEY_CHAPTERS.length;
-    const duration = total - 1;
-    const timeline = gsap.timeline({ paused: true, defaults: { ease: "none" } });
-    for (let i = 0; i < total; i++) {
-      if (i > 0) {
-        timeline.to(chapters[i], {
-          autoAlpha: 1, yPercent: 0, filter: "blur(0px)",
-          duration: reducedMotion ? 0.04 : 0.22,
-        }, i - 0.12);
-      }
-      if (i < total - 1) {
-        timeline.to(chapters[i], {
-          autoAlpha: 0, yPercent: -9, filter: "blur(10px)",
-          duration: reducedMotion ? 0.04 : 0.2,
-        }, i + 0.62);
-      }
+    gsap.set(chapters, { autoAlpha: 0, y: reduced ? 0 : 30, filter: reduced ? "none" : "blur(10px)" });
+    gsap.set(chapters[0], { autoAlpha: 1, y: 0, filter: "blur(0px)" });
+    const timeline = gsap.timeline({ paused: true });
+    // Stage one chapter per unit; chapter is stable during checkpoint approach/hold.
+    for (let i = 0; i <= maxIndex; i++) {
+      if (i > 0) timeline.to(chapters[i], {
+        autoAlpha: 1, y: 0, filter: "blur(0px)", duration: reduced ? 0.02 : 0.27,
+        ease: "power2.out",
+      }, i - 0.08);
+      if (i < maxIndex) timeline.to(chapters[i], {
+        autoAlpha: 0, y: reduced ? 0 : -24,
+        filter: reduced ? "none" : "blur(8px)", duration: reduced ? 0.02 : 0.25,
+        ease: "power2.in",
+      }, i + 0.68);
     }
-    timeline.to({}, { duration: 0.001 }, duration);
+    timeline.to({}, { duration: 0.01 }, maxIndex);
+
+    const onProgress = (p: number) => {
+      journeyProgress.current = p;
+      timeline.progress(p);
+      if (bar) bar.style.transform = `scaleX(${p})`;
+      const raw = p * maxIndex;
+      const nearest = Math.max(0, Math.min(maxIndex, Math.round(raw)));
+      if (nearest !== lastIndex) {
+        lastIndex = nearest;
+        setActiveChapter(nearest);
+      }
+      // The focus only blooms near a checkpoint's hold segment; it fades while in transit.
+      const distance = Math.abs(raw - Math.round(raw));
+      const focus = nearest > 0 && nearest <= JOURNEY_CHECKPOINTS.length
+        ? Math.max(0, Math.min(1, (0.58 - distance) / 0.17)) : 0;
+      stage.style.setProperty("--focus-strength", reduced ? "0" : focus.toFixed(3));
+    };
 
     const trigger = ScrollTrigger.create({
-      trigger: scrollSpace,
-      start: "top top",
-      end: "bottom bottom",
+      trigger: container,
+      start: "top top", end: "bottom bottom",
       invalidateOnRefresh: true,
-      onUpdate(self) {
-        const p = self.progress;
-        journeyProgress.current = p;
-        timeline.progress(p);
-        if (progressBar) progressBar.style.transform = `scaleX(${p})`;
-      },
+      onUpdate(self) { onProgress(self.progress); },
+      // Deliberately no mandatory snap: reversible scroll remains responsive.
     });
-
-    // Refresh positions on viewport changes. Native scroll remains enabled.
+    onProgress(trigger.progress);
     const refresh = () => ScrollTrigger.refresh();
     window.addEventListener("resize", refresh);
     ScrollTrigger.refresh();
@@ -67,44 +75,71 @@ export default function JourneyOverlay() {
       window.removeEventListener("resize", refresh);
       trigger.kill();
       timeline.kill();
+      stage.style.setProperty("--focus-strength", "0");
     };
-  }, [ready, explored, journeyProgress]);
+  }, [explored, ready, journeyProgress, setActiveChapter]);
+
+  const goTo = (index: number) => {
+    const space = root.current?.closest<HTMLElement>("[data-journey-scroll-space]");
+    if (!space) return;
+    const start = space.getBoundingClientRect().top + window.scrollY;
+    const length = space.offsetHeight - window.innerHeight;
+    const y = start + length * (index / (JOURNEY_CHAPTERS.length - 1));
+    window.scrollTo({ top: y, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  };
 
   const startExploring = () => {
     explore(false);
-    // The long scroll-space collapses to one viewport on explore mode.
-    // Reset native scroll position in the same user action.
     window.scrollTo({ top: 0, behavior: "instant" });
   };
-
   if (explored) return null;
-
   return (
-    <div ref={root} className="journey-overlay" aria-label="Hành trình giới thiệu tương tác">
+    <div ref={root} className="journey-overlay journey-overlay--wow" aria-label="Hành trình giới thiệu Đồng Tháp">
       <header className="journey-header">
-        <span className="journey-brand">MIỀN SÔNG NƯỚC <span>— 3D ATLAS</span></span>
-        <span className="journey-tag">AN INTERACTIVE JOURNEY</span>
+        <span className="journey-brand">ĐỒNG THÁP <span>— MIỀN SÔNG NƯỚC</span></span>
+        <span className="journey-tag">AN INTERACTIVE ATLAS</span>
       </header>
-
+      <nav className="journey-navigation" aria-label="Chọn điểm dừng">
+        {JOURNEY_CHAPTERS.map((chapter, i) => (
+          <button key={chapter.index} type="button" className={`journey-nav-point${activeChapter === i ? " is-active" : ""}`}
+            onClick={() => goTo(i)} aria-current={activeChapter === i ? "step" : undefined}
+            aria-label={`Đến chương ${i + 1}: ${chapter.emphasis}`} title={chapter.emphasis}>
+            <span className="journey-nav-dot" /><span className="journey-nav-name">{chapter.emphasis}</span>
+          </button>
+        ))}
+      </nav>
       <div className="journey-chapters" aria-live="off">
         {JOURNEY_CHAPTERS.map((chapter, i) => (
-          <article key={chapter.index} data-journey-chapter className={`journey-chapter journey-chapter--${chapter.position}`} aria-label={`Chương ${i + 1}`}>
-            <span className="journey-eyebrow"><span className="journey-mini-line" />{chapter.eyebrow}</span>
-            <h1 className="journey-heading">{chapter.title}<br /><em>{chapter.emphasis}</em></h1>
-            <p className="journey-description">{chapter.description}</p>
-            {i === JOURNEY_CHAPTERS.length - 1 && (
-              <button type="button" className="journey-cta" onClick={startExploring}>
-                BẮT ĐẦU KHÁM PHÁ <span aria-hidden="true">↗</span>
-              </button>
-            )}
+          <article key={chapter.index} data-journey-chapter
+            className={`journey-chapter journey-chapter--${chapter.position}`} aria-label={`Chương ${i + 1}`}>
+            <div className="journey-chapter__glass">
+              <span className="journey-eyebrow"><span className="journey-mini-line" />{chapter.eyebrow}</span>
+              <h1 className="journey-heading"><span>{chapter.title}</span><br /><em>{chapter.emphasis}</em></h1>
+              <p className="journey-description">{chapter.description}</p>
+              {i > 0 && i < JOURNEY_CHAPTERS.length - 1 && (
+                <span className="journey-chapter__number">ĐIỂM DỪNG {String(i).padStart(2,"0")} / {String(JOURNEY_CHECKPOINTS.length).padStart(2,"0")}</span>
+              )}
+              {i === JOURNEY_CHAPTERS.length - 1 && (
+                <button type="button" className="journey-cta" onClick={startExploring}>
+                  BẮT ĐẦU KHÁM PHÁ <span aria-hidden="true">↗</span>
+                </button>
+              )}
+            </div>
           </article>
         ))}
       </div>
-
+      <div className="journey-season-switcher" role="group" aria-label="Màu sắc theo mùa">
+        {([
+          ["mango", "Mùa xoài"], ["dry", "Mùa khô"], ["flood", "Mùa nước nổi"],
+        ] as const).map(([value, label]) => (
+          <button type="button" key={value} onClick={() => setSeason(value)}
+            className={season === value ? "is-active" : ""} aria-pressed={season === value}>{label}</button>
+        ))}
+      </div>
       <footer className="journey-footer">
-        <div className="journey-scroll-cue"><span className="journey-mouse">↓</span> CUỘN ĐỂ TIẾP TỤC</div>
+        <div className="journey-scroll-cue"><span className="journey-mouse">↓</span> CUỘN ĐỂ KHÁM PHÁ</div>
         <div className="journey-track"><span data-journey-progress /></div>
-        <span className="journey-bottom-label">SCROLL / EXPLORE / DISCOVER</span>
+        <span className="journey-bottom-label">{String(activeChapter+1).padStart(2,"0")} / {String(JOURNEY_CHAPTERS.length).padStart(2,"0")}</span>
       </footer>
     </div>
   );
