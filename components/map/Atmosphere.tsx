@@ -7,6 +7,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
+  Color,
   LinearFilter,
   RepeatWrapping,
   SRGBColorSpace,
@@ -16,8 +17,11 @@ import type { MapAssets } from "@/lib/map/assets";
 
 const CLOUD_VERTEX = /* glsl */ `
   varying vec2 vUv;
+  varying vec3 vWorld;
   void main() {
     vUv = uv;
+    vec4 world = modelMatrix * vec4(position, 1.0);
+    vWorld = world.xyz;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -28,47 +32,59 @@ const CLOUD_FRAGMENT = /* glsl */ `
   uniform float uOpacity;
   uniform float uScale;
   uniform vec2 uDrift;
+  uniform vec3 uTint;
+  uniform float uDetail;
   varying vec2 vUv;
+  varying vec3 vWorld;
 
   void main() {
-    vec2 uv = vUv * uScale + uDrift * uTime;
-    float a = texture2D(uMap, uv).a;
-    float b = texture2D(uMap, uv * 1.7 + vec2(0.013, -0.009) * uTime).a;
-    float cloud = smoothstep(0.24, 0.9, a * 0.68 + b * 0.42);
+    vec2 baseUv = vUv * uScale;
+    vec2 warp = vec2(
+      texture2D(uMap, baseUv * 0.34 + vec2(uTime * 0.003, -uTime * 0.0013)).a,
+      texture2D(uMap, baseUv * 0.34 + vec2(-uTime * 0.0017, uTime * 0.0025)).a
+    ) - 0.5;
 
-    // Fade the plane edges so the rectangular geometry never shows up.
-    vec2 edgeUv = smoothstep(vec2(0.0), vec2(0.16), vUv) *
-      smoothstep(vec2(0.0), vec2(0.16), 1.0 - vUv);
+    vec2 uvA = baseUv + warp * 0.38 + uDrift * uTime;
+    vec2 uvB = baseUv * 1.57 - warp * 0.22 + vec2(0.016, -0.011) * uTime;
+    vec2 uvC = baseUv * 0.72 + warp * 0.18 + vec2(-0.007, 0.005) * uTime;
+
+    float a = texture2D(uMap, uvA).a;
+    float b = texture2D(uMap, uvB).a;
+    float c = texture2D(uMap, uvC).a;
+
+    float density = a * 0.56 + b * 0.29 + c * 0.31;
+    float cloud = smoothstep(0.34, 0.92, density);
+    float detail = smoothstep(0.58, 0.96, density) * uDetail;
+
+    vec2 edgeUv = smoothstep(vec2(0.0), vec2(0.2), vUv) *
+      smoothstep(vec2(0.0), vec2(0.2), 1.0 - vUv);
     float edge = edgeUv.x * edgeUv.y;
 
-    float alpha = cloud * edge * uOpacity;
-    if (alpha < 0.002) discard;
-    gl_FragColor = vec4(vec3(0.86, 0.91, 0.88), alpha);
+    float verticalFade = smoothstep(0.0, 0.2, vUv.y) * smoothstep(0.0, 0.2, 1.0 - vUv.y);
+    float alpha = cloud * edge * verticalFade * uOpacity;
+    if (alpha < 0.003) discard;
+
+    float softShadow = smoothstep(0.28, 0.78, density) * 0.12;
+    vec3 color = uTint + vec3(detail * 0.18 - softShadow * 0.06);
+    gl_FragColor = vec4(color, alpha);
     #include <colorspace_fragment>
   }
 `;
 
-/**
- * Periodic value-noise fbm baked once into a tileable alpha texture. Cheaper
- * than evaluating five octaves per pixel every frame, and the repeat wrapping
- * lets the cloud planes scroll forever without a visible seam.
- */
-function makeCloudTexture(size = 256) {
+function makeCloudTexture(size = 512) {
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
   const image = ctx.createImageData(size, size);
 
-  const octaves = [4, 8, 16, 32, 64];
+  const octaves = [4, 8, 16, 32, 64, 96];
   const grids = octaves.map((count) => {
     const values = new Float32Array(count * count);
-    // Deterministic pseudo-random lattice; no Math.random so hot reloads keep
-    // the same cloud silhouette.
-    let seed = count * 9301 + 49297;
+    let seed = count * 1231 + 9817;
     for (let i = 0; i < values.length; i++) {
-      seed = (seed * 9301 + 49297) % 233280;
-      values[i] = seed / 233280;
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      values[i] = (seed % 100000) / 100000;
     }
     return { count, values };
   });
@@ -99,23 +115,29 @@ function makeCloudTexture(size = 256) {
     for (let x = 0; x < size; x++) {
       const u = x / size;
       const v = y / size;
+      const dx = u - 0.5;
+      const dy = v - 0.5;
+      const radial = Math.hypot(dx, dy);
       let value = 0;
       let amplitude = 0.55;
       let total = 0;
-      grids.forEach(({ count, values }) => {
+      for (const { count, values } of grids) {
         value += sample(values, count, u, v) * amplitude;
         total += amplitude;
-        amplitude *= 0.5;
-      });
+        amplitude *= 0.54;
+      }
       value /= total;
-      const alpha = Math.max(0, Math.min(1, (value - 0.36) / 0.44));
+      const puff = Math.max(0, 1 - radial * 1.72);
+      const erosion = Math.max(0, (value - 0.42) / 0.5);
+      const alpha = Math.pow(Math.min(1, erosion * 1.08 + puff * 0.24), 1.6);
       const p = (y * size + x) * 4;
       image.data[p] = 255;
       image.data[p + 1] = 255;
       image.data[p + 2] = 255;
-      image.data[p + 3] = Math.round(alpha * alpha * 255);
+      image.data[p + 3] = Math.round(alpha * 255);
     }
   }
+
   ctx.putImageData(image, 0, 0);
 
   const texture = new CanvasTexture(canvas);
@@ -143,7 +165,7 @@ function makeDotTexture() {
     size / 2,
   );
   gradient.addColorStop(0, "rgba(255,248,224,1)");
-  gradient.addColorStop(0.4, "rgba(255,240,200,0.5)");
+  gradient.addColorStop(0.35, "rgba(255,242,206,0.55)");
   gradient.addColorStop(1, "rgba(255,240,200,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
@@ -159,9 +181,21 @@ type CloudLayerProps = {
   opacity: number;
   drift: [number, number];
   size: [number, number];
+  tint: string;
+  detail?: number;
 };
 
-function CloudLayer({ map, y, scale, opacity, drift, size }: CloudLayerProps) {
+function CloudLayer({
+  map,
+  y,
+  scale,
+  opacity,
+  drift,
+  size,
+  tint,
+  detail = 1,
+}: CloudLayerProps) {
+  const tintColor = useMemo(() => new Color(tint), [tint]);
   const material = useMemo(
     () =>
       new ShaderMaterial({
@@ -171,6 +205,8 @@ function CloudLayer({ map, y, scale, opacity, drift, size }: CloudLayerProps) {
           uOpacity: { value: opacity },
           uScale: { value: scale },
           uDrift: { value: drift },
+          uTint: { value: tintColor.clone() },
+          uDetail: { value: detail },
         },
         vertexShader: CLOUD_VERTEX,
         fragmentShader: CLOUD_FRAGMENT,
@@ -178,7 +214,7 @@ function CloudLayer({ map, y, scale, opacity, drift, size }: CloudLayerProps) {
         depthWrite: false,
         toneMapped: false,
       }),
-    [map, scale, opacity, drift],
+    [map, scale, opacity, drift, tintColor, detail],
   );
 
   useEffect(() => () => material.dispose(), [material]);
@@ -215,21 +251,32 @@ export function Atmosphere({ assets, base }: Props) {
   const dotTexture = useMemo(() => makeDotTexture(), []);
   useEffect(() => () => dotTexture.dispose(), [dotTexture]);
 
+  const hazeBanks = useMemo(
+    () => [
+      { x: -width * 0.28, z: -depth * 0.18, y: base + 10, sx: width * 0.44, sz: depth * 0.28, r: 0.28, o: 0.12 },
+      { x: width * 0.32, z: -depth * 0.24, y: base + 13, sx: width * 0.38, sz: depth * 0.26, r: -0.18, o: 0.1 },
+      { x: width * 0.24, z: depth * 0.31, y: base + 12, sx: width * 0.34, sz: depth * 0.22, r: 0.36, o: 0.11 },
+      { x: -width * 0.36, z: depth * 0.24, y: base + 11, sx: width * 0.3, sz: depth * 0.2, r: -0.22, o: 0.09 },
+    ],
+    [width, depth, base],
+  );
+
+
   const motes = useMemo(() => {
-    const count = 90;
+    const count = 72;
     const seeds = new Float32Array(count * 4);
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const x = (Math.random() - 0.5) * width * 0.92;
-      const z = (Math.random() - 0.5) * depth * 0.92;
+      const x = (Math.random() - 0.5) * width * 0.88;
+      const z = (Math.random() - 0.5) * depth * 0.88;
       const phase = Math.random() * Math.PI * 2;
-      const speed = 0.25 + Math.random() * 0.5;
+      const speed = 0.18 + Math.random() * 0.32;
       seeds[i * 4] = x;
       seeds[i * 4 + 1] = z;
       seeds[i * 4 + 2] = phase;
       seeds[i * 4 + 3] = speed;
       positions[i * 3] = x;
-      positions[i * 3 + 1] = base + 3 + Math.random() * 18;
+      positions[i * 3 + 1] = base + 8 + Math.random() * 20;
       positions[i * 3 + 2] = z;
     }
     const geometry = new BufferGeometry();
@@ -250,9 +297,9 @@ export function Atmosphere({ assets, base }: Props) {
       const z = motes.seeds[i * 4 + 1];
       const phase = motes.seeds[i * 4 + 2];
       const speed = motes.seeds[i * 4 + 3];
-      array[i * 3] = x + Math.sin(t * 0.16 + phase) * 3.2;
-      array[i * 3 + 1] = base + 2 + ((t * speed + phase * 4) % 16);
-      array[i * 3 + 2] = z + Math.cos(t * 0.12 + phase) * 3.2;
+      array[i * 3] = x + Math.sin(t * 0.12 + phase) * 2.2;
+      array[i * 3 + 1] = base + 6 + ((t * speed + phase * 3.1) % 18);
+      array[i * 3 + 2] = z + Math.cos(t * 0.09 + phase) * 2.2;
     }
     attribute.needsUpdate = true;
   });
@@ -261,20 +308,54 @@ export function Atmosphere({ assets, base }: Props) {
     <group>
       <CloudLayer
         map={cloudMap}
-        y={base + 17}
-        scale={2.1}
-        opacity={0.3}
-        drift={[0.0024, 0.0011]}
-        size={[width * 1.5, depth * 1.5]}
+        y={base + 13}
+        scale={2.3}
+        opacity={0.11}
+        drift={[0.0011, 0.0008]}
+        size={[width * 1.15, depth * 1.15]}
+        tint="#dde4dd"
+        detail={0.9}
       />
       <CloudLayer
         map={cloudMap}
-        y={base + 30}
-        scale={3.4}
+        y={base + 20}
+        scale={2.9}
         opacity={0.18}
-        drift={[-0.0015, 0.0019]}
-        size={[width * 1.9, depth * 1.9]}
+        drift={[0.0018, 0.0012]}
+        size={[width * 1.52, depth * 1.52]}
+        tint="#edf1ec"
+        detail={1.0}
       />
+      <CloudLayer
+        map={cloudMap}
+        y={base + 31}
+        scale={3.8}
+        opacity={0.16}
+        drift={[-0.0012, 0.0015]}
+        size={[width * 1.9, depth * 1.9]}
+        tint="#f6f7f4"
+        detail={1.15}
+      />
+
+      {hazeBanks.map((bank, index) => (
+        <mesh
+          key={index}
+          rotation={[-Math.PI / 2, 0, bank.r]}
+          position={[bank.x, bank.y, bank.z]}
+          raycast={() => null}
+          matrixAutoUpdate={false}
+        >
+          <planeGeometry args={[bank.sx, bank.sz]} />
+          <meshBasicMaterial
+            map={cloudMap}
+            transparent
+            opacity={bank.o}
+            depthWrite={false}
+            toneMapped={false}
+            color="#d7ddd7"
+          />
+        </mesh>
+      ))}
 
       <points geometry={motes.geometry} frustumCulled={false}>
         <bufferAttribute
@@ -284,10 +365,10 @@ export function Atmosphere({ assets, base }: Props) {
         />
         <pointsMaterial
           map={dotTexture}
-          size={0.9}
+          size={0.72}
           sizeAttenuation
           transparent
-          opacity={0.4}
+          opacity={0.24}
           depthWrite={false}
           blending={AdditiveBlending}
           toneMapped={false}

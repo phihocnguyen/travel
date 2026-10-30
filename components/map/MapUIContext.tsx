@@ -9,7 +9,11 @@ import {
   type ReactNode,
 } from "react";
 
+export type MapSeason = "mango" | "flood" | "mandarin";
+
 type MapUI = {
+  season: MapSeason;
+  setSeason: (season: MapSeason) => void;
   explored: boolean;
   audioEnabled: boolean;
   inquireOpen: boolean;
@@ -31,6 +35,7 @@ type MapUI = {
 const Ctx = createContext<MapUI | null>(null);
 
 export function MapUIProvider({ children }: { children: ReactNode }) {
+  const [season, setSeason] = useState<MapSeason>("mango");
   const [explored, setExplored] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [inquireOpen, setInquireOpen] = useState(false);
@@ -49,6 +54,8 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      season,
+      setSeason,
       explored,
       audioEnabled,
       inquireOpen,
@@ -67,6 +74,8 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       setReady,
     }),
     [
+      season,
+      setSeason,
       explored,
       audioEnabled,
       inquireOpen,

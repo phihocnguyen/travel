@@ -15,7 +15,8 @@ type Props = {
   overview: [number, number, number];
 };
 
-const INTRO_SECONDS = 4.6;
+const INTRO_SECONDS = 4.8;
+const TEMP = new Vector3();
 
 export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
   const camera = useThree((state) => state.camera);
@@ -33,29 +34,22 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
     if (!ready || started.current) return;
     started.current = true;
     startPos.current.copy(camera.position);
+    goalPos.current.set(overview[0], overview[1], overview[2]);
     mode.current = "intro";
     introTime.current = 0;
-  }, [ready, camera]);
+  }, [ready, camera, overview]);
 
   useEffect(() => {
-    // Closing the detail panel must NOT fly the camera back to the overview.
-    // The camera only moves when a new checkpoint is selected.
     if (!focusPoint) return;
     if (focusPoint === lastFocus.current) return;
     lastFocus.current = focusPoint;
-    // Shift the framing left so the selected checkpoint is not hidden by the
-    // 30rem detail panel pinned to the right edge.
-    const panelOffset = 7;
-    goalPos.current.set(
-      focusPoint.x + panelOffset,
-      42,
-      focusPoint.z + 36,
-    );
-    goalTarget.current.set(focusPoint.x + panelOffset, 0, focusPoint.z);
+    const panelOffset = 6.5;
+    goalPos.current.set(focusPoint.x + panelOffset, 34, focusPoint.z + 28);
+    goalTarget.current.set(focusPoint.x, 1.2, focusPoint.z);
     mode.current = "focus";
   }, [focusPoint]);
 
-  useFrame((_, rawDt) => {
+  useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
     const orbit = controls.current;
     if (!ready) return;
@@ -64,10 +58,16 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
       introTime.current += dt;
       const t = MathUtils.clamp(introTime.current / INTRO_SECONDS, 0, 1);
       const eased = 1 - Math.pow(1 - t, 3);
-      camera.position.lerpVectors(startPos.current, goalPos.current, eased);
+      TEMP.copy(goalPos.current);
+      TEMP.x += Math.sin(t * Math.PI) * 22;
+      TEMP.z += (1 - eased) * 20;
+      camera.position.lerpVectors(startPos.current, TEMP, eased);
       camera.lookAt(0, 0, 0);
+      if (orbit) {
+        orbit.target.lerp(new Vector3(0, 0, 0), 0.14);
+        orbit.enabled = false;
+      }
       if (t >= 1) mode.current = "idle";
-      if (orbit) orbit.enabled = false;
       invalidate();
       return;
     }
@@ -79,7 +79,7 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
         orbit.target.lerp(goalTarget.current, k);
         orbit.enabled = false;
       }
-      if (camera.position.distanceTo(goalPos.current) < 0.6) {
+      if (camera.position.distanceTo(goalPos.current) < 0.55) {
         mode.current = "idle";
         if (orbit) {
           orbit.enabled = explored;
@@ -90,7 +90,12 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
       return;
     }
 
-    if (orbit) orbit.enabled = explored;
+    if (orbit) {
+      orbit.enabled = explored;
+      if (explored && !focusPoint) {
+        orbit.target.lerp(goalTarget.current.set(0, 0, 0), 0.05);
+      }
+    }
   });
 
   return (
@@ -99,14 +104,15 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
       enabled={false}
       target={[0, 0, 0]}
       enableDamping
-      dampingFactor={0.06}
-      minDistance={14}
-      maxDistance={320}
-      minPolarAngle={0.08}
-      maxPolarAngle={Math.PI * 0.46}
-      zoomSpeed={0.8}
-      rotateSpeed={0.55}
-      panSpeed={0.7}
+      dampingFactor={0.055}
+      minDistance={16}
+      maxDistance={260}
+      minPolarAngle={0.1}
+      maxPolarAngle={Math.PI * 0.42}
+      zoomSpeed={0.75}
+      rotateSpeed={0.48}
+      panSpeed={0.64}
+      screenSpacePanning={false}
     />
   );
 }

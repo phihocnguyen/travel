@@ -4,6 +4,7 @@ import MapCanvas from "./MapCanvas";
 import HeroOverlay from "@/components/hero/HeroOverlay";
 import AttractionModal from "@/components/hero/AttractionModal";
 import { MapUIProvider } from "./MapUIContext";
+import { SeasonSwitcher } from "./SeasonSwitcher";
 
 export default function MapExperience() {
   return (
@@ -12,6 +13,7 @@ export default function MapExperience() {
         <MapCanvas />
         <div className="map-vignette" aria-hidden />
         <HeroOverlay />
+        <SeasonSwitcher />
         <AttractionModal />
       </div>
     </MapUIProvider>

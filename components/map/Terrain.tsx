@@ -30,21 +30,19 @@ type TerrainProps = {
   onHoverId?: (id: number | null) => void;
 };
 
-/**
- * One opaque pass for the whole map. Imagery, province clip mask, commune tint
- * and the hovered-zone highlight all share the same UV space, so they are
- * composited in the fragment shader instead of stacking transparent quads.
- * Lighting is a cheap normal-based hillshade baked from the DEM geometry:
- * enough depth to read the relief without a light or shadow pass.
- */
 const TERRAIN_VERTEX = /* glsl */ `
   #include <common>
   #include <fog_pars_vertex>
   varying vec2 vUv;
   varying vec3 vNormal;
+  varying vec3 vWorldPos;
+  varying float vHeight;
   void main() {
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
+    vec4 world = modelMatrix * vec4(position, 1.0);
+    vWorldPos = world.xyz;
+    vHeight = position.y;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPosition;
     #include <fog_vertex>
@@ -60,36 +58,90 @@ const TERRAIN_FRAGMENT = /* glsl */ `
   uniform sampler2D uAdminId;
   uniform vec2 uImageryOffset;
   uniform vec2 uImageryRepeat;
+  uniform vec2 uImageryTexel;
   uniform float uAdminOpacity;
   uniform float uHoverId;
   uniform float uHoverFade;
+  uniform float uTime;
   varying vec2 vUv;
   varying vec3 vNormal;
+  varying vec3 vWorldPos;
+  varying float vHeight;
 
   float communeId(vec2 uv) {
     return floor(texture2D(uAdminId, uv).r * 255.0 + 0.5);
   }
 
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+  }
+
+  float fbm(vec2 p) {
+    float value = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 4; i++) {
+      value += noise(p) * amp;
+      p *= 2.03;
+      amp *= 0.5;
+    }
+    return value;
+  }
+
+  vec3 sampleImagery(vec2 uv) {
+    return texture2D(uImagery, uv).rgb;
+  }
+
   void main() {
-    // Cheap mask fetch first: everything outside the province is discarded
-    // before paying for the colour atlases.
     vec4 mask = texture2D(uMask, vUv);
     if (mask.g < 0.45) discard;
 
     vec2 imageryUv = vUv * uImageryRepeat + uImageryOffset;
-    vec3 color = texture2D(uImagery, imageryUv).rgb;
+    vec2 texel = max(uImageryTexel, vec2(0.0002));
 
-    // Soft directional hillshade. The delta is almost flat, so the range is
-    // wide enough to keep the relief readable without looking metallic.
+    vec3 color = sampleImagery(imageryUv);
+    vec3 north = sampleImagery(imageryUv + vec2(0.0, texel.y));
+    vec3 south = sampleImagery(imageryUv - vec2(0.0, texel.y));
+    vec3 east = sampleImagery(imageryUv + vec2(texel.x, 0.0));
+    vec3 west = sampleImagery(imageryUv - vec2(texel.x, 0.0));
+    vec3 blur = (north + south + east + west) * 0.25;
+    vec3 detail = color - blur;
+    color += detail * 0.55;
+
     vec3 n = normalize(vNormal);
-    float sun = clamp(dot(n, normalize(vec3(-0.45, 0.82, 0.35))), 0.0, 1.0);
-    color *= mix(0.88, 1.14, sun);
+    float slope = 1.0 - clamp(n.y, 0.0, 1.0);
+    float sunKey = clamp(dot(n, normalize(vec3(-0.48, 0.84, 0.24))), 0.0, 1.0);
+    float sunFill = clamp(dot(n, normalize(vec3(0.35, 0.58, -0.74))), 0.0, 1.0);
+    float rim = pow(1.0 - clamp(dot(n, normalize(vec3(0.0, 0.96, 0.18))), 0.0, 1.0), 3.0);
+    float shadow = mix(1.0, 0.8, slope * 0.72);
 
-    // Gentle saturation/contrast lift; satellite tiles are a little muted
-    // compared with a hand-painted Primland-style terrain.
+    color *= shadow;
+    color *= mix(0.92, 1.16, sunKey);
+    color += vec3(0.03, 0.045, 0.035) * sunFill * 0.18;
+    color += vec3(0.07, 0.08, 0.06) * rim * 0.08;
+
     float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(vec3(luma), color, 1.12);
-    color = clamp((color - 0.5) * 1.06 + 0.5, 0.0, 1.0);
+    color = mix(vec3(luma), color, 1.16);
+    color = clamp((color - 0.5) * 1.08 + 0.5, 0.0, 1.0);
+
+    float elevTint = smoothstep(0.6, 5.5, vHeight);
+    color = mix(color, color * vec3(0.92, 0.99, 0.94), elevTint * 0.16);
+
+    float cloudShadow = fbm(vUv * 7.5 + vec2(uTime * 0.018, -uTime * 0.011));
+    color *= mix(0.92, 1.01, smoothstep(0.28, 0.82, cloudShadow));
+
+    float vignette = smoothstep(0.44, 0.92, distance(vUv, vec2(0.5)));
+    color = mix(color, vec3(0.07, 0.13, 0.11), vignette * 0.18);
 
     if (uAdminOpacity > 0.001) {
       vec4 admin = texture2D(uAdmin, vUv);
@@ -97,19 +149,17 @@ const TERRAIN_FRAGMENT = /* glsl */ `
       color = color * (1.0 - adminA) + admin.rgb * adminA;
     }
 
-    // Hovered commune: tint the whole zone and trace its border by comparing
-    // ids with the four neighbouring texels. Only runs while hovering.
     if (uHoverFade > 0.001 && uHoverId > 0.5) {
       float id = communeId(vUv);
       if (abs(id - uHoverId) < 0.5) {
-        vec2 texel = vec2(1.0 / 512.0, 1.0 / 256.0);
+        vec2 adminTexel = vec2(1.0 / 512.0, 1.0 / 256.0);
         float edge = 0.0;
-        edge = max(edge, step(0.5, abs(communeId(vUv + vec2(texel.x, 0.0)) - id)));
-        edge = max(edge, step(0.5, abs(communeId(vUv - vec2(texel.x, 0.0)) - id)));
-        edge = max(edge, step(0.5, abs(communeId(vUv + vec2(0.0, texel.y)) - id)));
-        edge = max(edge, step(0.5, abs(communeId(vUv - vec2(0.0, texel.y)) - id)));
-        color = mix(color, vec3(0.96, 0.91, 0.68), 0.22 * uHoverFade);
-        color = mix(color, vec3(1.0, 0.97, 0.84), edge * 0.62 * uHoverFade);
+        edge = max(edge, step(0.5, abs(communeId(vUv + vec2(adminTexel.x, 0.0)) - id)));
+        edge = max(edge, step(0.5, abs(communeId(vUv - vec2(adminTexel.x, 0.0)) - id)));
+        edge = max(edge, step(0.5, abs(communeId(vUv + vec2(0.0, adminTexel.y)) - id)));
+        edge = max(edge, step(0.5, abs(communeId(vUv - vec2(0.0, adminTexel.y)) - id)));
+        color = mix(color, vec3(0.97, 0.93, 0.72), 0.2 * uHoverFade);
+        color = mix(color, vec3(1.0, 0.985, 0.88), edge * 0.7 * uHoverFade);
       }
     }
 
@@ -120,10 +170,37 @@ const TERRAIN_FRAGMENT = /* glsl */ `
   }
 `;
 
+const RIVER_VERTEX = /* glsl */ `
+  varying vec3 vWorldPos;
+  void main() {
+    vec4 world = modelMatrix * vec4(position, 1.0);
+    vWorldPos = world.xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const RIVER_FRAGMENT = /* glsl */ `
+  uniform float uTime;
+  varying vec3 vWorldPos;
+  void main() {
+    float sweep = sin(vWorldPos.x * 0.55 + vWorldPos.z * 0.36 - uTime * 1.1) * 0.5 + 0.5;
+    float ripples = sin(vWorldPos.x * 2.1 - uTime * 1.9) * sin(vWorldPos.z * 1.6 - uTime * 1.5);
+    float sparkle = pow(clamp(sweep * 0.72 + ripples * 0.28, 0.0, 1.0), 6.0) * 0.18;
+    vec3 base = mix(vec3(0.06, 0.19, 0.23), vec3(0.2, 0.48, 0.54), 0.5 + sweep * 0.2);
+    vec3 color = base + vec3(sparkle);
+    gl_FragColor = vec4(color, 0.84);
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+  }
+`;
+
 function buildTerrainGeometry(assets: MapAssets, segments: number) {
   const { projector, dem } = assets;
   const segX = segments;
-  const segZ = Math.max(40, Math.round(segments * (projector.depthKm / projector.widthKm)));
+  const segZ = Math.max(
+    40,
+    Math.round(segments * (projector.depthKm / projector.widthKm)),
+  );
   const cols = segX + 1;
   const rows = segZ + 1;
   const positions = new Float32Array(cols * rows * 3);
@@ -147,8 +224,6 @@ function buildTerrainGeometry(assets: MapAssets, segments: number) {
     }
   }
 
-  // Baked normals from central differences. This lets the fragment shader do
-  // a single dot() per pixel for the hillshade, with no light or normal map.
   const normals = new Float32Array(cols * rows * 3);
   const cellX = projector.widthKm / segX;
   const cellZ = projector.depthKm / segZ;
@@ -202,6 +277,9 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
   );
 
   const material = useMemo(() => {
+    const image = assets.imagery.image as { width?: number; height?: number } | undefined;
+    const width = image?.width ?? 2048;
+    const height = image?.height ?? 2048;
     const uniforms = UniformsUtils.merge([
       UniformsLib.fog,
       {
@@ -211,9 +289,11 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
         uAdminId: { value: null },
         uImageryOffset: { value: new Vector2() },
         uImageryRepeat: { value: new Vector2(1, 1) },
-        uAdminOpacity: { value: 0.28 },
+        uImageryTexel: { value: new Vector2(1 / width, 1 / height) },
+        uAdminOpacity: { value: 0.22 },
         uHoverId: { value: 0 },
         uHoverFade: { value: 0 },
+        uTime: { value: 0 },
       },
     ]);
     const next = new ShaderMaterial({
@@ -248,15 +328,14 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
     if (hoveredId != null) hoverId.current = hoveredId + 1;
   }, [hoveredId]);
 
-  // Fade the zone highlight in/out. Only frames while the fade is still
-  // moving request a redraw, so a resting hover costs nothing.
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     const target = hoveredId != null ? 1 : 0;
-    const next = hoverFade.current + (target - hoverFade.current) * Math.min(1, dt * 12);
+    const next =
+      hoverFade.current + (target - hoverFade.current) * Math.min(1, dt * 12);
     const current = materialRef.current;
     if (current) {
-      current.uniforms.uHoverId.value =
-        next > 0.004 ? hoverId.current : 0;
+      current.uniforms.uTime.value = state.clock.elapsedTime;
+      current.uniforms.uHoverId.value = next > 0.004 ? hoverId.current : 0;
       current.uniforms.uHoverFade.value = next;
     }
     hoverFade.current = next;
@@ -285,10 +364,6 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
     <>
       <mesh geometry={geometry} material={material} matrixAutoUpdate={false} />
 
-      {/* Invisible flat pick plane. Raycasting the 130k-triangle terrain on
-          every pointer move is the main source of hover stutter; this plane
-          has two triangles and shares the exact terrain UV space. Sits just
-          above the highest peak so it always wins the intersection. */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, elevationToScene(assets.maxHeightMeters) + 0.6, 0]}
@@ -302,7 +377,9 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
         }
         onPointerOut={onHoverId ? () => onHoverId(null) : undefined}
       >
-        <planeGeometry args={[assets.projector.widthKm, assets.projector.depthKm]} />
+        <planeGeometry
+          args={[assets.projector.widthKm, assets.projector.depthKm]}
+        />
         <meshBasicMaterial visible={false} />
       </mesh>
     </>
@@ -353,10 +430,18 @@ function buildRiverGeometry(assets: MapAssets, y: number) {
       const nz = (dx / len) * (widthKm / 2);
       const base = positions.length / 3;
       positions.push(
-        x0 + nx, y, z0 + nz,
-        x0 - nx, y, z0 - nz,
-        x1 + nx, y, z1 + nz,
-        x1 - nx, y, z1 - nz,
+        x0 + nx,
+        y,
+        z0 + nz,
+        x0 - nx,
+        y,
+        z0 - nz,
+        x1 + nx,
+        y,
+        z1 + nz,
+        x1 - nx,
+        y,
+        z1 - nz,
       );
       indices.push(base, base + 2, base + 1, base + 1, base + 2, base + 3);
     }
@@ -385,16 +470,21 @@ export function Rivers({ assets, y }: RiversProps) {
   const geometry = useMemo(() => buildRiverGeometry(assets, y), [assets, y]);
   const material = useMemo(
     () =>
-      new MeshBasicMaterial({
-        color: "#4b98a6",
+      new ShaderMaterial({
+        uniforms: { uTime: { value: 0 } },
+        vertexShader: RIVER_VERTEX,
+        fragmentShader: RIVER_FRAGMENT,
         transparent: true,
-        opacity: 0.8,
         depthWrite: false,
         side: DoubleSide,
         toneMapped: false,
       }),
     [],
   );
+
+  useFrame((state) => {
+    material.uniforms.uTime.value = state.clock.elapsedTime;
+  });
 
   useEffect(() => {
     return () => {
@@ -412,9 +502,6 @@ type OutlineProps = {
 };
 
 export function ProvinceOutline({ assets, y }: OutlineProps) {
-  // Every ring used to be its own drei <Line> (one draw call + one fat-line
-  // material each). Flatten them into a single LineSegments buffer so the
-  // whole province border is a single draw call.
   const geometry = useMemo(() => {
     const positions: number[] = [];
     forEachRing(assets.geometry, (ring) => {
@@ -438,9 +525,9 @@ export function ProvinceOutline({ assets, y }: OutlineProps) {
   const material = useMemo(
     () =>
       new LineBasicMaterial({
-        color: "#f6edcf",
+        color: "#f4edd2",
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.85,
         depthWrite: false,
         toneMapped: false,
       }),
