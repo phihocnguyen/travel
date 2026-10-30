@@ -19,6 +19,7 @@ import { AdminOverlay } from "./AdminOverlay";
 import { Atmosphere } from "./Atmosphere";
 import { AttractionMarkers } from "./AttractionMarkers";
 import { CameraRig } from "./CameraRig";
+import { MangoGroves } from "@/components/landscape/MangoGroves";
 import { PerfOverlay } from "./PerfOverlay";
 import {
   ProvinceOutline,
@@ -213,6 +214,7 @@ function SceneContent() {
           <Rivers assets={assets} y={layers.rivers} />
           <AdminOverlay assets={assets} y={layers.admin} />
           <ProvinceOutline assets={assets} y={layers.outline} />
+          <MangoGroves assets={assets} />
           <Atmosphere assets={assets} base={layers.base} />
           <AttractionMarkers assets={assets} y={layers.outline + 0.18} />
           <CheckpointScreenBridge assets={assets} />
