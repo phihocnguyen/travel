@@ -25,11 +25,24 @@ import type {
 } from "@/lib/geo/types";
 import { createProjector, type Projector } from "./projection";
 
-export const TILE_ZOOM = 11;
+export const TILE_ZOOM = 12;
+const MOBILE_TILE_ZOOM = 11;
 const DEM_ZOOM = 10;
 const TILE_SIZE = 256;
-const ADMIN_WIDTH = 512;
-const ADMIN_HEIGHT = 256;
+const ADMIN_WIDTH = 1024;
+const ADMIN_HEIGHT = 512;
+
+// High-end desktop GPUs get one extra imagery zoom level (roughly 2.5x the
+// pixels per kilometre). Mobile and low-memory devices stay on the lighter
+// atlas so load time and texture memory remain predictable.
+function pickImageryZoom() {
+  if (typeof navigator === "undefined") return TILE_ZOOM;
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(nav.userAgent);
+  const lowMemory = (nav.deviceMemory ?? 8) < 6;
+  const lowCores = (nav.hardwareConcurrency ?? 8) < 6;
+  return mobile || lowMemory || lowCores ? MOBILE_TILE_ZOOM : TILE_ZOOM;
+}
 
 type Region = {
   meta: RegionMeta;
@@ -372,11 +385,12 @@ function drawProvinceMask(
 }
 
 export function applyTextureQuality(assets: MapAssets, maxAnisotropy: number) {
-  // A hardware GPU can afford 4x anisotropy on the terrain atlas; it keeps
-  // the satellite imagery crisp when the camera tilts to a grazing angle.
-  const anisotropy = Math.min(4, maxAnisotropy);
+  // Anisotropic filtering is what keeps the satellite atlas crisp when the
+  // camera tilts to a grazing angle. Use the hardware maximum (usually 8–16)
+  // instead of the old 4x cap.
+  const anisotropy = Math.min(8, maxAnisotropy);
   assets.imagery.anisotropy = anisotropy;
-  assets.admin.anisotropy = Math.min(2, anisotropy);
+  assets.admin.anisotropy = Math.min(4, anisotropy);
   assets.imagery.needsUpdate = true;
   assets.admin.needsUpdate = true;
 }
@@ -387,7 +401,8 @@ export async function buildMapAssets(
 ): Promise<MapAssets> {
   const { meta, geometry, communes, rivers } = region;
   const projector = createProjector(meta.bbox, meta.center);
-  const imageryRange = tileRange(meta.bbox, TILE_ZOOM);
+  const imageryZoom = pickImageryZoom();
+  const imageryRange = tileRange(meta.bbox, imageryZoom);
   const demRange = tileRange(meta.bbox, DEM_ZOOM);
   const countFor = (r: ReturnType<typeof tileRange>) =>
     (r.xMax - r.xMin + 1) * (r.yMax - r.yMin + 1);
@@ -400,7 +415,7 @@ export async function buildMapAssets(
 
   onProgress(0.03);
   const [imagery, dem] = await Promise.all([
-    buildImagery(meta.bbox, TILE_ZOOM, imageryRange, onTick),
+    buildImagery(meta.bbox, imageryZoom, imageryRange, onTick),
     buildDem(DEM_ZOOM, demRange, meta.bbox, onTick),
   ]);
 
