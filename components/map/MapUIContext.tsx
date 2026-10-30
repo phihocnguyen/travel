@@ -5,15 +5,13 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
+  type MutableRefObject,
 } from "react";
 
-export type MapSeason = "mango" | "flood" | "mandarin";
-
 type MapUI = {
-  season: MapSeason;
-  setSeason: (season: MapSeason) => void;
   explored: boolean;
   audioEnabled: boolean;
   inquireOpen: boolean;
@@ -22,6 +20,7 @@ type MapUI = {
   selectedAttractionId: number | null;
   loadProgress: number;
   ready: boolean;
+  journeyProgress: MutableRefObject<number>;
   explore: (withAudio: boolean) => void;
   setAudioEnabled: (v: boolean) => void;
   setInquireOpen: (v: boolean) => void;
@@ -35,7 +34,6 @@ type MapUI = {
 const Ctx = createContext<MapUI | null>(null);
 
 export function MapUIProvider({ children }: { children: ReactNode }) {
-  const [season, setSeason] = useState<MapSeason>("mango");
   const [explored, setExplored] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [inquireOpen, setInquireOpen] = useState(false);
@@ -46,6 +44,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
   >(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [ready, setReady] = useState(false);
+  const journeyProgress = useRef(0);
 
   const explore = useCallback((withAudio: boolean) => {
     setAudioEnabled(withAudio);
@@ -54,8 +53,6 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      season,
-      setSeason,
       explored,
       audioEnabled,
       inquireOpen,
@@ -64,6 +61,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       selectedAttractionId,
       loadProgress,
       ready,
+      journeyProgress,
       explore,
       setAudioEnabled,
       setInquireOpen,
@@ -74,8 +72,6 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       setReady,
     }),
     [
-      season,
-      setSeason,
       explored,
       audioEnabled,
       inquireOpen,

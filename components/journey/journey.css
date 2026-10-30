@@ -1,0 +1,39 @@
+.journey-scroll-space { position: relative; width: 100%; height: 850dvh; overflow: visible; background: #08110d; }
+.journey-scroll-space--explored { height: 100dvh; }
+.journey-stage { position: sticky; top: 0; width: 100%; height: 100dvh; isolation: isolate; background: #08110d; }
+.journey-stage > .journey-map { position: absolute; inset: 0; }
+.journey-overlay { position: absolute; inset: 0; z-index: 35; pointer-events: none; color: #f5efdc; font-family: var(--font-sans, Inter, Arial, sans-serif); }
+.journey-overlay::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(4,13,11,.56), transparent 62%), linear-gradient(0deg, rgba(3,12,10,.58),transparent 25%,transparent 75%,rgba(3,12,10,.38)); }
+.journey-header,.journey-footer { position: absolute; left: clamp(24px, 4.2vw, 80px); right: clamp(24px, 4.2vw, 80px); z-index: 2; display: flex; align-items: center; justify-content: space-between; letter-spacing: .19em; font-size: 10px; font-weight: 650; }
+.journey-header { top: clamp(24px, 4vh, 46px); }
+.journey-brand { font-size: clamp(11px, 1vw, 15px); letter-spacing: .22em; }
+.journey-brand span,.journey-tag { color: rgba(240,235,216,.6); }
+.journey-footer { bottom: clamp(25px, 5vh, 60px); gap: 22px; }
+.journey-scroll-cue { white-space: nowrap; display: flex; gap: 15px; align-items: center; }
+.journey-mouse { font-size: 23px; font-weight: 300; animation: journey-bob 2s ease-in-out infinite; }
+.journey-track { position: relative; flex: 1; max-width: 260px; height: 1px; background: rgba(241,239,219,.35); }
+.journey-track > span { display: block; width: 100%; height: 100%; transform: scaleX(0); transform-origin: left; background: #ece4bd; }
+.journey-bottom-label { color: rgba(238,235,219,.65); }
+.journey-chapters { position: absolute; inset: 0; }
+.journey-chapter { position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 8vh clamp(25px, 8vw, 144px); visibility: hidden; opacity: 0; }
+.journey-chapter--center { align-items: center; text-align: center; }
+.journey-chapter--left { align-items: flex-start; text-align: left; }
+.journey-chapter--right { align-items: flex-end; text-align: right; }
+.journey-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 11px; letter-spacing: .26em; color: #e2d6ae; font-weight: 650; margin-bottom: clamp(20px, 4vh, 46px); }
+.journey-mini-line { display: block; width: 28px; height: 1px; background: #dbc58e; }
+.journey-heading { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(51px, 8vw, 142px); letter-spacing: -.055em; line-height: .94; text-shadow: 0 4px 48px rgba(0,0,0,.23); }
+.journey-heading em { font-weight: 400; color: #e4dab3; }
+.journey-description { font-size: clamp(14px, 1.2vw, 19px); line-height: 1.8; letter-spacing: .014em; color: rgba(246,240,224,.86); max-width: 460px; margin-top: clamp(26px, 5vh, 52px); }
+.journey-cta { pointer-events: auto; margin-top: 27px; border: 1px solid rgba(244,234,200,.72); background: rgba(14,31,25,.55); backdrop-filter: blur(14px); padding: 17px 22px; color: #fff5d8; cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .18em; transition: background .25s ease, transform .25s ease; }
+.journey-cta:hover { background: rgba(223,207,161,.19); transform: translateY(-2px); }
+.journey-cta span { padding-left: 16px; }
+@keyframes journey-bob { 50% { transform: translateY(7px); } }
+@media (max-width: 700px) {
+  .journey-tag,.journey-bottom-label { display: none; }
+  .journey-header,.journey-footer { left: 22px; right: 22px; }
+  .journey-chapter,.journey-chapter--left,.journey-chapter--right { padding: 0 24px; align-items: flex-start; text-align: left; }
+  .journey-chapter--center { align-items: center; text-align: center; }
+  .journey-heading { font-size: clamp(48px, 12vw, 78px); }
+  .journey-description { max-width: 90%; }
+}
+@media (prefers-reduced-motion: reduce) { .journey-mouse { animation: none; } .journey-cta { transition: none; } }

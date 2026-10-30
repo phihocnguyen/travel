@@ -199,6 +199,7 @@ function SceneContent() {
         explored={explored}
         focusPoint={focusPoint}
         overview={OVERVIEW}
+        assets={assets}
       />
     </>
   );

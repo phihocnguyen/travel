@@ -31,9 +31,13 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+html {
+  overflow-x: clip;
+}
 
 body {
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: auto;
 }
 
 button,
