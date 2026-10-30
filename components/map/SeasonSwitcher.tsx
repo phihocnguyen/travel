@@ -3,9 +3,9 @@
 import { useMapUI, type MapSeason } from "./MapUIContext";
 
 const SEASONS: { id: MapSeason; label: string; caption: string; icon: string }[] = [
-  { id: "mango", label: "Mùa xoài", caption: "Vườn xanh · trái vàng", icon: "🥭" },
-  { id: "flood", label: "Mùa nước nổi", caption: "Sông nước · phù sa", icon: "🌊" },
-  { id: "mandarin", label: "Mùa quýt", caption: "Vườn quýt · sắc cam", icon: "🍊" },
+  { id: "mango", label: "Mango season", caption: "Golden groves · ripe fruit", icon: "🥭" },
+  { id: "dry", label: "Dry season", caption: "Amber fields · clear skies", icon: "☀️" },
+  { id: "flood", label: "Flood season", caption: "Rising water · silt", icon: "🌊" },
 ];
 
 export function SeasonSwitcher() {

@@ -10,6 +10,12 @@ type Props = {
   y: number;
 };
 
+const KIND_LABELS: Record<string, string> = {
+  "Xã": "Commune",
+  "Phường": "Ward",
+  "Thị trấn": "Town",
+};
+
 /**
  * The commune zone itself is tinted and outlined inside the terrain shader.
  * This component only owns the DOM tooltip that follows the hovered commune.
@@ -39,7 +45,7 @@ export function AdminOverlay({ assets, y }: Props) {
       style={{ pointerEvents: "none" }}
     >
       <div className="admin-tooltip">
-        <span className="admin-tooltip__kind">{active.kind}</span>
+        <span className="admin-tooltip__kind">{KIND_LABELS[active.kind] ?? active.kind}</span>
         <span className="admin-tooltip__name">{active.name}</span>
       </div>
     </Html>

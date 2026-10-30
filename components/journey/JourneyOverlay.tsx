@@ -94,16 +94,16 @@ export default function JourneyOverlay() {
   };
   if (explored) return null;
   return (
-    <div ref={root} className="journey-overlay journey-overlay--wow" aria-label="Hành trình giới thiệu Đồng Tháp">
+    <div ref={root} className="journey-overlay journey-overlay--wow" aria-label="An interactive journey through Dong Thap">
       <header className="journey-header">
-        <span className="journey-brand">ĐỒNG THÁP <span>— MIỀN SÔNG NƯỚC</span></span>
+        <span className="journey-brand">DONG THAP <span>— THE WATERWAYS</span></span>
         <span className="journey-tag">AN INTERACTIVE ATLAS</span>
       </header>
-      <nav className="journey-navigation" aria-label="Chọn điểm dừng">
+      <nav className="journey-navigation" aria-label="Choose a checkpoint">
         {JOURNEY_CHAPTERS.map((chapter, i) => (
           <button key={chapter.index} type="button" className={`journey-nav-point${activeChapter === i ? " is-active" : ""}`}
             onClick={() => goTo(i)} aria-current={activeChapter === i ? "step" : undefined}
-            aria-label={`Đến chương ${i + 1}: ${chapter.emphasis}`} title={chapter.emphasis}>
+            aria-label={`Go to chapter ${i + 1}: ${chapter.emphasis}`} title={chapter.emphasis}>
             <span className="journey-nav-dot" /><span className="journey-nav-name">{chapter.emphasis}</span>
           </button>
         ))}
@@ -111,33 +111,33 @@ export default function JourneyOverlay() {
       <div className="journey-chapters" aria-live="off">
         {JOURNEY_CHAPTERS.map((chapter, i) => (
           <article key={chapter.index} data-journey-chapter
-            className={`journey-chapter journey-chapter--${chapter.position}`} aria-label={`Chương ${i + 1}`}>
+            className={`journey-chapter journey-chapter--${chapter.position}`} aria-label={`Chapter ${i + 1}`}>
             <div className="journey-chapter__glass">
               <span className="journey-eyebrow"><span className="journey-mini-line" />{chapter.eyebrow}</span>
               <h1 className="journey-heading"><span>{chapter.title}</span><br /><em>{chapter.emphasis}</em></h1>
               <p className="journey-description">{chapter.description}</p>
               {i > 0 && i < JOURNEY_CHAPTERS.length - 1 && (
-                <span className="journey-chapter__number">ĐIỂM DỪNG {String(i).padStart(2,"0")} / {String(JOURNEY_CHECKPOINTS.length).padStart(2,"0")}</span>
+                <span className="journey-chapter__number">STOP {String(i).padStart(2,"0")} / {String(JOURNEY_CHECKPOINTS.length).padStart(2,"0")}</span>
               )}
               {i === JOURNEY_CHAPTERS.length - 1 && (
                 <button type="button" className="journey-cta" onClick={startExploring}>
-                  BẮT ĐẦU KHÁM PHÁ <span aria-hidden="true">↗</span>
+                  START EXPLORING <span aria-hidden="true">↗</span>
                 </button>
               )}
             </div>
           </article>
         ))}
       </div>
-      <div className="journey-season-switcher" role="group" aria-label="Màu sắc theo mùa">
+      <div className="journey-season-switcher" role="group" aria-label="Seasonal colour">
         {([
-          ["mango", "Mùa xoài"], ["dry", "Mùa khô"], ["flood", "Mùa nước nổi"],
+          ["mango", "Mango season"], ["dry", "Dry season"], ["flood", "Flood season"],
         ] as const).map(([value, label]) => (
           <button type="button" key={value} onClick={() => setSeason(value)}
             className={season === value ? "is-active" : ""} aria-pressed={season === value}>{label}</button>
         ))}
       </div>
       <footer className="journey-footer">
-        <div className="journey-scroll-cue"><span className="journey-mouse">↓</span> CUỘN ĐỂ KHÁM PHÁ</div>
+        <div className="journey-scroll-cue"><span className="journey-mouse">↓</span> SCROLL TO EXPLORE</div>
         <div className="journey-track"><span data-journey-progress /></div>
         <span className="journey-bottom-label">{String(activeChapter+1).padStart(2,"0")} / {String(JOURNEY_CHAPTERS.length).padStart(2,"0")}</span>
       </footer>

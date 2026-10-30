@@ -147,7 +147,7 @@ function ForestInstances({ trees, season }: { trees: Tree[]; season: MapSeason }
       dummy.scale.set(t.size * .46, height * .65, t.size * .46);
       dummy.updateMatrix();
       bodyRef.current?.setMatrixAt(i, dummy.matrix);
-      color.set(season === "mandarin" ? "#496b2d" : season === "flood" ? "#315b43" : "#3d6130");
+      color.set(season === "dry" ? "#496b2d" : season === "flood" ? "#315b43" : "#3d6130");
       color.multiplyScalar(.68 + t.tint * .72);
       bodyRef.current?.setColorAt(i, color);
 
@@ -157,7 +157,7 @@ function ForestInstances({ trees, season }: { trees: Tree[]; season: MapSeason }
       dummy.scale.set(t.size * 1.15, t.size * 1.15, 1);
       dummy.updateMatrix();
       crownRef.current?.setMatrixAt(i, dummy.matrix);
-      color.set(season === "mandarin" ? "#b7b873" : season === "flood" ? "#9cbaa3" : "#b2c07b");
+      color.set(season === "dry" ? "#b7b873" : season === "flood" ? "#9cbaa3" : "#b2c07b");
       color.multiplyScalar(.66 + t.tint * .52);
       crownRef.current?.setColorAt(i, color);
       dummy.quaternion.identity();
@@ -168,7 +168,7 @@ function ForestInstances({ trees, season }: { trees: Tree[]; season: MapSeason }
       dummy.scale.setScalar(t.size * (season === "flood" ? .001 : .16));
       dummy.updateMatrix();
       fruitRef.current?.setMatrixAt(i, dummy.matrix);
-      fruitRef.current?.setColorAt(i, color.set(season === "mandarin" ? "#ffab3c" : "#efc45d"));
+      fruitRef.current?.setColorAt(i, color.set(season === "dry" ? "#ffab3c" : "#efc45d"));
     }
     for (const mesh of [bodyRef.current, crownRef.current, fruitRef.current]) {
       if (!mesh) continue;

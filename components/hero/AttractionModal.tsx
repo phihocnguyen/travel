@@ -52,7 +52,7 @@ export default function AttractionModal() {
         className={`attraction-modal${open ? " is-open" : ""}`}
         role="dialog"
         aria-modal={open}
-        aria-label={shown?.name ?? "Điểm đến"}
+        aria-label={shown?.name ?? "Destination"}
         aria-hidden={!open}
       >
         {shown && (
@@ -68,7 +68,7 @@ export default function AttractionModal() {
               type="button"
               className="attraction-card__close"
               onClick={() => setSelectedAttractionId(null)}
-              aria-label="Đóng thông tin điểm đến"
+              aria-label="Close destination details"
             >
               ×
             </button>
@@ -81,7 +81,7 @@ export default function AttractionModal() {
                 {shown.category}
               </span>
               <span className="attraction-card__area">
-                {shown.area} · Đồng Tháp
+                {shown.area} · Dong Thap
               </span>
               <span className="attraction-card__mark" aria-hidden>
                 <span />
@@ -103,11 +103,11 @@ export default function AttractionModal() {
 
               <dl className="attraction-card__facts">
                 <div>
-                  <dt>Thời điểm đẹp</dt>
+                  <dt>Best time</dt>
                   <dd>{shown.bestTime}</dd>
                 </div>
                 <div>
-                  <dt>Toạ độ</dt>
+                  <dt>Coordinates</dt>
                   <dd>
                     {shown.lat.toFixed(4)}°N · {shown.lon.toFixed(4)}°E
                   </dd>
@@ -121,7 +121,7 @@ export default function AttractionModal() {
                   rel="noreferrer"
                   className="hero-cta hero-cta--primary"
                 >
-                  Mở bản đồ
+                  Open in Maps
                   <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4">
                     <path
                       d="M5 12h13M12.5 6.5L19 12l-6.5 5.5"
@@ -138,7 +138,7 @@ export default function AttractionModal() {
                   className="attraction-card__back"
                   onClick={() => setSelectedAttractionId(null)}
                 >
-                  Đóng panel
+                  Close panel
                 </button>
               </div>
             </div>
@@ -151,7 +151,7 @@ export default function AttractionModal() {
           type="button"
           className="hero-scrim attraction-scrim"
           onClick={() => setSelectedAttractionId(null)}
-          aria-label="Đóng thông tin điểm đến"
+          aria-label="Close destination details"
         />
       )}
     </>

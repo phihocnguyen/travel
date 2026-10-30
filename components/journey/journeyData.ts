@@ -22,26 +22,28 @@ export type JourneyChapter = {
 export const JOURNEY_CHAPTERS: JourneyChapter[] = [
   {
     index: "00",
-    eyebrow: "ĐỒNG THÁP / MỘT HÀNH TRÌNH TƯƠNG TÁC",
-    title: "Đi qua",
-    emphasis: "miền sông nước.",
-    description: "Cuộn để camera bay qua từng điểm đến trên bản đồ. Mỗi điểm dừng hé lộ một câu chuyện riêng.",
+    eyebrow: "DONG THAP / AN INTERACTIVE JOURNEY",
+    title: "Travel through",
+    emphasis: "the waterways.",
+    description:
+      "Scroll to fly the camera from one destination to the next. Every stop reveals a different story of the delta.",
     position: "center",
   },
   ...JOURNEY_CHECKPOINTS.map(({ attraction }, i): JourneyChapter => ({
     index: String(i + 1).padStart(2, "0"),
-    eyebrow: `ĐIỂM DỪNG ${String(i + 1).padStart(2, "0")} / ${attraction.category}`,
-    title: "Khám phá",
+    eyebrow: `CHECKPOINT ${String(i + 1).padStart(2, "0")} / ${attraction.category}`,
+    title: "Discover",
     emphasis: attraction.name,
-    description: `Một điểm đến thuộc nhóm ${attraction.category}. Nội dung giới thiệu chi tiết hiện là template và có thể thay trong journeyData.ts.`,
+    description: attraction.summary,
     position: i % 2 === 0 ? "left" : "right",
   })),
   {
     index: String(CHECKPOINT_COUNT + 1).padStart(2, "0"),
-    eyebrow: "TIẾP TỤC HÀNH TRÌNH",
-    title: "Tự mình",
-    emphasis: "khám phá.",
-    description: "Xoay, thu phóng và chọn các marker trên bản đồ để tìm hiểu địa điểm.",
+    eyebrow: "CONTINUE THE JOURNEY",
+    title: "Find your own",
+    emphasis: "way.",
+    description:
+      "Rotate, zoom and choose any marker on the map to learn more about each place.",
     position: "center",
   },
 ];
