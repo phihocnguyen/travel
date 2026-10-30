@@ -1,0 +1,11 @@
+{
+  "bbox": [105.1854, 10.1345, 106.8225, 10.973],
+  "center": [106.00395, 10.55375],
+  "neighbors": [
+    { "name": "Campuchia", "lon": 105.22, "lat": 10.96 },
+    { "name": "An Giang", "lon": 105.12, "lat": 10.52 },
+    { "name": "Long An", "lon": 106.62, "lat": 10.95 },
+    { "name": "Vĩnh Long", "lon": 106.22, "lat": 10.08 },
+    { "name": "Cần Thơ", "lon": 105.52, "lat": 10.1 }
+  ]
+}
