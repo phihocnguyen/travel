@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
-import { ATTRACTIONS, CATEGORY_COLORS } from "@/lib/map/attractions";
+import { useEffect, useState, type CSSProperties } from "react";
+import { ATTRACTIONS, CATEGORY_COLORS, type Attraction } from "@/lib/map/attractions";
 import { useMapUI } from "@/components/map/MapUIContext";
+
+const EXIT_MS = 520;
 
 export default function AttractionModal() {
   const { selectedAttractionId, setSelectedAttractionId } = useMapUI();
@@ -10,6 +12,30 @@ export default function AttractionModal() {
     selectedAttractionId == null
       ? null
       : ATTRACTIONS[selectedAttractionId] ?? null;
+  const [shown, setShown] = useState<Attraction | null>(attraction);
+  const [open, setOpen] = useState(false);
+
+  // Keep the last card mounted long enough to slide out, while a new
+  // selection updates the content in place without closing the panel.
+  useEffect(() => {
+    let frame = 0;
+    let timer = 0;
+    if (attraction) {
+      // Defer one frame so a freshly mounted card paints off-screen first and
+      // the CSS transform can actually animate in.
+      frame = requestAnimationFrame(() => {
+        setShown(attraction);
+        setOpen(true);
+      });
+    } else {
+      frame = requestAnimationFrame(() => setOpen(false));
+      timer = window.setTimeout(() => setShown(null), EXIT_MS);
+    }
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [attraction]);
 
   useEffect(() => {
     if (!attraction) return;
@@ -20,23 +46,21 @@ export default function AttractionModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [attraction, setSelectedAttractionId]);
 
-  const open = !!attraction;
-
   return (
     <>
       <div
         className={`attraction-modal${open ? " is-open" : ""}`}
         role="dialog"
-        aria-modal="true"
-        aria-label={attraction?.name ?? "Điểm đến"}
+        aria-modal={open}
+        aria-label={shown?.name ?? "Điểm đến"}
         aria-hidden={!open}
       >
-        {attraction && (
+        {shown && (
           <article
             className="attraction-card"
             style={
               {
-                "--attraction-color": CATEGORY_COLORS[attraction.category],
+                "--attraction-color": CATEGORY_COLORS[shown.category],
               } as CSSProperties
             }
           >
@@ -51,13 +75,13 @@ export default function AttractionModal() {
 
             <div className="attraction-card__visual">
               <span className="attraction-card__index">
-                {String(attraction.id + 1).padStart(2, "0")}
+                {String(shown.id + 1).padStart(2, "0")}
               </span>
               <span className="attraction-card__category">
-                {attraction.category}
+                {shown.category}
               </span>
               <span className="attraction-card__area">
-                {attraction.area} · Đồng Tháp
+                {shown.area} · Đồng Tháp
               </span>
               <span className="attraction-card__mark" aria-hidden>
                 <span />
@@ -65,14 +89,14 @@ export default function AttractionModal() {
             </div>
 
             <div className="attraction-card__body">
-              <h2 className="attraction-card__name">{attraction.name}</h2>
-              <p className="attraction-card__summary">{attraction.summary}</p>
+              <h2 className="attraction-card__name">{shown.name}</h2>
+              <p className="attraction-card__summary">{shown.summary}</p>
               <p className="attraction-card__description">
-                {attraction.description}
+                {shown.description}
               </p>
 
               <ul className="attraction-card__highlights">
-                {attraction.highlights.map((highlight) => (
+                {shown.highlights.map((highlight) => (
                   <li key={highlight}>{highlight}</li>
                 ))}
               </ul>
@@ -80,20 +104,19 @@ export default function AttractionModal() {
               <dl className="attraction-card__facts">
                 <div>
                   <dt>Thời điểm đẹp</dt>
-                  <dd>{attraction.bestTime}</dd>
+                  <dd>{shown.bestTime}</dd>
                 </div>
                 <div>
                   <dt>Toạ độ</dt>
                   <dd>
-                    {attraction.lat.toFixed(4)}°N ·{" "}
-                    {attraction.lon.toFixed(4)}°E
+                    {shown.lat.toFixed(4)}°N · {shown.lon.toFixed(4)}°E
                   </dd>
                 </div>
               </dl>
 
               <div className="attraction-card__actions">
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${attraction.lat},${attraction.lon}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${shown.lat},${shown.lon}`}
                   target="_blank"
                   rel="noreferrer"
                   className="hero-cta hero-cta--primary"
@@ -115,7 +138,7 @@ export default function AttractionModal() {
                   className="attraction-card__back"
                   onClick={() => setSelectedAttractionId(null)}
                 >
-                  Về toàn cảnh
+                  Đóng panel
                 </button>
               </div>
             </div>

@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AmbientBed } from "@/lib/audio/ambient";
-import type { Commune } from "@/lib/geo/types";
+import { ATTRACTIONS } from "@/lib/map/attractions";
 import { useMapUI } from "@/components/map/MapUIContext";
 
 const MENU_ITEMS = [
   { label: "Tổng quan", note: "Đồng bằng sông Cửu Long" },
-  { label: "Địa lý", note: "Sông Tiền · Sông Hậu" },
-  { label: "Hành chính 2025", note: "102 xã, phường" },
+  { label: "Điểm đến", note: `${ATTRACTIONS.length} checkpoint` },
   { label: "Sinh thái", note: "Tràm Chim · rừng ngập nước" },
+  { label: "Văn hoá", note: "Di tích · làng nghề" },
 ];
 
 function AudioIcon({ muted }: { muted: boolean }) {
@@ -67,31 +67,12 @@ export default function HeroOverlay() {
     setInquireOpen,
     menuOpen,
     setMenuOpen,
-    showAdmin,
-    toggleAdmin,
-    selectedId,
-    setSelectedId,
+    selectedAttractionId,
     setSelectedAttractionId,
   } = useMapUI();
 
-  const [communes, setCommunes] = useState<Commune[]>([]);
   const [sent, setSent] = useState(false);
   const bed = useRef<AmbientBed | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/geo/communes.json")
-      .then((r) => r.json() as Promise<Commune[]>)
-      .then((data) => {
-        if (!cancelled) setCommunes(data);
-      })
-      .catch(() => {
-        /* detail panel stays empty if data is unavailable */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (audioEnabled) {
@@ -116,14 +97,12 @@ export default function HeroOverlay() {
       if (event.key !== "Escape") return;
       setInquireOpen(false);
       setMenuOpen(false);
-      setSelectedId(null);
       setSelectedAttractionId(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [setInquireOpen, setMenuOpen, setSelectedId, setSelectedAttractionId]);
+  }, [setInquireOpen, setMenuOpen, setSelectedAttractionId]);
 
-  const selected = selectedId == null ? null : communes[selectedId] ?? null;
   const progress = Math.round(loadProgress * 100);
 
   const submitInquire = (event: FormEvent<HTMLFormElement>) => {
@@ -154,15 +133,9 @@ export default function HeroOverlay() {
         </div>
 
         <div className="hero-header__right">
-          <button
-            type="button"
-            className={`hero-nav-button hero-layer-toggle${showAdmin ? " is-on" : ""}`}
-            onClick={toggleAdmin}
-            aria-pressed={showAdmin}
-          >
-            <span className="hero-layer-dot" aria-hidden />
-            Lớp hành chính
-          </button>
+          <span className="hero-checkpoint-count">
+            {ATTRACTIONS.length} checkpoint
+          </span>
           <button
             type="button"
             className="hero-cta hero-cta--small"
@@ -177,87 +150,58 @@ export default function HeroOverlay() {
       </header>
 
       <section className="hero-center" aria-hidden={explored}>
-        <p className="hero-kicker">
-          <span className="hero-kicker__line" aria-hidden />
-          Đồng bằng sông Cửu Long · Việt Nam
-        </p>
-        <h1 className="hero-title">Đồng Tháp</h1>
-        <p className="hero-subtitle">
-          Nơi dòng Tiền mở thành biển nước, những cánh đồng sen, vườn tràm và
-          kênh rạch vẽ nên một miền đất hiền hòa.
-        </p>
-        <div className="hero-actions">
-          <button
-            type="button"
-            className="hero-cta hero-cta--primary"
-            onClick={() => explore(false)}
-            disabled={!ready}
-          >
-            <span>{ready ? "Khám phá bản đồ" : "Đang tải bản đồ"}</span>
-            <ArrowIcon />
-          </button>
-          <button
-            type="button"
-            className="hero-audio-link"
-            onClick={() => explore(true)}
-            disabled={!ready}
-          >
-            <AudioIcon muted={false} />
-            Bắt đầu cùng âm thanh
-          </button>
+        <div className="hero-intro">
+          <p className="hero-kicker">
+            <span className="hero-kicker__line" aria-hidden />
+            <span>Đồng bằng sông Cửu Long</span>
+            <span className="hero-kicker__dot" aria-hidden />
+            <span>Việt Nam</span>
+            <span className="hero-kicker__line" aria-hidden />
+          </p>
+
+          <h1 className="hero-title">
+            <span className="hero-title__main">Đồng Tháp</span>
+            <span className="hero-title__accent">miền sông nước</span>
+          </h1>
+
+          <div className="hero-rule" aria-hidden>
+            <span />
+          </div>
+
+          <p className="hero-subtitle">
+            Nơi dòng Tiền mở thành biển nước, những cánh đồng sen, vườn tràm và
+            kênh rạch vẽ nên một miền đất hiền hòa.
+          </p>
+
+          <div className="hero-actions">
+            <button
+              type="button"
+              className="hero-cta hero-cta--primary"
+              onClick={() => explore(false)}
+              disabled={!ready}
+            >
+              <span>{ready ? "Khám phá bản đồ" : "Đang tải bản đồ"}</span>
+              <ArrowIcon />
+            </button>
+            <button
+              type="button"
+              className="hero-audio-link"
+              onClick={() => explore(true)}
+              disabled={!ready}
+            >
+              <AudioIcon muted={false} />
+              Bắt đầu cùng âm thanh
+            </button>
+          </div>
         </div>
       </section>
 
-      {explored && !selected && (
+      {explored && selectedAttractionId == null && (
         <div className="hero-hint">
           <span className="hero-hint__dot" aria-hidden />
-          Chạm vào một xã, phường để xem chi tiết
+          Hover để xem xã/phường · Chạm checkpoint để khám phá
         </div>
       )}
-
-      <aside
-        className={`commune-panel${selected ? " is-open" : ""}`}
-        aria-hidden={!selected}
-      >
-        {selected && (
-          <>
-            <button
-              type="button"
-              className="commune-panel__close"
-              onClick={() => setSelectedId(null)}
-              aria-label="Đóng thông tin"
-            >
-              ×
-            </button>
-            <p className="commune-panel__eyebrow">Hành chính 2025</p>
-            <p className="commune-panel__kind">{selected.kind}</p>
-            <h2 className="commune-panel__name">{selected.name}</h2>
-            <dl className="commune-panel__facts">
-              <div>
-                <dt>Tọa độ</dt>
-                <dd>
-                  {selected.lat.toFixed(4)}°N · {selected.lon.toFixed(4)}°E
-                </dd>
-              </div>
-              <div>
-                <dt>Vùng</dt>
-                <dd>Đồng Tháp · Miền Tây Nam Bộ</dd>
-              </div>
-            </dl>
-            <p className="commune-panel__copy">
-              Đơn vị hành chính cấp xã thuộc tỉnh Đồng Tháp sau sắp xếp năm
-              2025, nơi đồng bằng phù sa gặp hệ thống kênh rạch chằng chịt.
-            </p>
-            <button
-              type="button"
-              className="commune-panel__action"
-              onClick={() => setSelectedId(null)}
-            >
-              Xem toàn cảnh
-            </button>
-          </>
-        )}
-      </aside>
 
       <footer className="hero-footer">
         <button
@@ -350,7 +294,7 @@ export default function HeroOverlay() {
           </button>
         </nav>
         <p className="hero-drawer__foot">
-          Bản đồ cinematic tỉnh Đồng Tháp · Ranh giới hành chính 2025
+          Bản đồ tương tác Đồng Tháp · Checkpoint du lịch
         </p>
       </div>
 

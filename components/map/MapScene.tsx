@@ -1,17 +1,22 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
-import { ACESFilmicToneMapping, Color } from "three";
+import {
+  ACESFilmicToneMapping,
+  CanvasTexture,
+  SRGBColorSpace,
+  type WebGLRenderer,
+} from "three";
 import { loadMapAssetsOnce, unsubscribeMapAssets } from "@/lib/map/assetLoader";
 import type { MapAssets } from "@/lib/map/assets";
 import { ATTRACTIONS } from "@/lib/map/attractions";
 import { useMapUI } from "./MapUIContext";
 import { AdminOverlay } from "./AdminOverlay";
+import { Atmosphere } from "./Atmosphere";
 import { AttractionMarkers } from "./AttractionMarkers";
 import { CameraRig } from "./CameraRig";
-import { NeighborLabels } from "./NeighborLabels";
 import { PerfOverlay } from "./PerfOverlay";
 import {
   ProvinceOutline,
@@ -21,18 +26,67 @@ import {
 } from "./Terrain";
 
 const OVERVIEW: [number, number, number] = [0, 122, 118];
-const PIXEL_BUDGET = 2_200_000;
+// Hardware GPUs get supersampled edges; the budget still prevents a 4K retina
+// window from quadrupling the pixel count for no visible gain.
+const MAX_DPR = 2;
+const MIN_DPR = 0.75;
+const PIXEL_BUDGET = 8_300_000;
+// Software rasterisers (Microsoft Basic Render Driver / WARP, SwiftShader,
+// llvmpipe) shade every pixel on the CPU, so we stop at a lower resolution and
+// only redraw when something actually changes.
+const SOFTWARE_DPR = 0.7;
+const SOFTWARE_RENDERER =
+  /swiftshader|llvmpipe|software|basic render|warp/i;
+
+function clampDpr(value: number) {
+  return Math.min(MAX_DPR, Math.max(MIN_DPR, Number(value.toFixed(2))));
+}
+
+function detectSoftwareRenderer(gl: WebGLRenderer) {
+  try {
+    const context = gl.getContext();
+    const info = context.getExtension("WEBGL_debug_renderer_info");
+    const name = String(
+      info
+        ? context.getParameter(info.UNMASKED_RENDERER_WEBGL)
+        : context.getParameter(context.RENDERER),
+    );
+    return SOFTWARE_RENDERER.test(name);
+  } catch {
+    return false;
+  }
+}
 
 function initialDpr() {
   if (typeof window === "undefined") return 1;
   const pixels = window.innerWidth * window.innerHeight;
   if (!pixels) return 1;
-  return Math.min(1, Math.max(0.6, Math.sqrt(PIXEL_BUDGET / pixels)));
+  const budgetDpr = Math.sqrt(PIXEL_BUDGET / pixels);
+  // On a 1080p desktop (devicePixelRatio = 1) we still want a little
+  // supersampling so the terrain texture stays crisp while orbiting.
+  const deviceDpr = Math.max(window.devicePixelRatio || 1, 1.4);
+  return clampDpr(Math.min(deviceDpr, budgetDpr));
 }
 
 function debugEnabled() {
   if (typeof window === "undefined") return false;
   return new URLSearchParams(window.location.search).get("debug") === "1";
+}
+
+function makeSkyTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+  gradient.addColorStop(0, "#0d1a15");
+  gradient.addColorStop(0.5, "#1b3329");
+  gradient.addColorStop(1, "#070f0b");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 2, 256);
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  return texture;
 }
 
 function FallbackGround() {
@@ -50,10 +104,33 @@ function FallbackGround() {
   );
 }
 
+function SceneSync({ demand }: { demand: boolean }) {
+  const invalidate = useThree((state) => state.invalidate);
+  const { explored, hoveredId, selectedAttractionId } = useMapUI();
+
+  // In demand mode React state changes do not schedule a frame on their own,
+  // so any visual state change has to poke the render loop explicitly.
+  useEffect(() => {
+    invalidate();
+  }, [invalidate, demand, explored, hoveredId, selectedAttractionId]);
+
+  return null;
+}
+
 function SceneContent() {
-  const { explored, selectedId, selectedAttractionId, setLoadProgress, setReady } =
-    useMapUI();
+  const {
+    explored,
+    selectedAttractionId,
+    setHoveredId,
+    setLoadProgress,
+    setReady,
+  } = useMapUI();
   const [assets, setAssets] = useState<MapAssets | null>(null);
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    if (assets) invalidate();
+  }, [assets, invalidate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,44 +167,34 @@ function SceneContent() {
       base,
       rivers: base + 0.02,
       admin: base + 0.06,
-      labels: base + 0.08,
       outline: base + 0.14,
     };
   }, [assets]);
 
   const focusPoint = useMemo(() => {
-    if (!assets) return null;
-    if (selectedAttractionId != null) {
-      const attraction = ATTRACTIONS[selectedAttractionId];
-      if (!attraction) return null;
-      const [x, z] = assets.projector.toLocal(attraction.lon, attraction.lat);
-      return { x, z };
-    }
-    if (selectedId == null) return null;
-    const commune = assets.communes[selectedId];
-    if (!commune) return null;
-    const [x, z] = assets.projector.toLocal(commune.lon, commune.lat);
+    if (!assets || selectedAttractionId == null) return null;
+    const attraction = ATTRACTIONS[selectedAttractionId];
+    if (!attraction) return null;
+    const [x, z] = assets.projector.toLocal(attraction.lon, attraction.lat);
     return { x, z };
-  }, [assets, selectedId, selectedAttractionId]);
+  }, [assets, selectedAttractionId]);
 
   return (
     <>
-      <color attach="background" args={["#0a1411"]} />
-      <fog attach="fog" args={["#0f1d17", 95, 360]} />
+      <fog attach="fog" args={["#13251e", 110, 400]} />
 
       {assets && layers ? (
         <>
-          <FallbackGround />
-          <Terrain assets={assets} segments={160} />
+          <Terrain
+            assets={assets}
+            segments={256}
+            onHoverId={setHoveredId}
+          />
           <Rivers assets={assets} y={layers.rivers} />
           <AdminOverlay assets={assets} y={layers.admin} />
           <ProvinceOutline assets={assets} y={layers.outline} />
+          <Atmosphere assets={assets} base={layers.base} />
           <AttractionMarkers assets={assets} y={layers.outline + 0.2} />
-          <NeighborLabels
-            projector={assets.projector}
-            neighbors={assets.meta.neighbors}
-            y={layers.labels}
-          />
         </>
       ) : (
         <FallbackGround />
@@ -145,33 +212,47 @@ function SceneContent() {
 
 export default function MapScene() {
   const [dpr, setDpr] = useState(initialDpr);
+  const [software, setSoftware] = useState(false);
   const [debug] = useState(debugEnabled);
 
   return (
     <Canvas
       dpr={dpr}
+      frameloop={software ? "demand" : "always"}
       camera={{ position: [0, 182, 192], fov: 46, near: 0.1, far: 900 }}
       gl={{
-        antialias: false,
+        antialias: true,
         alpha: false,
-        powerPreference: "high-performance",
+        depth: true,
         stencil: false,
+        preserveDrawingBuffer: false,
+        powerPreference: "high-performance",
+        precision: "highp",
       }}
       onCreated={({ gl, scene }) => {
         gl.toneMapping = ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.06;
-        scene.background = new Color("#0a1411");
+        gl.toneMappingExposure = 1.1;
+        // The whole scene is unlit (MeshBasic/custom materials), so the
+        // shadow pipeline would only cost a per-frame shadow map pass.
+        gl.shadowMap.enabled = false;
+        gl.shadowMap.autoUpdate = false;
+        gl.shadowMap.needsUpdate = false;
+        gl.setClearColor("#0a1411", 1);
+        scene.background = makeSkyTexture();
+        if (detectSoftwareRenderer(gl)) {
+          setSoftware(true);
+          setDpr(SOFTWARE_DPR);
+        }
       }}
     >
-      <PerformanceMonitor
-        flipflops={2}
-        onDecline={() =>
-          setDpr((value) => Math.max(0.55, Number((value - 0.15).toFixed(2))))
-        }
-        onIncline={() =>
-          setDpr((value) => Math.min(1, Number((value + 0.05).toFixed(2))))
-        }
-      />
+      {!software && (
+        <PerformanceMonitor
+          flipflops={3}
+          onDecline={() => setDpr((value) => clampDpr(value - 0.12))}
+          onIncline={() => setDpr((value) => clampDpr(value + 0.08))}
+        />
+      )}
+      <SceneSync demand={software} />
       <Suspense fallback={null}>
         <SceneContent />
       </Suspense>

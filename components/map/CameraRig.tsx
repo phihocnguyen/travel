@@ -19,13 +19,13 @@ const INTRO_SECONDS = 4.6;
 
 export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
   const camera = useThree((state) => state.camera);
+  const invalidate = useThree((state) => state.invalidate);
   const controls = useRef<OrbitControlsImpl>(null);
   const mode = useRef<"intro" | "idle" | "focus">("intro");
   const introTime = useRef(0);
   const startPos = useRef(new Vector3());
   const goalPos = useRef(new Vector3(...overview));
   const goalTarget = useRef(new Vector3(0, 0, 0));
-  const overviewRef = useRef(overview);
   const started = useRef(false);
   const lastFocus = useRef<FocusPoint>(null);
 
@@ -38,19 +38,20 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
   }, [ready, camera]);
 
   useEffect(() => {
-    if (!focusPoint) {
-      if (lastFocus.current) {
-        lastFocus.current = null;
-        goalPos.current.set(...overviewRef.current);
-        goalTarget.current.set(0, 0, 0);
-        mode.current = "focus";
-      }
-      return;
-    }
+    // Closing the detail panel must NOT fly the camera back to the overview.
+    // The camera only moves when a new checkpoint is selected.
+    if (!focusPoint) return;
     if (focusPoint === lastFocus.current) return;
     lastFocus.current = focusPoint;
-    goalPos.current.set(focusPoint.x, 46, focusPoint.z + 40);
-    goalTarget.current.set(focusPoint.x, 0, focusPoint.z);
+    // Shift the framing left so the selected checkpoint is not hidden by the
+    // 30rem detail panel pinned to the right edge.
+    const panelOffset = 7;
+    goalPos.current.set(
+      focusPoint.x + panelOffset,
+      42,
+      focusPoint.z + 36,
+    );
+    goalTarget.current.set(focusPoint.x + panelOffset, 0, focusPoint.z);
     mode.current = "focus";
   }, [focusPoint]);
 
@@ -67,6 +68,7 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
       camera.lookAt(0, 0, 0);
       if (t >= 1) mode.current = "idle";
       if (orbit) orbit.enabled = false;
+      invalidate();
       return;
     }
 
@@ -84,6 +86,7 @@ export function CameraRig({ ready, explored, focusPoint, overview }: Props) {
           orbit.update();
         }
       }
+      invalidate();
       return;
     }
 

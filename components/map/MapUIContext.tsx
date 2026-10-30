@@ -14,9 +14,7 @@ type MapUI = {
   audioEnabled: boolean;
   inquireOpen: boolean;
   menuOpen: boolean;
-  showAdmin: boolean;
   hoveredId: number | null;
-  selectedId: number | null;
   selectedAttractionId: number | null;
   loadProgress: number;
   ready: boolean;
@@ -24,9 +22,7 @@ type MapUI = {
   setAudioEnabled: (v: boolean) => void;
   setInquireOpen: (v: boolean) => void;
   setMenuOpen: (v: boolean) => void;
-  toggleAdmin: () => void;
   setHoveredId: (id: number | null) => void;
-  setSelectedId: (id: number | null) => void;
   setSelectedAttractionId: (id: number | null) => void;
   setLoadProgress: (n: number) => void;
   setReady: (v: boolean) => void;
@@ -39,9 +35,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [inquireOpen, setInquireOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(true);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedAttractionId, setSelectedAttractionId] = useState<
     number | null
   >(null);
@@ -53,17 +47,13 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
     setExplored(true);
   }, []);
 
-  const toggleAdmin = useCallback(() => setShowAdmin((v) => !v), []);
-
   const value = useMemo(
     () => ({
       explored,
       audioEnabled,
       inquireOpen,
       menuOpen,
-      showAdmin,
       hoveredId,
-      selectedId,
       selectedAttractionId,
       loadProgress,
       ready,
@@ -71,9 +61,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       setAudioEnabled,
       setInquireOpen,
       setMenuOpen,
-      toggleAdmin,
       setHoveredId,
-      setSelectedId,
       setSelectedAttractionId,
       setLoadProgress,
       setReady,
@@ -83,14 +71,11 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       audioEnabled,
       inquireOpen,
       menuOpen,
-      showAdmin,
       hoveredId,
-      selectedId,
       selectedAttractionId,
       loadProgress,
       ready,
       explore,
-      toggleAdmin,
     ],
   );
 

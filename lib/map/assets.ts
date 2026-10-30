@@ -3,6 +3,7 @@ import {
   ClampToEdgeWrapping,
   LinearFilter,
   LinearMipmapLinearFilter,
+  NearestFilter,
   NoColorSpace,
   SRGBColorSpace,
   type Texture,
@@ -29,8 +30,6 @@ const DEM_ZOOM = 10;
 const TILE_SIZE = 256;
 const ADMIN_WIDTH = 512;
 const ADMIN_HEIGHT = 256;
-const LABEL_WIDTH = 2048;
-const LABEL_HEIGHT = 1024;
 
 type Region = {
   meta: RegionMeta;
@@ -56,7 +55,7 @@ export type MapAssets = {
   imagery: Texture;
   mask: Texture;
   admin: Texture;
-  labels: Texture;
+  adminIdTexture: Texture;
   adminIds: Uint16Array;
   adminWidth: number;
   adminHeight: number;
@@ -147,6 +146,20 @@ function demUrls(z: number, x: number, y: number) {
     `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`,
     `/api/tiles/dem/${z}/${x}/${y}`,
   ];
+}
+
+function makeIdTexture(canvas: HTMLCanvasElement) {
+  // Nearest filtering is mandatory: linear blending between two commune ids
+  // would invent a third, non-existent id along every border.
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = NoColorSpace;
+  texture.wrapS = ClampToEdgeWrapping;
+  texture.wrapT = ClampToEdgeWrapping;
+  texture.minFilter = NearestFilter;
+  texture.magFilter = NearestFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
 }
 
 function makeMapTexture(
@@ -329,29 +342,7 @@ function buildMaskAndAdmin(
     communes,
   );
 
-  // The label atlas is generated at higher resolution so it stays crisp when
-  // the camera moves closer. Names are hidden until zoom in via material fade.
-  const labelCanvas = document.createElement("canvas");
-  labelCanvas.width = LABEL_WIDTH;
-  labelCanvas.height = LABEL_HEIGHT;
-  const lctx = labelCanvas.getContext("2d")!;
-  lctx.textAlign = "center";
-  lctx.textBaseline = "middle";
-  lctx.font = "600 15px ui-sans-serif, system-ui, sans-serif";
-  lctx.lineJoin = "round";
-  lctx.lineWidth = 4;
-  lctx.strokeStyle = "rgba(9, 16, 12, 0.85)";
-  lctx.fillStyle = "rgba(246, 243, 226, 0.95)";
-  for (const commune of communes) {
-    const u = (commune.lon - west) / (east - west);
-    const v = (commune.lat - south) / (north - south);
-    const x = u * LABEL_WIDTH;
-    const y = (1 - v) * LABEL_HEIGHT;
-    lctx.strokeText(commune.name, x, y);
-    lctx.fillText(commune.name, x, y);
-  }
-
-  return { overlay, idCanvas, ids, labelCanvas };
+  return { overlay, idCanvas, ids };
 }
 
 function drawProvinceMask(
@@ -381,8 +372,11 @@ function drawProvinceMask(
 }
 
 export function applyTextureQuality(assets: MapAssets, maxAnisotropy: number) {
-  assets.imagery.anisotropy = maxAnisotropy;
-  assets.admin.anisotropy = Math.min(8, maxAnisotropy);
+  // A hardware GPU can afford 4x anisotropy on the terrain atlas; it keeps
+  // the satellite imagery crisp when the camera tilts to a grazing angle.
+  const anisotropy = Math.min(4, maxAnisotropy);
+  assets.imagery.anisotropy = anisotropy;
+  assets.admin.anisotropy = Math.min(2, anisotropy);
   assets.imagery.needsUpdate = true;
   assets.admin.needsUpdate = true;
 }
@@ -411,7 +405,7 @@ export async function buildMapAssets(
   ]);
 
   onProgress(0.95);
-  const { overlay, ids, labelCanvas } = buildMaskAndAdmin(
+  const { overlay, ids, idCanvas } = buildMaskAndAdmin(
     meta,
     geometry,
     communes,
@@ -432,7 +426,7 @@ export async function buildMapAssets(
 
   const maskTexture = makeMapTexture(provinceMask, false);
   const adminTexture = makeMapTexture(overlay);
-  const labelTexture = makeMapTexture(labelCanvas);
+  const adminIdTexture = makeIdTexture(idCanvas);
   onProgress(1);
 
   let maxHeightMeters = 0;
@@ -452,7 +446,7 @@ export async function buildMapAssets(
     imagery: imageryTexture,
     mask: maskTexture,
     admin: adminTexture,
-    labels: labelTexture,
+    adminIdTexture,
     adminIds: ids,
     adminWidth: ADMIN_WIDTH,
     adminHeight: ADMIN_HEIGHT,
@@ -462,7 +456,7 @@ export async function buildMapAssets(
       imageryTexture.dispose();
       maskTexture.dispose();
       adminTexture.dispose();
-      labelTexture.dispose();
+      adminIdTexture.dispose();
     },
   };
 }
