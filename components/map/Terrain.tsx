@@ -16,6 +16,7 @@ import {
 import { idAt } from "@/lib/geo/adminTextures";
 import { forEachRing, geometryContains } from "@/lib/geo/polygon";
 import { applyTextureQuality, type MapAssets } from "@/lib/map/assets";
+import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS } from "@/components/journey/journeyData";
 import { useMapUI } from "./MapUIContext";
 
 export const EXAGGERATION = 18;
@@ -56,12 +57,15 @@ const TERRAIN_FRAGMENT = /* glsl */ `
   uniform sampler2D uMask;
   uniform sampler2D uAdmin;
   uniform sampler2D uAdminId;
+  uniform vec2 uAdminTexel;
   uniform vec2 uImageryOffset;
   uniform vec2 uImageryRepeat;
   uniform vec2 uImageryTexel;
   uniform float uAdminOpacity;
   uniform float uHoverId;
   uniform float uHoverFade;
+  uniform float uFocusStrength;
+  uniform vec2 uFocusCenter;
   uniform float uTime;
   uniform float uSeasonFrom;
   uniform float uSeasonTo;
@@ -121,7 +125,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     vec3 west = sampleImagery(imageryUv - vec2(texel.x, 0.0));
     vec3 blur = (north + south + east + west) * 0.25;
     vec3 detail = color - blur;
-    color += detail * 0.55;
+    color += detail * 0.72;
 
     vec3 n = normalize(vNormal);
     float slope = 1.0 - clamp(n.y, 0.0, 1.0);
@@ -147,9 +151,10 @@ const TERRAIN_FRAGMENT = /* glsl */ `
 
     // Geographic seasonal transition: a wave travels outward from its origin.
     // The imagery stays intact. Only colour grading changes inside the wave.
-    vec3 mangoGrade = vec3(1.055, 1.032, 0.965);
-    vec3 dryGrade = vec3(1.095, 1.005, 0.86);
-    vec3 floodGrade = vec3(0.86, 1.02, 1.125);
+    // Dry and flood grades are deliberately deeper so the filter reads clearly.
+    vec3 mangoGrade = vec3(1.05, 1.04, 0.95);
+    vec3 dryGrade = vec3(1.06, 0.9, 0.7);
+    vec3 floodGrade = vec3(0.68, 0.97, 1.16);
     vec3 oldGrade = uSeasonFrom < 0.5 ? mangoGrade : (uSeasonFrom < 1.5 ? dryGrade : floodGrade);
     vec3 newGrade = uSeasonTo < 0.5 ? mangoGrade : (uSeasonTo < 1.5 ? dryGrade : floodGrade);
     // Slight procedural scalloping prevents the wipe from resembling a hard circular mask.
@@ -173,7 +178,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     if (uHoverFade > 0.001 && uHoverId > 0.5) {
       float id = communeId(vUv);
       if (abs(id - uHoverId) < 0.5) {
-        vec2 adminTexel = vec2(1.0 / 512.0, 1.0 / 256.0);
+        vec2 adminTexel = uAdminTexel;
         float edge = 0.0;
         edge = max(edge, step(0.5, abs(communeId(vUv + vec2(adminTexel.x, 0.0)) - id)));
         edge = max(edge, step(0.5, abs(communeId(vUv - vec2(adminTexel.x, 0.0)) - id)));
@@ -182,6 +187,14 @@ const TERRAIN_FRAGMENT = /* glsl */ `
         color = mix(color, vec3(0.97, 0.93, 0.72), 0.2 * uHoverFade);
         color = mix(color, vec3(1.0, 0.985, 0.88), edge * 0.7 * uHoverFade);
       }
+    }
+
+    // While a checkpoint is in focus, every other zone falls back into shadow
+    // so the active area reads as the single point of attention.
+    if (uFocusStrength > 0.001) {
+      float focusDistance = distance(vUv, uFocusCenter);
+      float dim = smoothstep(0.055, 0.19, focusDistance);
+      color = mix(color, color * vec3(0.34, 0.4, 0.37) + vec3(0.012, 0.022, 0.017), dim * uFocusStrength * 0.78);
     }
 
     gl_FragColor = vec4(color, 1.0);
@@ -308,12 +321,15 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
         uMask: { value: null },
         uAdmin: { value: null },
         uAdminId: { value: null },
+        uAdminTexel: { value: new Vector2(1 / 1024, 1 / 512) },
         uImageryOffset: { value: new Vector2() },
         uImageryRepeat: { value: new Vector2(1, 1) },
         uImageryTexel: { value: new Vector2(1 / width, 1 / height) },
         uAdminOpacity: { value: 0.22 },
         uHoverId: { value: 0 },
         uHoverFade: { value: 0 },
+        uFocusStrength: { value: 0 },
+        uFocusCenter: { value: new Vector2(0.5, 0.5) },
         uTime: { value: 0 },
         uSeasonFrom: { value: 0 },
         uSeasonTo: { value: 0 },
@@ -332,6 +348,7 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
     next.uniforms.uMask.value = assets.mask;
     next.uniforms.uAdmin.value = assets.admin;
     next.uniforms.uAdminId.value = assets.adminIdTexture;
+    next.uniforms.uAdminTexel.value.set(1 / assets.adminWidth, 1 / assets.adminHeight);
     next.uniforms.uImageryOffset.value.copy(assets.imagery.offset);
     next.uniforms.uImageryRepeat.value.copy(assets.imagery.repeat);
     return next;
@@ -340,7 +357,10 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
   const materialRef = useRef<ShaderMaterial | null>(null);
   const hoverId = useRef(0);
   const hoverFade = useRef(0);
-  const { hoveredId, season } = useMapUI();
+  const { hoveredId, season, explored, journeyProgress } = useMapUI();
+  const focusStrength = useRef(0);
+  const focusCenter = useRef(new Vector2(0.5, 0.5));
+  const focusTarget = useMemo(() => new Vector2(0.5, 0.5), []);
   const wave = useRef({ from: 0, to: 0, start: -100, running: false });
   const elapsedRef = useRef(0);
   const SEASON_WAVE_DURATION = 2.1;
@@ -405,6 +425,33 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
     }
     hoverFade.current = next;
     if (Math.abs(target - next) > 0.002) invalidate();
+
+    // Checkpoint focus: reuse the same progress curve as the DOM spotlight so
+    // the 3D zones fade exactly when the interface focuses a checkpoint.
+    const maxIndex = JOURNEY_CHAPTERS.length - 1;
+    const raw = journeyProgress.current * maxIndex;
+    const nearest = Math.max(0, Math.min(maxIndex, Math.round(raw)));
+    let targetFocus = 0;
+    if (!explored && nearest > 0 && nearest <= JOURNEY_CHECKPOINTS.length) {
+      const distance = Math.abs(raw - Math.round(raw));
+      targetFocus = Math.max(0, Math.min(1, (0.58 - distance) / 0.17));
+      const attraction = JOURNEY_CHECKPOINTS[nearest - 1].attraction;
+      const [focalX, focalZ] = assets.projector.toLocal(attraction.lon, attraction.lat);
+      focusTarget.set(
+        focalX / assets.projector.widthKm + 0.5,
+        0.5 - focalZ / assets.projector.depthKm,
+      );
+    }
+    const previousFocus = focusStrength.current;
+    const focusK = Math.min(1, dt * 6);
+    focusStrength.current += (targetFocus - focusStrength.current) * focusK;
+    if (targetFocus > 0) focusCenter.current.lerp(focusTarget, focusK);
+    const currentMaterial = materialRef.current;
+    if (currentMaterial) {
+      currentMaterial.uniforms.uFocusStrength.value = focusStrength.current;
+      currentMaterial.uniforms.uFocusCenter.value.copy(focusCenter.current);
+    }
+    if (Math.abs(focusStrength.current - previousFocus) > 0.001) invalidate();
   });
 
   useLayoutEffect(() => {
