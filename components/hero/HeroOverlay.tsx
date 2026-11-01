@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AmbientBed } from "@/lib/audio/ambient";
 import { ATTRACTIONS } from "@/lib/map/attractions";
@@ -133,6 +134,9 @@ export default function HeroOverlay() {
         </div>
 
         <div className="hero-header__right">
+          <Link href="/login" className="hero-auth-link">
+            Sign in
+          </Link>
           <span className="hero-checkpoint-count">
             {ATTRACTIONS.length} checkpoints
           </span>

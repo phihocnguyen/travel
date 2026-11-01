@@ -292,6 +292,24 @@ button:disabled {
   letter-spacing: 0.16em;
 }
 
+.hero-auth-link {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(238, 232, 211, 0.26);
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(238, 232, 211, 0.66);
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.hero-auth-link:hover {
+  color: #ffffff;
+  border-color: rgba(238, 232, 211, 0.6);
+}
+
 .hero-layer-dot {
   width: 5px;
   height: 5px;
