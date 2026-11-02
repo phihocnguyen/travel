@@ -1,9 +1,12 @@
-import MapExperience from "@/components/map/MapExperience";
+import type { Metadata } from "next";
+import LandingPage from "@/components/landing/LandingPage";
+
+export const metadata: Metadata = {
+  title: "VỊ XOÀI DẪN LỐI · Theo vị xoài Cát, mở lối chu du",
+  description:
+    "Chiến dịch du lịch trải nghiệm Cao Lãnh, Đồng Tháp dành cho người trẻ 18–24 tuổi tại TP. Hồ Chí Minh. Khám phá Trạm Hẹn Cao Lãnh và tạo Vé Hẹn Chu Du.",
+};
 
 export default function Home() {
-  return (
-    <main className="relative min-h-dvh w-full bg-[#0a1411]">
-      <MapExperience />
-    </main>
-  );
+  return <LandingPage />;
 }
