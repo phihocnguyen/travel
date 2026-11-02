@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CAMPAIGN, EVENT } from "@/components/campaign/campaignData";
 
 const LOGO = "/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg";
@@ -262,12 +264,26 @@ function Carousel() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const pointerStart = useRef<number | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const count = SLIDES.length;
 
   const go = useCallback(
     (next: number) => setIndex(((next % count) + count) % count),
     [count],
   );
+
+  // GSAP drives the slide transition so the motion stays smooth and reversible.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.to(track, {
+      xPercent: -index * 100,
+      duration: reduced ? 0 : 0.9,
+      ease: "power3.out",
+      overwrite: "auto",
+    });
+  }, [index]);
 
   useEffect(() => {
     if (paused) return;
@@ -292,8 +308,9 @@ function Carousel() {
       tabIndex={0}
     >
       <div
-        className="flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
-        style={{ transform: `translateX(-${index * 100}%)` }}
+        ref={trackRef}
+        className="flex"
+        style={{ transform: "translateX(0%)" }}
         onPointerDown={(event) => {
           pointerStart.current = event.clientX;
         }}
@@ -438,7 +455,7 @@ function Carousel() {
 
 function SectionIntro() {
   return (
-    <section id="gioi-thieu" className="bg-cream px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+    <section id="gioi-thieu" data-reveal className="bg-cream px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
           <div>
@@ -481,7 +498,7 @@ function SectionIntro() {
 
 function SectionEvent() {
   return (
-    <section id="tram-hen" className="bg-forest px-5 py-20 text-cream sm:px-8 lg:px-12 lg:py-28">
+    <section id="tram-hen" data-reveal className="bg-forest px-5 py-20 text-cream sm:px-8 lg:px-12 lg:py-28">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-20">
           <div>
@@ -552,7 +569,7 @@ function SectionEvent() {
 
 function SectionMap() {
   return (
-    <section id="ban-do" className="bg-cream px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
+    <section id="ban-do" data-reveal className="bg-cream px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 border-t border-forest/20 pt-12 sm:flex-row sm:items-end">
         <div>
           <p className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.26em] text-forest-mid">
@@ -599,10 +616,42 @@ function Footer() {
 }
 
 export default function LandingPage() {
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = mainRef.current;
+    if (!root) return;
+    gsap.registerPlugin(ScrollTrigger);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const items = root.querySelectorAll<HTMLElement>("[data-reveal]");
+    items.forEach((item) => {
+      gsap.fromTo(
+        item,
+        { opacity: 0, y: 48 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: item,
+            start: "top 82%",
+            toggleActions: "play none none reverse",
+          },
+        },
+      );
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+    };
+  }, []);
+
   return (
     <div className="min-h-dvh bg-cream">
       <Header />
-      <main>
+      <main ref={mainRef}>
         <Carousel />
         <SectionIntro />
         <SectionEvent />
