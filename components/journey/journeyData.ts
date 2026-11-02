@@ -1,4 +1,5 @@
-import { ATTRACTIONS } from "@/lib/map/attractions";
+import { ATTRACTIONS, type AttractionCategory } from "@/lib/map/attractions";
+import { CAMPAIGN, EVENT } from "@/components/campaign/campaignData";
 
 export const CHECKPOINT_COUNT = Math.min(4, ATTRACTIONS.length);
 
@@ -10,6 +11,13 @@ export const JOURNEY_CHECKPOINTS = Array.from({ length: CHECKPOINT_COUNT }, (_, 
   return { index, attraction: ATTRACTIONS[index] };
 });
 
+const CATEGORY_LABELS: Record<AttractionCategory, string> = {
+  Ecology: "Sinh thái",
+  Heritage: "Di sản",
+  Culture: "Văn hóa",
+  Coast: "Biển",
+};
+
 export type JourneyChapter = {
   index: string;
   eyebrow: string;
@@ -17,33 +25,46 @@ export type JourneyChapter = {
   emphasis: string;
   description: string;
   position: "center" | "left" | "right";
+  variant?: "campaign" | "event";
+  bullets?: readonly string[];
+  meta?: readonly { label: string; value: string }[];
+  ctaTitle?: string;
+  ctaBody?: string;
+  cta?: { label: string; href: string };
+  note?: string;
 };
 
 export const JOURNEY_CHAPTERS: JourneyChapter[] = [
   {
     index: "00",
-    eyebrow: "DONG THAP / AN INTERACTIVE JOURNEY",
-    title: "Travel through",
-    emphasis: "the waterways.",
-    description:
-      "Scroll to fly the camera from one destination to the next. Every stop reveals a different story of the delta.",
+    eyebrow: `${CAMPAIGN.name} · CAO LÃNH, ĐỒNG THÁP`,
+    title: "Theo vị xoài Cát,",
+    emphasis: "mở lối chu du.",
+    description: CAMPAIGN.description,
     position: "center",
+    variant: "campaign",
   },
   ...JOURNEY_CHECKPOINTS.map(({ attraction }, i): JourneyChapter => ({
     index: String(i + 1).padStart(2, "0"),
-    eyebrow: `CHECKPOINT ${String(i + 1).padStart(2, "0")} / ${attraction.category}`,
-    title: "Discover",
+    eyebrow: `TRẠM ${String(i + 1).padStart(2, "0")} / ${CATEGORY_LABELS[attraction.category]}`,
+    title: "Khám phá",
     emphasis: attraction.name,
     description: attraction.summary,
     position: i % 2 === 0 ? "left" : "right",
   })),
   {
     index: String(CHECKPOINT_COUNT + 1).padStart(2, "0"),
-    eyebrow: "CONTINUE THE JOURNEY",
-    title: "Find your own",
-    emphasis: "way.",
-    description:
-      "Rotate, zoom and choose any marker on the map to learn more about each place.",
+    eyebrow: `${EVENT.name} · ${EVENT.tagline.toUpperCase()}`,
+    title: "Trạm Hẹn",
+    emphasis: "Cao Lãnh.",
+    description: EVENT.description,
     position: "center",
+    variant: "event",
+    bullets: EVENT.highlights,
+    meta: EVENT.meta,
+    ctaTitle: EVENT.ctaTitle,
+    ctaBody: EVENT.ctaBody,
+    cta: { label: "Tạo Vé Hẹn Chu Du", href: EVENT.ticketHref },
+    note: EVENT.ticketNote,
   },
 ];

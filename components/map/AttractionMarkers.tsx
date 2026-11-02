@@ -519,11 +519,16 @@ export function AttractionMarkers({ assets, y }: Props) {
 
       {activePoint && (
         <Html position={[activePoint.x, y + BEAM_HEIGHT + 1.1, activePoint.z]} center zIndexRange={[45, 0]} style={{ pointerEvents: "none" }}>
-          <div className="attraction-marker-label">
-            <span className="attraction-marker-label__category" style={{ color: CATEGORY_COLORS[activePoint.attraction.category] }}>
+          <div className="flex items-center gap-2 rounded-full border border-forest/10 bg-cream/95 px-3 py-1.5 shadow-card backdrop-blur">
+            <span
+              className="text-[9px] font-bold uppercase tracking-[0.2em]"
+              style={{ color: CATEGORY_COLORS[activePoint.attraction.category] }}
+            >
               {activePoint.attraction.category}
             </span>
-            <span className="attraction-marker-label__name">{activePoint.attraction.name}</span>
+            <span className="text-[12px] font-semibold text-forest">
+              {activePoint.attraction.name}
+            </span>
           </div>
         </Html>
       )}

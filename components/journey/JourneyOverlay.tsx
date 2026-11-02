@@ -1,10 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS } from "./journeyData";
 import { useMapUI } from "../map/MapUIContext";
+
+const POSITION_CLASSES = {
+  center: "items-center text-center",
+  left: "items-start text-left",
+  right: "items-end text-right",
+} as const;
 
 /** One pinned-looking sticky map with native document scroll. One writer owns progress. */
 export default function JourneyOverlay() {
@@ -92,54 +99,214 @@ export default function JourneyOverlay() {
     explore(false);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
+
   if (explored) return null;
+
   return (
-    <div ref={root} className="journey-overlay journey-overlay--wow" aria-label="An interactive journey through Dong Thap">
-      <header className="journey-header">
-        <span className="journey-brand">DONG THAP <span>— THE WATERWAYS</span></span>
-        <span className="journey-tag">AN INTERACTIVE ATLAS</span>
+    <div
+      ref={root}
+      className="pointer-events-none absolute inset-0 z-[35] font-sans text-forest"
+      aria-label="Hành trình khám phá Cao Lãnh, Đồng Tháp"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(8,36,23,0.42),transparent_20%,transparent_74%,rgba(8,36,23,0.5))]"
+      />
+
+      <header className="absolute left-4 right-4 top-4 z-20 flex items-center justify-between gap-3 sm:left-6 sm:right-6 sm:top-6">
+        <span className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.2em] text-cream drop-shadow-[0_1px_8px_rgba(4,20,14,0.7)] sm:text-[10px]">
+          <span className="h-1.5 w-1.5 rounded-full bg-mango" />
+          Vị Xoài Dẫn Lối
+          <span className="hidden text-cream/60 md:inline">— Trạm Hẹn Cao Lãnh</span>
+        </span>
+        <span className="hidden text-[9px] font-semibold uppercase tracking-[0.2em] text-cream/80 drop-shadow-[0_1px_8px_rgba(4,20,14,0.7)] sm:block">
+          Cao Lãnh · Đồng Tháp
+        </span>
       </header>
-      <nav className="journey-navigation" aria-label="Choose a checkpoint">
+
+      <nav
+        className="pointer-events-auto absolute right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col items-end gap-3 sm:right-5"
+        aria-label="Chọn một trạm dừng"
+      >
         {JOURNEY_CHAPTERS.map((chapter, i) => (
-          <button key={chapter.index} type="button" className={`journey-nav-point${activeChapter === i ? " is-active" : ""}`}
-            onClick={() => goTo(i)} aria-current={activeChapter === i ? "step" : undefined}
-            aria-label={`Go to chapter ${i + 1}: ${chapter.emphasis}`} title={chapter.emphasis}>
-            <span className="journey-nav-dot" /><span className="journey-nav-name">{chapter.emphasis}</span>
+          <button
+            key={chapter.index}
+            type="button"
+            className={`group flex items-center gap-2.5 text-[10px] font-semibold transition-colors ${
+              activeChapter === i ? "text-mango" : "text-cream/60 hover:text-cream"
+            }`}
+            onClick={() => goTo(i)}
+            aria-current={activeChapter === i ? "step" : undefined}
+            aria-label={`Đến chương ${i + 1}: ${chapter.emphasis}`}
+            title={chapter.emphasis}
+          >
+            <span
+              className={`hidden max-w-0 overflow-hidden whitespace-nowrap text-right transition-all duration-300 lg:block ${
+                activeChapter === i
+                  ? "max-w-48 opacity-100"
+                  : "opacity-0 group-hover:max-w-48 group-hover:opacity-100"
+              }`}
+            >
+              {chapter.emphasis}
+            </span>
+            <span
+              className={`h-2 w-2 rounded-full border transition-all ${
+                activeChapter === i
+                  ? "scale-125 border-mango bg-mango shadow-[0_0_14px_rgba(254,178,18,0.8)]"
+                  : "border-cream/70 bg-transparent"
+              }`}
+            />
           </button>
         ))}
       </nav>
-      <div className="journey-chapters" aria-live="off">
-        {JOURNEY_CHAPTERS.map((chapter, i) => (
-          <article key={chapter.index} data-journey-chapter
-            className={`journey-chapter journey-chapter--${chapter.position}`} aria-label={`Chapter ${i + 1}`}>
-            <div className="journey-chapter__glass">
-              <span className="journey-eyebrow"><span className="journey-mini-line" />{chapter.eyebrow}</span>
-              <h1 className="journey-heading"><span>{chapter.title}</span><br /><em>{chapter.emphasis}</em></h1>
-              <p className="journey-description">{chapter.description}</p>
-              {i > 0 && i < JOURNEY_CHAPTERS.length - 1 && (
-                <span className="journey-chapter__number">STOP {String(i).padStart(2,"0")} / {String(JOURNEY_CHECKPOINTS.length).padStart(2,"0")}</span>
-              )}
-              {i === JOURNEY_CHAPTERS.length - 1 && (
-                <button type="button" className="journey-cta" onClick={startExploring}>
-                  START EXPLORING <span aria-hidden="true">↗</span>
-                </button>
-              )}
-            </div>
-          </article>
-        ))}
+
+      <div className="absolute inset-0" aria-live="off">
+        {JOURNEY_CHAPTERS.map((chapter, i) => {
+          const position = POSITION_CLASSES[chapter.position];
+
+          return (
+            <article
+              key={chapter.index}
+              data-journey-chapter
+              className={`absolute inset-0 z-10 flex flex-col justify-center px-4 py-24 sm:px-8 lg:px-16 ${position}`}
+              aria-label={`Chương ${i + 1}`}
+            >
+              <div
+                className={`pointer-events-auto w-full ${
+                  chapter.variant === "event" ? "max-w-3xl" : "max-w-2xl"
+                }`}
+              >
+                <div>
+                  <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.24em] text-mango">
+                    <span className="block h-px w-6 bg-mango" />
+                    {chapter.eyebrow}
+                  </span>
+
+                  <h1 className="mt-3 font-display text-[clamp(1.9rem,4.2vw,3.7rem)] font-semibold leading-[1] tracking-[-0.03em] text-cream drop-shadow-[0_2px_18px_rgba(4,20,14,0.55)]">
+                    {chapter.title}
+                    <br />
+                    <em className="font-normal not-italic text-mango">{chapter.emphasis}</em>
+                  </h1>
+
+                  <p className={`mt-4 text-[13px] leading-relaxed text-cream/80 drop-shadow-[0_1px_10px_rgba(4,20,14,0.6)] sm:text-sm ${position === "center" ? "mx-auto max-w-xl" : "max-w-lg"}`}>
+                    {chapter.description}
+                  </p>
+
+                    {chapter.bullets && (
+                      <ul className={`mt-4 grid gap-2 ${position === "center" ? "mx-auto max-w-lg" : "max-w-lg"} text-left`}>
+                        {chapter.bullets.map((item) => (
+                          <li key={item} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-cream/80">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-mango" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {chapter.meta && (
+                      <dl className={`mt-4 flex flex-wrap gap-2.5 ${position === "center" ? "justify-center" : ""}`}>
+                        {chapter.meta.map((item) => (
+                          <div key={item.label} className="rounded-xl border border-cream/20 bg-forest/60 px-3.5 py-2 text-left backdrop-blur-md">
+                            <dt className="text-[8px] font-bold uppercase tracking-[0.22em] text-cream/60">
+                              {item.label}
+                            </dt>
+                            <dd className="mt-0.5 font-display text-sm font-semibold text-cream">
+                              {item.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+
+                    {chapter.ctaTitle && (
+                      <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.24em] text-mango">
+                        {chapter.ctaTitle}
+                      </p>
+                    )}
+                    {chapter.ctaBody && (
+                      <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-cream/80">
+                        {chapter.ctaBody}
+                      </p>
+                    )}
+
+                    <div className={`mt-5 flex flex-wrap items-center gap-2.5 ${position === "center" ? "justify-center" : ""}`}>
+                      {chapter.cta && (
+                        <Link
+                          href={chapter.cta.href}
+                          className="inline-flex items-center gap-2 rounded-full bg-mango px-5 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-forest transition-colors hover:bg-mango-bright"
+                        >
+                          {chapter.cta.label}
+                          <span aria-hidden>↗</span>
+                        </Link>
+                      )}
+                      {i === JOURNEY_CHAPTERS.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={startExploring}
+                          className="inline-flex items-center gap-2 rounded-full border border-cream/40 bg-forest/40 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-cream backdrop-blur-md transition-colors hover:bg-forest/60"
+                        >
+                          Khám phá bản đồ
+                          <span aria-hidden>↗</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {chapter.note && (
+                      <p className="mt-3 text-[10.5px] italic leading-relaxed text-cream/70">
+                        {chapter.note}
+                      </p>
+                    )}
+
+                    {i > 0 && i < JOURNEY_CHAPTERS.length - 1 && (
+                      <span className="mt-4 inline-block rounded-full border border-cream/20 bg-forest/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-cream/70 backdrop-blur-md">
+                        Trạm {String(i).padStart(2, "0")} / {String(JOURNEY_CHECKPOINTS.length).padStart(2, "0")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+            </article>
+          );
+        })}
       </div>
-      <div className="journey-season-switcher" role="group" aria-label="Seasonal colour">
+
+      <div
+        className="pointer-events-auto absolute bottom-20 left-4 z-30 flex gap-1 rounded-full border border-cream/25 bg-forest/60 p-1 backdrop-blur-md sm:left-6"
+        role="group"
+        aria-label="Sắc thái mùa"
+      >
         {([
-          ["mango", "Mango season"], ["dry", "Dry season"], ["flood", "Flood season"],
+          ["mango", "Mùa xoài"],
+          ["dry", "Mùa khô"],
+          ["flood", "Mùa nước nổi"],
         ] as const).map(([value, label]) => (
-          <button type="button" key={value} onClick={() => setSeason(value)}
-            className={season === value ? "is-active" : ""} aria-pressed={season === value}>{label}</button>
+          <button
+            type="button"
+            key={value}
+            onClick={() => setSeason(value)}
+            className={`rounded-full px-3 py-1.5 text-[9px] font-semibold transition-colors ${
+              season === value
+                ? "bg-cream text-forest"
+                : "text-cream/70 hover:text-cream"
+            }`}
+            aria-pressed={season === value}
+          >
+            {label}
+          </button>
         ))}
       </div>
-      <footer className="journey-footer">
-        <div className="journey-scroll-cue"><span className="journey-mouse">↓</span> SCROLL TO EXPLORE</div>
-        <div className="journey-track"><span data-journey-progress /></div>
-        <span className="journey-bottom-label">{String(activeChapter+1).padStart(2,"0")} / {String(JOURNEY_CHAPTERS.length).padStart(2,"0")}</span>
+
+      <footer className="absolute bottom-4 left-4 right-4 z-20 flex items-center gap-4 text-[8px] font-semibold uppercase tracking-[0.2em] text-cream/70 sm:left-6 sm:right-6 sm:text-[9px]">
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="animate-bounce text-sm" aria-hidden>↓</span>
+          Cuộn để khám phá
+        </span>
+        <div className="relative h-px max-w-64 flex-1 bg-cream/25">
+          <span data-journey-progress className="block h-full origin-left scale-x-0 bg-mango" />
+        </div>
+        <span className="text-cream/50">
+          {String(activeChapter + 1).padStart(2, "0")} /{" "}
+          {String(JOURNEY_CHAPTERS.length).padStart(2, "0")}
+        </span>
       </footer>
     </div>
   );

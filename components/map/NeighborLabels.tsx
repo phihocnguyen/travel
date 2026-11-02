@@ -23,8 +23,8 @@ export function NeighborLabels({ projector, neighbors, y }: Props) {
             zIndexRange={[20, 0]}
             style={{ pointerEvents: "none" }}
           >
-            <div className="neighbor-label">
-              <span className="neighbor-label__dot" />
+            <div className="flex items-center gap-2 rounded-full border border-forest/10 bg-cream/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-forest shadow-card backdrop-blur">
+              <span className="h-1.5 w-1.5 rounded-full bg-mango" />
               {neighbor.name}
             </div>
           </Html>

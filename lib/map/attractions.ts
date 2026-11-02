@@ -231,8 +231,8 @@ export const ATTRACTIONS: Attraction[] = [
 ];
 
 export const CATEGORY_COLORS: Record<AttractionCategory, string> = {
-  Ecology: "#8fae76",
-  Heritage: "#d2b06b",
-  Culture: "#c98f78",
-  Coast: "#83b3c2",
+  Ecology: "#7faf2d",
+  Heritage: "#feb212",
+  Culture: "#93381f",
+  Coast: "#207b58",
 };

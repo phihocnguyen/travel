@@ -11,9 +11,9 @@ type Props = {
 };
 
 const KIND_LABELS: Record<string, string> = {
-  "Xã": "Commune",
-  "Phường": "Ward",
-  "Thị trấn": "Town",
+  "Xã": "Xã",
+  "Phường": "Phường",
+  "Thị trấn": "Thị trấn",
 };
 
 /**
@@ -44,9 +44,13 @@ export function AdminOverlay({ assets, y }: Props) {
       zIndexRange={[40, 0]}
       style={{ pointerEvents: "none" }}
     >
-      <div className="admin-tooltip">
-        <span className="admin-tooltip__kind">{KIND_LABELS[active.kind] ?? active.kind}</span>
-        <span className="admin-tooltip__name">{active.name}</span>
+      <div className="rounded-xl border border-forest/10 bg-cream/95 px-3.5 py-2 shadow-card backdrop-blur">
+        <span className="block text-[8px] font-bold uppercase tracking-[0.22em] text-forest/50">
+          {KIND_LABELS[active.kind] ?? active.kind}
+        </span>
+        <span className="mt-0.5 block text-sm font-semibold text-forest">
+          {active.name}
+        </span>
       </div>
     </Html>
   );
