@@ -31,29 +31,25 @@ export function LoginForm({ next, initialError }: Props) {
         | null;
 
       if (!response.ok) {
-        setError(payload?.error ?? "Sign-in failed. Please try again.");
+        setError(payload?.error ?? "Đăng nhập thất bại. Vui lòng thử lại.");
         setSubmitting(false);
         return;
       }
 
       window.location.assign(next);
     } catch {
-      setError("The network is quiet right now. Please try again.");
+      setError("Mạng đang không ổn định. Vui lòng thử lại.");
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="login-form">
+    <div className="mt-6">
       <a
-        className="login-google"
+        className="flex items-center justify-center gap-3 rounded-full bg-cream px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.16em] text-forest transition-colors hover:bg-mint"
         href={`/api/auth/google?next=${encodeURIComponent(next)}`}
       >
-        <svg
-          className="login-google__icon"
-          viewBox="0 0 18 18"
-          aria-hidden="true"
-        >
+        <svg className="h-4 w-4" viewBox="0 0 18 18" aria-hidden="true">
           <path
             fill="#4285F4"
             d="M17.64 9.2c0-.64-.05-1.26-.16-1.86H9v3.53h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.65Z"
@@ -71,22 +67,29 @@ export function LoginForm({ next, initialError }: Props) {
             d="M9 3.55c1.32 0 2.5.45 3.44 1.35l2.58-2.59A9 9 0 0 0 .96 4.92l3.01 2.33C4.68 5.13 6.66 3.55 9 3.55Z"
           />
         </svg>
-        <span>Continue with Google</span>
+        <span>Tiếp tục với Google</span>
       </a>
 
-      <div className="login-divider">
-        <span>or sign in with email</span>
+      <div className="my-6 flex items-center gap-3 text-[8px] font-semibold uppercase tracking-[0.24em] text-cream/40">
+        <span className="h-px flex-1 bg-cream/15" />
+        hoặc đăng nhập bằng email
+        <span className="h-px flex-1 bg-cream/15" />
       </div>
 
       {error ? (
-        <p className="login-alert" role="alert">
+        <p
+          className="mb-4 rounded-xl bg-earth/30 px-4 py-3 text-[11px] leading-relaxed text-cream"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
 
-      <form className="login-fields" onSubmit={handleSubmit} noValidate>
-        <label className="login-field">
-          <span>Email address</span>
+      <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
+        <label className="grid gap-1.5">
+          <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-cream/50">
+            Email
+          </span>
           <input
             type="email"
             name="email"
@@ -95,12 +98,15 @@ export function LoginForm({ next, initialError }: Props) {
             autoComplete="email"
             placeholder="you@example.com"
             required
+            className="rounded-xl border border-cream/20 bg-cream/10 px-4 py-3 text-sm text-cream placeholder:text-cream/30 focus:border-mango focus:outline-none"
           />
         </label>
 
-        <label className="login-field">
-          <span>Password</span>
-          <span className="login-field__control">
+        <label className="grid gap-1.5">
+          <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-cream/50">
+            Mật khẩu
+          </span>
+          <span className="relative block">
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -109,29 +115,31 @@ export function LoginForm({ next, initialError }: Props) {
               autoComplete="current-password"
               placeholder="••••••••"
               required
+              className="w-full rounded-xl border border-cream/20 bg-cream/10 px-4 py-3 pr-16 text-sm text-cream placeholder:text-cream/30 focus:border-mango focus:outline-none"
             />
             <button
               type="button"
-              className="login-field__toggle"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em] text-cream/60 transition-colors hover:bg-cream/10 hover:text-cream"
               onClick={() => setShowPassword((value) => !value)}
             >
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? "Ẩn" : "Hiện"}
             </button>
           </span>
         </label>
 
         <button
           type="submit"
-          className="login-submit"
+          className="mt-1 rounded-full bg-mango px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-forest transition-colors hover:bg-mango-bright disabled:opacity-60"
           disabled={submitting}
         >
-          {submitting ? "Opening the gates…" : "Sign in"}
+          {submitting ? "Đang mở lối…" : "Đăng nhập"}
         </button>
       </form>
 
-      <p className="login-card__fine">
-        Email sign-in is limited to provisioned accounts. By continuing you
-        agree to the expedition terms and the respectful use of the delta map.
+      <p className="mt-5 text-[10px] leading-relaxed text-cream/40">
+        Đăng nhập bằng email chỉ dành cho tài khoản đã được cấp. Khi tiếp tục,
+        bạn đồng ý với điều khoản hành trình và việc sử dụng bản đồ một cách tôn
+        trọng.
       </p>
     </div>
   );
