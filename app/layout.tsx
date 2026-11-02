@@ -1,21 +1,29 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 
+const khaviax = localFont({
+  src: "./fonts/Khaviax.ttf",
+  variable: "--font-khaviax",
+  display: "swap",
+  weight: "400",
+});
+
 export const metadata: Metadata = {
-  title: "Dong Thap · The Waterways",
+  title: "VỊ XOÀI DẪN LỐI · Trạm Hẹn Cao Lãnh",
   description:
-    "A cinematic 3D map of Dong Thap province — 2025 administration, the Tien and Hau rivers and the alluvial delta.",
+    "Theo vị xoài Cát, mở lối chu du — chiến dịch du lịch trải nghiệm Cao Lãnh, Đồng Tháp và sự kiện Trạm Hẹn Cao Lãnh ngày 21/11/2026 tại TP. Hồ Chí Minh.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a1411",
+  themeColor: "#fefbdf",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="vi" className={`${khaviax.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );
