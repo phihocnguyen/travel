@@ -157,25 +157,25 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
         active
-          ? "bg-[#f4ead5]/10 font-semibold text-[#fdf8ec]"
-          : "text-[#f4ead5]/55 hover:bg-white/5 hover:text-[#fdf8ec]/90"
+          ? "bg-[#fefbdf]/10 font-semibold text-[#fffdf0]"
+          : "text-[#fefbdf]/55 hover:bg-cream-soft/5 hover:text-[#fffdf0]/90"
       }`}
     >
       {active ? (
-        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#e8b04b]" />
+        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#feb212]" />
       ) : null}
       <span
         className={
           active
-            ? "text-[#e8b04b]"
-            : "text-[#f4ead5]/35 group-hover:text-[#f4ead5]/60"
+            ? "text-[#feb212]"
+            : "text-[#fefbdf]/35 group-hover:text-[#fefbdf]/60"
         }
       >
         {item.icon}
       </span>
       <span className="flex-1">{item.label}</span>
       {item.badge ? (
-        <span className="rounded-full bg-[#e8b04b] px-1.5 py-0.5 text-[10px] font-bold text-[#14281e]">
+        <span className="rounded-full bg-[#feb212] px-1.5 py-0.5 text-[10px] font-bold text-[#15602c]">
           {item.badge}
         </span>
       ) : null}
@@ -219,7 +219,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="min-h-dvh bg-[#f6f1e6] text-[#14281e]">
+    <div className="min-h-dvh bg-cream text-ink">
       {open ? (
         <button
           aria-label="Đóng menu"
@@ -229,23 +229,23 @@ export function DashboardShell({
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#14281e] text-[#f4ead5] transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-forest text-cream transition-transform duration-300 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-20 items-center justify-between border-b border-white/10 px-5">
           <Link href="/dashboard" className="leading-none">
-            <span className="block font-display text-xl tracking-[0.08em] text-[#fdf8ec]">
+            <span className="block font-display text-xl tracking-[0.08em] text-cream-soft">
               Dong Thap
             </span>
-            <span className="mt-1 block text-[9px] uppercase tracking-[0.32em] text-[#e8b04b]">
+            <span className="mt-1 block text-[9px] uppercase tracking-[0.32em] text-mango">
               The Waterways
             </span>
           </Link>
 
           <button
             onClick={closeMenu}
-            className="rounded-lg p-2 text-white/60 hover:bg-white/10 lg:hidden"
+            className="rounded-lg p-2 text-white/60 hover:bg-cream-soft/10 lg:hidden"
             aria-label="Đóng menu"
           >
             <svg {...iconProps}>
@@ -256,7 +256,7 @@ export function DashboardShell({
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
           <div className="space-y-1">
-            <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-[#f4ead5]/30">
+            <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-[#fefbdf]/30">
               Hành trình
             </p>
             {journeyNav.map((item) => (
@@ -270,7 +270,7 @@ export function DashboardShell({
           </div>
 
           <div className="space-y-1">
-            <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-[#f4ead5]/30">
+            <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-[#fefbdf]/30">
               Câu chuyện
             </p>
             {storyNav.map((item) => (
@@ -284,7 +284,7 @@ export function DashboardShell({
           </div>
 
           <div className="space-y-1">
-            <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-[#f4ead5]/30">
+            <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-[#fefbdf]/30">
               Tài khoản
             </p>
             <NavLink
@@ -302,26 +302,26 @@ export function DashboardShell({
         <div className="border-t border-white/10 p-3">
           <Link
             href="/blog"
-            className="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#f4ead5]/55 transition hover:bg-white/5 hover:text-[#fdf8ec]/90"
+            className="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#fefbdf]/55 transition hover:bg-cream-soft/5 hover:text-[#fffdf0]/90"
           >
-            <span className="text-[#f4ead5]/35">
+            <span className="text-[#fefbdf]/35">
               <BookIcon />
             </span>
             Blog công khai
           </Link>
           <Link
             href="/"
-            className="mb-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#f4ead5]/55 transition hover:bg-white/5 hover:text-[#fdf8ec]/90"
+            className="mb-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#fefbdf]/55 transition hover:bg-cream-soft/5 hover:text-[#fffdf0]/90"
           >
-            <span className="text-[#f4ead5]/35">
+            <span className="text-[#fefbdf]/35">
               <MapIcon />
             </span>
             Về bản đồ
           </Link>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
+          <div className="flex items-center gap-3 rounded-xl bg-cream-soft/5 p-3">
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2f7d4f] bg-cover bg-center text-xs font-bold text-white"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#207b58] bg-cover bg-center text-xs font-bold text-white"
               style={
                 user.picture
                   ? { backgroundImage: `url(${user.picture})` }
@@ -333,22 +333,22 @@ export function DashboardShell({
             </span>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-[#fdf8ec]/90">
+              <p className="truncate text-sm font-medium text-[#fffdf0]/90">
                 {user.name}
               </p>
-              <p className="truncate text-xs text-[#f4ead5]/40">{user.email}</p>
+              <p className="truncate text-xs text-[#fefbdf]/40">{user.email}</p>
             </div>
           </div>
 
-          <LogoutButton className="mt-2 w-full rounded-xl px-3 py-2 text-sm font-medium text-[#f4ead5]/60 transition hover:bg-white/10 hover:text-white disabled:opacity-50" />
+          <LogoutButton className="mt-2 w-full rounded-xl px-3 py-2 text-sm font-medium text-[#fefbdf]/60 transition hover:bg-cream-soft/10 hover:text-white disabled:opacity-50" />
         </div>
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-[#e2d8c3] bg-[#fffdf7]/90 px-4 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-forest/10 bg-cream-soft/90 px-4 backdrop-blur md:px-6">
           <button
             onClick={() => setOpen(true)}
-            className="rounded-lg border border-[#e2d8c3] p-2 text-[#3c5145] hover:bg-[#f4ead5] lg:hidden"
+            className="rounded-lg border border-[#d8dfc1] p-2 text-[#17331f] hover:bg-[#fefbdf] lg:hidden"
             aria-label="Mở menu"
           >
             <svg {...iconProps}>
@@ -357,17 +357,17 @@ export function DashboardShell({
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a4651c]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-earth">
               Dong Thap dashboard
             </p>
-            <p className="truncate text-sm font-semibold text-[#14281e]">
+            <p className="truncate text-sm font-semibold text-forest">
               {pageTitle(pathname)}
             </p>
           </div>
 
           <Link
             href="/dashboard/tickets/new"
-            className="hidden items-center gap-2 rounded-xl bg-[#14281e] px-4 py-2 text-sm font-semibold text-[#f7f1e4] transition hover:bg-[#1d3a2a] sm:inline-flex"
+            className="hidden items-center gap-2 rounded-xl bg-forest px-4 py-2 text-sm font-semibold text-cream transition hover:bg-forest-mid sm:inline-flex"
           >
             <svg {...iconProps} width={14} height={14}>
               <path d="M12 5v14M5 12h14" />
@@ -376,7 +376,7 @@ export function DashboardShell({
           </Link>
           <Link
             href="/dashboard/posts/new"
-            className="hidden items-center gap-2 rounded-xl border border-[#d9cdb4] bg-white px-4 py-2 text-sm font-semibold text-[#3c5145] transition hover:bg-[#f7f1e4] sm:inline-flex"
+            className="hidden items-center gap-2 rounded-xl border border-forest/15 bg-cream-soft px-4 py-2 text-sm font-semibold text-forest transition hover:bg-mint/35 sm:inline-flex"
           >
             <PenIcon />
             Viết bài

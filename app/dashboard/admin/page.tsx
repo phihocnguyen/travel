@@ -42,13 +42,13 @@ export default async function AdminReviewPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#a4651c]">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#93381f]">
           Quản trị
         </p>
-        <h1 className="mt-1 font-display text-3xl text-[#14281e]">
+        <h1 className="mt-1 font-display text-3xl text-[#15602c]">
           Duyệt bài viết
         </h1>
-        <p className="mt-1 text-sm text-[#6b7a6f]">
+        <p className="mt-1 text-sm text-[#45614a]">
           {pending.length > 0
             ? `${pending.length} bài viết đang chờ duyệt.`
             : "Không có bài viết nào đang chờ duyệt."}
@@ -56,19 +56,19 @@ export default async function AdminReviewPage() {
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#6b7a6f]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#45614a]">
           Chờ duyệt
         </h2>
 
         {pending.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-[#d9cdb4] bg-white p-10 text-center text-sm text-[#6b7a6f]">
+          <div className="rounded-3xl border border-dashed border-[#d8dfc1] bg-cream-soft p-10 text-center text-sm text-[#45614a]">
             Hàng đợi trống. Bài viết mới sẽ xuất hiện ở đây.
           </div>
         ) : (
           pending.map((post) => (
             <article
               key={post.id}
-              className="overflow-hidden rounded-3xl border border-[#e2d8c3] bg-white shadow-sm md:flex"
+              className="overflow-hidden rounded-3xl border border-[#d8dfc1] bg-cream-soft shadow-sm md:flex"
             >
               <div
                 className="aspect-[16/9] w-full bg-cover bg-center md:aspect-auto md:w-64 md:shrink-0"
@@ -77,14 +77,14 @@ export default async function AdminReviewPage() {
                     ? { backgroundImage: `url(${post.coverImageUrl})` }
                     : {
                         background:
-                          "linear-gradient(135deg, #2f7d4f 0%, #14281e 100%)",
+                          "linear-gradient(135deg, #207b58 0%, #15602c 100%)",
                       }
                 }
               />
 
               <div className="flex min-w-0 flex-1 flex-col p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#f4ead5] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#a4651c]">
+                  <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
                     {post.category}
                   </span>
                   <span
@@ -97,10 +97,10 @@ export default async function AdminReviewPage() {
                   </span>
                 </div>
 
-                <h3 className="mt-2 font-display text-xl text-[#14281e]">
+                <h3 className="mt-2 font-display text-xl text-[#15602c]">
                   {post.title}
                 </h3>
-                <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-[#6b7a6f]">
+                <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-[#45614a]">
                   {post.content}
                 </p>
 
@@ -118,18 +118,18 @@ export default async function AdminReviewPage() {
 
       {reviewed.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#6b7a6f]">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#45614a]">
             Đã xử lý gần đây
           </h2>
 
-          <div className="divide-y divide-[#eee5d2] overflow-hidden rounded-3xl border border-[#e2d8c3] bg-white">
+          <div className="divide-y divide-[#eee5d2] overflow-hidden rounded-3xl border border-[#d8dfc1] bg-cream-soft">
             {reviewed.map((post) => (
               <div
                 key={post.id}
                 className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-[#14281e]">
+                  <p className="truncate font-medium text-[#15602c]">
                     {post.title}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-[#9a8f7a]">

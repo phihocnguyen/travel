@@ -41,13 +41,13 @@ export default async function DashboardPostsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#a4651c]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#93381f]">
             Blog
           </p>
-          <h1 className="mt-1 font-display text-3xl text-[#14281e]">
+          <h1 className="mt-1 font-display text-3xl text-[#15602c]">
             Bài viết của tôi
           </h1>
-          <p className="mt-1 text-sm text-[#6b7a6f]">
+          <p className="mt-1 text-sm text-[#45614a]">
             {posts.length > 0
               ? `${posts.length} bài viết. Bài mới hoặc chỉnh sửa sẽ cần quản trị viên duyệt lại.`
               : "Chia sẻ câu chuyện chuyến đi của bạn với cộng đồng."}
@@ -58,7 +58,7 @@ export default async function DashboardPostsPage() {
           {isAdmin(session) ? (
             <Link
               href="/dashboard/admin"
-              className="inline-flex items-center gap-2 rounded-xl border border-[#d9cdb4] bg-white px-4 py-3 text-sm font-semibold text-[#3c5145] transition hover:bg-[#f7f1e4]"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#d8dfc1] bg-cream-soft px-4 py-3 text-sm font-semibold text-[#17331f] transition hover:bg-[#fefbdf]"
             >
               Duyệt bài
               {pendingCount > 0 ? (
@@ -70,7 +70,7 @@ export default async function DashboardPostsPage() {
           ) : null}
           <Link
             href="/dashboard/posts/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#14281e] px-5 py-3 text-sm font-semibold text-[#f7f1e4] transition hover:bg-[#1d3a2a]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#15602c] px-5 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
           >
             + Viết bài
           </Link>
@@ -78,17 +78,17 @@ export default async function DashboardPostsPage() {
       </div>
 
       {posts.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-[#d9cdb4] bg-white p-12 text-center">
-          <p className="font-display text-2xl text-[#14281e]">
+        <div className="rounded-3xl border border-dashed border-[#d8dfc1] bg-cream-soft p-12 text-center">
+          <p className="font-display text-2xl text-[#15602c]">
             Chưa có bài viết nào
           </p>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#6b7a6f]">
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#45614a]">
             Viết về điểm đến, món ăn hay kinh nghiệm du lịch Đồng Tháp. Bài
             viết sẽ được gửi tới quản trị viên để duyệt trước khi xuất bản.
           </p>
           <Link
             href="/dashboard/posts/new"
-            className="mt-6 inline-flex rounded-xl bg-[#14281e] px-6 py-3 text-sm font-semibold text-[#f7f1e4] transition hover:bg-[#1d3a2a]"
+            className="mt-6 inline-flex rounded-xl bg-[#15602c] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
           >
             Viết bài đầu tiên
           </Link>
@@ -98,7 +98,7 @@ export default async function DashboardPostsPage() {
           {posts.map((post) => (
             <article
               key={post.id}
-              className="overflow-hidden rounded-3xl border border-[#e2d8c3] bg-white shadow-sm md:flex"
+              className="overflow-hidden rounded-3xl border border-[#d8dfc1] bg-cream-soft shadow-sm md:flex"
             >
               <div
                 className="aspect-[16/9] w-full bg-cover bg-center md:aspect-auto md:w-64 md:shrink-0"
@@ -107,7 +107,7 @@ export default async function DashboardPostsPage() {
                     ? { backgroundImage: `url(${post.coverImageUrl})` }
                     : {
                         background:
-                          "linear-gradient(135deg, #2f7d4f 0%, #14281e 100%)",
+                          "linear-gradient(135deg, #207b58 0%, #15602c 100%)",
                       }
                 }
               />
@@ -116,7 +116,7 @@ export default async function DashboardPostsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-[#f4ead5] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#a4651c]">
+                      <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
                         {post.category}
                       </span>
                       <span
@@ -125,7 +125,7 @@ export default async function DashboardPostsPage() {
                         {POST_STATUS_LABELS[post.status]}
                       </span>
                     </div>
-                    <h2 className="mt-2 line-clamp-1 font-display text-xl text-[#14281e]">
+                    <h2 className="mt-2 line-clamp-1 font-display text-xl text-[#15602c]">
                       {post.title}
                     </h2>
                   </div>
@@ -135,7 +135,7 @@ export default async function DashboardPostsPage() {
                   </p>
                 </div>
 
-                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#6b7a6f]">
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#45614a]">
                   {post.excerpt || post.content}
                 </p>
 
@@ -149,7 +149,7 @@ export default async function DashboardPostsPage() {
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/dashboard/posts/${post.id}`}
-                      className="rounded-lg bg-[#f4ead5] px-3 py-2 text-sm font-semibold text-[#6b5a3d] transition hover:bg-[#ecdfc4]"
+                      className="rounded-lg bg-[#fefbdf] px-3 py-2 text-sm font-semibold text-[#6b5a3d] transition hover:bg-[#ecdfc4]"
                     >
                       Chỉnh sửa
                     </Link>
