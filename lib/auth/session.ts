@@ -17,11 +17,13 @@ export type Session = {
 };
 
 /**
- * Temporary local bypass: when AUTH_BYPASS is truthy, any sign-in flow opens
- * a demo session without contacting Google or checking credentials.
+ * Development defaults to a demo session so the project can be previewed
+ * without OAuth credentials. Set AUTH_BYPASS=false to exercise real auth.
+ * Production never bypasses authentication unless explicitly configured.
  */
 export function isAuthBypassEnabled(): boolean {
   const value = (process.env.AUTH_BYPASS ?? "").trim().toLowerCase();
+  if (!value) return process.env.NODE_ENV === "development";
   return value === "1" || value === "true" || value === "yes";
 }
 

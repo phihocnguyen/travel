@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -158,9 +157,7 @@ export default function JourneyOverlay() {
               aria-label={`Chương ${i + 1}`}
             >
               <div
-                className={`journey-card pointer-events-auto w-full ${
-                  chapter.variant === "event" ? "max-w-3xl" : "max-w-xl"
-                }`}
+                className="journey-card pointer-events-auto w-full max-w-xl"
               >
                 <div className="journey-card__index" aria-hidden="true">
                   <span>{String(i + 1).padStart(2, "0")}</span>
@@ -183,53 +180,7 @@ export default function JourneyOverlay() {
                     {chapter.description}
                   </p>
 
-                    {chapter.bullets && (
-                      <ul className={`mt-4 grid gap-2 ${isCentered ? "mx-auto max-w-lg" : "max-w-lg"} text-left`}>
-                        {chapter.bullets.map((item) => (
-                          <li key={item} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-cream/80">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-mango" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {chapter.meta && (
-                      <dl className={`mt-4 flex flex-wrap gap-2.5 ${isCentered ? "justify-center" : ""}`}>
-                        {chapter.meta.map((item) => (
-                          <div key={item.label} className="rounded-xl border border-cream/20 bg-forest/60 px-3.5 py-2 text-left backdrop-blur-md">
-                            <dt className="text-[8px] font-bold uppercase tracking-[0.22em] text-cream/60">
-                              {item.label}
-                            </dt>
-                            <dd className="mt-0.5 font-display text-sm font-semibold text-cream">
-                              {item.value}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    )}
-
-                    {chapter.ctaTitle && (
-                      <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.24em] text-mango">
-                        {chapter.ctaTitle}
-                      </p>
-                    )}
-                    {chapter.ctaBody && (
-                      <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-cream/80">
-                        {chapter.ctaBody}
-                      </p>
-                    )}
-
                     <div className={`mt-5 flex flex-wrap items-center gap-2.5 ${isCentered ? "justify-center" : ""}`}>
-                      {chapter.cta && (
-                        <Link
-                          href={chapter.cta.href}
-                          className="inline-flex items-center gap-2 rounded-full bg-mango px-5 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-forest transition-colors hover:bg-mango-bright"
-                        >
-                          {chapter.cta.label}
-                          <span aria-hidden>↗</span>
-                        </Link>
-                      )}
                       {i === JOURNEY_CHAPTERS.length - 1 && (
                         <button
                           type="button"
@@ -242,13 +193,7 @@ export default function JourneyOverlay() {
                       )}
                     </div>
 
-                    {chapter.note && (
-                      <p className="mt-3 text-[10.5px] italic leading-relaxed text-cream/70">
-                        {chapter.note}
-                      </p>
-                    )}
-
-                    {i > 0 && i < JOURNEY_CHAPTERS.length - 1 && (
+                    {i > 0 && (
                       <span className="mt-4 inline-block rounded-full border border-cream/20 bg-forest/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-cream/70 backdrop-blur-md">
                         Trạm {String(i).padStart(2, "0")} / {String(JOURNEY_CHECKPOINTS.length).padStart(2, "0")}
                       </span>

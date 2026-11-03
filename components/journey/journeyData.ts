@@ -1,5 +1,5 @@
 import { ATTRACTIONS, type AttractionCategory } from "@/lib/map/attractions";
-import { CAMPAIGN, EVENT } from "@/components/campaign/campaignData";
+import { CAMPAIGN } from "@/components/campaign/campaignData";
 
 export const CHECKPOINT_COUNT = Math.min(4, ATTRACTIONS.length);
 
@@ -18,6 +18,14 @@ const CATEGORY_LABELS: Record<AttractionCategory, string> = {
   Coast: "Biển",
 };
 
+// Short, concrete checkpoint copy for the places shown in the journey.
+const CHECKPOINT_DESCRIPTIONS: Record<number, string> = {
+  0: "Mùa khô, nước rút để lộ những bãi cỏ rộng và chim về kiếm ăn. Nếu có thời gian, thử đi thuyền vào vùng lõi để ngắm cảnh đồng nước.",
+  5: "Ở Tân Quy Đông, vườn hoa nằm san sát dọc bờ sông Tiền. Những tuần cận Tết là lúc làng hoa nhộn nhịp và nhiều màu sắc nhất.",
+  9: "Chùa có cổng tam quan, chánh điện và nhiều pho tượng lớn giữa khu vườn rợp bóng. Buổi sáng thường yên hơn để thong thả đi một vòng.",
+  14: "Ngôi chùa người Hoa ở trung tâm Sa Đéc, dễ nhận ra bởi mái ngói uốn cong và các hình chạm rồng phượng. Nhà cổ Huỳnh Thủy Lê ở gần đó, tiện ghé cùng chuyến.",
+};
+
 export type JourneyChapter = {
   index: string;
   eyebrow: string;
@@ -25,13 +33,6 @@ export type JourneyChapter = {
   emphasis: string;
   description: string;
   position: "center" | "left" | "right";
-  variant?: "campaign" | "event";
-  bullets?: readonly string[];
-  meta?: readonly { label: string; value: string }[];
-  ctaTitle?: string;
-  ctaBody?: string;
-  cta?: { label: string; href: string };
-  note?: string;
 };
 
 export const JOURNEY_CHAPTERS: JourneyChapter[] = [
@@ -42,29 +43,13 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     emphasis: "mở lối chu du.",
     description: CAMPAIGN.description,
     position: "center",
-    variant: "campaign",
   },
   ...JOURNEY_CHECKPOINTS.map(({ attraction }, i): JourneyChapter => ({
     index: String(i + 1).padStart(2, "0"),
     eyebrow: `TRẠM ${String(i + 1).padStart(2, "0")} / ${CATEGORY_LABELS[attraction.category]}`,
     title: "Khám phá",
     emphasis: attraction.name,
-    description: attraction.summary,
+    description: CHECKPOINT_DESCRIPTIONS[attraction.id] ?? attraction.summary,
     position: i % 2 === 0 ? "left" : "right",
   })),
-  {
-    index: String(CHECKPOINT_COUNT + 1).padStart(2, "0"),
-    eyebrow: `${EVENT.name} · ${EVENT.tagline.toUpperCase()}`,
-    title: "Trạm Hẹn",
-    emphasis: "Cao Lãnh.",
-    description: EVENT.description,
-    position: "center",
-    variant: "event",
-    bullets: EVENT.highlights,
-    meta: EVENT.meta,
-    ctaTitle: EVENT.ctaTitle,
-    ctaBody: EVENT.ctaBody,
-    cta: { label: "Tạo Vé Hẹn Chu Du", href: EVENT.ticketHref },
-    note: EVENT.ticketNote,
-  },
 ];
