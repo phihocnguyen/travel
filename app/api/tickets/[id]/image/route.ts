@@ -24,9 +24,9 @@ export async function GET(_request: Request, context: RouteContext) {
       return new Response("Not found", { status: 404 });
     }
 
-    return new Response(new Uint8Array(image), {
+    return new Response(new Uint8Array(image.data), {
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": image.contentType,
         "Cache-Control": "private, max-age=31536000, immutable",
       },
     });

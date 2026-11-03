@@ -38,11 +38,11 @@ function ticketFile(userId: string, id: string): string {
   return path.join(userDir(userId), `${id}.json`);
 }
 
-function imageFile(userId: string, id: string): string {
+function imageFile(userId: string, id: string, extension: "jpg" | "png" = "jpg"): string {
   if (!ID_PATTERN.test(id)) {
     throw new TicketValidationError("Mã thiết kế không hợp lệ.");
   }
-  return path.join(userDir(userId), `${id}.jpg`);
+  return path.join(userDir(userId), `${id}.${extension}`);
 }
 
 function imageUrl(id: string, updatedAt: string): string {
@@ -70,12 +70,16 @@ function number(value: unknown, fallback: number, min: number, max: number) {
     : fallback;
 }
 
-function parseDataUrl(dataUrl: unknown): Buffer {
+function parseDataUrl(dataUrl: unknown): {
+  buffer: Buffer;
+  extension: "jpg" | "png";
+  contentType: "image/jpeg" | "image/png";
+} {
   if (typeof dataUrl !== "string") {
     throw new TicketValidationError("Ảnh tải lên không hợp lệ.");
   }
 
-  const match = /^data:image\/jpeg;base64,([a-z0-9+/=]+)$/i.exec(dataUrl);
+  const match = /^data:image\/(jpeg|png);base64,([a-z0-9+/=]+)$/i.exec(dataUrl);
 
   if (!match) {
     throw new TicketValidationError(
@@ -83,13 +87,18 @@ function parseDataUrl(dataUrl: unknown): Buffer {
     );
   }
 
-  const buffer = Buffer.from(match[1], "base64");
+  const isPng = match[1].toLowerCase() === "png";
+  const buffer = Buffer.from(match[2], "base64");
 
   if (buffer.byteLength === 0 || buffer.byteLength > MAX_IMAGE_BYTES) {
     throw new TicketValidationError("Ảnh vượt quá dung lượng cho phép (8MB).");
   }
 
-  return buffer;
+  return {
+    buffer,
+    extension: isPng ? "png" : "jpg",
+    contentType: isPng ? "image/png" : "image/jpeg",
+  };
 }
 
 function normalizeTheme(value: unknown): TicketTheme {
@@ -172,13 +181,19 @@ async function writeImage(
   id: string,
   dataUrl: unknown,
 ): Promise<void> {
-  const buffer = parseDataUrl(dataUrl);
+  const image = parseDataUrl(dataUrl);
   await mkdir(userDir(userId), { recursive: true });
-  await writeFile(imageFile(userId, id), buffer);
+  await rm(imageFile(userId, id, image.extension === "png" ? "jpg" : "png"), {
+    force: true,
+  });
+  await writeFile(imageFile(userId, id, image.extension), image.buffer);
 }
 
 async function removeImage(userId: string, id: string): Promise<void> {
-  await rm(imageFile(userId, id), { force: true });
+  await Promise.all([
+    rm(imageFile(userId, id, "jpg"), { force: true }),
+    rm(imageFile(userId, id, "png"), { force: true }),
+  ]);
 }
 
 export async function listTickets(userId: string): Promise<TicketDesign[]> {
@@ -308,10 +323,20 @@ export async function deleteTicket(
 export async function readTicketImage(
   userId: string,
   id: string,
-): Promise<Buffer | null> {
+): Promise<{ data: Buffer; contentType: "image/jpeg" | "image/png" } | null> {
   try {
-    return await readFile(imageFile(userId, id));
+    return {
+      data: await readFile(imageFile(userId, id, "png")),
+      contentType: "image/png",
+    };
   } catch {
-    return null;
+    try {
+      return {
+        data: await readFile(imageFile(userId, id, "jpg")),
+        contentType: "image/jpeg",
+      };
+    } catch {
+      return null;
+    }
   }
 }

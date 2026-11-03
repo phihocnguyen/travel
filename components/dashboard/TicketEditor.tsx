@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import TicketPreview from "./TicketPreview";
+import { removeImageBackground } from "@/lib/tickets/removeImageBackground";
 import {
   STICKER_CHOICES,
   THEME_PRESETS,
@@ -63,7 +64,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-async function compressImage(file: File): Promise<string> {
+async function compressImage(
+  file: Blob,
+  preserveTransparency = false,
+): Promise<string> {
   const bitmap = await createImageBitmap(file);
   const maxSize = 1600;
   const ratio = Math.min(
@@ -82,12 +86,17 @@ async function compressImage(file: File): Promise<string> {
     throw new Error("Canvas không được hỗ trợ");
   }
 
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!preserveTransparency) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
 
-  return canvas.toDataURL("image/jpeg", 0.88);
+  return canvas.toDataURL(
+    preserveTransparency ? "image/png" : "image/jpeg",
+    0.88,
+  );
 }
 
 function Field({
@@ -145,6 +154,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
   const [imageRemoved, setImageRemoved] = useState(false);
   const [tab, setTab] = useState<Tab>("content");
   const [uploading, setUploading] = useState(false);
+  const [removingBackground, setRemovingBackground] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{
     kind: "success" | "error";
@@ -344,6 +354,33 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
     setImageTransform({ scale: 1, x: 0, y: 0 });
   }
 
+  async function handleRemoveBackground() {
+    if (!imageUrl) return;
+
+    setRemovingBackground(true);
+    setStatus(null);
+
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error("Image could not be loaded");
+
+      const source = await response.blob();
+      const cutout = await removeImageBackground(source);
+      const dataUrl = await compressImage(cutout, true);
+
+      setPendingImage(dataUrl);
+      setImageUrl(dataUrl);
+      setImageRemoved(false);
+    } catch {
+      setStatus({
+        kind: "error",
+        text: "ChÆ°a thá»ƒ xÃ³a phÃ´ng áº£nh. HÃ£y thá»­ láº¡i vá»›i áº£nh chÃ¢n dung rÃµ nÃ©t.",
+      });
+    } finally {
+      setRemovingBackground(false);
+    }
+  }
+
   async function handleSave() {
     if (!title.trim()) {
       setStatus({ kind: "error", text: "Nhập tiêu đề vé trước khi lưu." });
@@ -467,7 +504,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
 
           <button
             onClick={handleSave}
-            disabled={saving || uploading}
+            disabled={saving || uploading || removingBackground}
             className="rounded-xl bg-[#15602c] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#207b58] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Đang lưu..." : "Lưu thiết kế"}
@@ -554,7 +591,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
+                  disabled={uploading || removingBackground}
                   className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d8dfc1] bg-[#fefbdf] px-4 py-8 text-center transition hover:border-emerald-500 hover:bg-mango/15 disabled:opacity-50"
                 >
                   <svg
@@ -587,6 +624,27 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
 
                 {imageUrl ? (
                   <div className="space-y-5">
+                    <div className="rounded-xl border border-forest/10 bg-cream-soft p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-forest">
+                            Tách chủ thể khỏi nền
+                          </p>
+                          <p className="mt-1 max-w-sm text-xs leading-relaxed text-forest/60">
+                            Xử lý ngay trên thiết bị để tách người hoặc vật thể. Lần đầu cần tải model.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveBackground}
+                          disabled={removingBackground || uploading || saving}
+                          className="rounded-full bg-mango px-4 py-2 text-xs font-bold text-forest transition hover:bg-mango-bright disabled:cursor-wait disabled:opacity-60"
+                        >
+                          {removingBackground ? "Đang tách nền…" : "Xóa phông"}
+                        </button>
+                      </div>
+                    </div>
+
                     <Field
                       label={`Phóng to: ${imageTransform.scale.toFixed(2)}×`}
                       hint="Kéo ảnh trực tiếp trên phần xem trước để căn vị trí."
