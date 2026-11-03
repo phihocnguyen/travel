@@ -162,12 +162,12 @@ function NavLink({
       }`}
     >
       {active ? (
-        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#feb212]" />
+        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#efc666]" />
       ) : null}
       <span
         className={
           active
-            ? "text-[#feb212]"
+            ? "text-[#efc666]"
             : "text-[#fefbdf]/35 group-hover:text-[#fefbdf]/60"
         }
       >
@@ -175,7 +175,7 @@ function NavLink({
       </span>
       <span className="flex-1">{item.label}</span>
       {item.badge ? (
-        <span className="rounded-full bg-[#feb212] px-1.5 py-0.5 text-[10px] font-bold text-[#15602c]">
+        <span className="rounded-full bg-[#efc666] px-1.5 py-0.5 text-[10px] font-bold text-[#356b43]">
           {item.badge}
         </span>
       ) : null}
@@ -219,7 +219,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="min-h-dvh bg-cream text-ink">
+    <div className="min-h-dvh bg-cream text-[#345840]">
       {open ? (
         <button
           aria-label="Đóng menu"
@@ -229,7 +229,7 @@ export function DashboardShell({
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-forest text-cream transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#356b43] text-cream transition-transform duration-300 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -238,7 +238,7 @@ export function DashboardShell({
             <span className="block font-display text-xl tracking-[0.08em] text-cream-soft">
               Dong Thap
             </span>
-            <span className="mt-1 block text-[9px] uppercase tracking-[0.32em] text-mango">
+            <span className="mt-1 block text-[9px] uppercase tracking-[0.32em] text-[#efc666]">
               The Waterways
             </span>
           </Link>
@@ -321,7 +321,7 @@ export function DashboardShell({
 
           <div className="flex items-center gap-3 rounded-xl bg-cream-soft/5 p-3">
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#207b58] bg-cover bg-center text-xs font-bold text-white"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#568260] bg-cover bg-center text-xs font-bold text-white"
               style={
                 user.picture
                   ? { backgroundImage: `url(${user.picture})` }
@@ -348,7 +348,7 @@ export function DashboardShell({
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-forest/10 bg-cream-soft/90 px-4 backdrop-blur md:px-6">
           <button
             onClick={() => setOpen(true)}
-            className="rounded-lg border border-[#d8dfc1] p-2 text-[#17331f] hover:bg-[#fefbdf] lg:hidden"
+            className="rounded-lg border border-[#d8dfc1] p-2 text-[#345840] hover:bg-[#fefbdf] lg:hidden"
             aria-label="Mở menu"
           >
             <svg {...iconProps}>
@@ -357,17 +357,17 @@ export function DashboardShell({
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-earth">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#9d6046]">
               Dong Thap dashboard
             </p>
-            <p className="truncate text-sm font-semibold text-forest">
+            <p className="truncate text-sm font-semibold text-[#356b43]">
               {pageTitle(pathname)}
             </p>
           </div>
 
           <Link
             href="/dashboard/tickets/new"
-            className="hidden items-center gap-2 rounded-xl bg-forest px-4 py-2 text-sm font-semibold text-cream transition hover:bg-forest-mid sm:inline-flex"
+            className="hidden items-center gap-2 rounded-xl bg-[#356b43] px-4 py-2 text-sm font-semibold text-cream transition hover:bg-[#568260] sm:inline-flex"
           >
             <svg {...iconProps} width={14} height={14}>
               <path d="M12 5v14M5 12h14" />
@@ -376,7 +376,7 @@ export function DashboardShell({
           </Link>
           <Link
             href="/dashboard/posts/new"
-            className="hidden items-center gap-2 rounded-xl border border-forest/15 bg-cream-soft px-4 py-2 text-sm font-semibold text-forest transition hover:bg-mint/35 sm:inline-flex"
+            className="hidden items-center gap-2 rounded-xl border border-forest/15 bg-cream-soft px-4 py-2 text-sm font-semibold text-[#356b43] transition hover:bg-mint/35 sm:inline-flex"
           >
             <PenIcon />
             Viết bài

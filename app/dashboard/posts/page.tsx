@@ -41,10 +41,10 @@ export default async function DashboardPostsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#93381f]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#9d6046]">
             Blog
           </p>
-          <h1 className="mt-1 font-display text-3xl text-[#15602c]">
+          <h1 className="mt-1 font-display text-3xl text-[#356b43]">
             Bài viết của tôi
           </h1>
           <p className="mt-1 text-sm text-[#45614a]">
@@ -58,7 +58,7 @@ export default async function DashboardPostsPage() {
           {isAdmin(session) ? (
             <Link
               href="/dashboard/admin"
-              className="inline-flex items-center gap-2 rounded-xl border border-[#d8dfc1] bg-cream-soft px-4 py-3 text-sm font-semibold text-[#17331f] transition hover:bg-[#fefbdf]"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#d8dfc1] bg-cream-soft px-4 py-3 text-sm font-semibold text-[#345840] transition hover:bg-[#fefbdf]"
             >
               Duyệt bài
               {pendingCount > 0 ? (
@@ -70,7 +70,7 @@ export default async function DashboardPostsPage() {
           ) : null}
           <Link
             href="/dashboard/posts/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#15602c] px-5 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#356b43] px-5 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260]"
           >
             + Viết bài
           </Link>
@@ -79,7 +79,7 @@ export default async function DashboardPostsPage() {
 
       {posts.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#d8dfc1] bg-cream-soft p-12 text-center">
-          <p className="font-display text-2xl text-[#15602c]">
+          <p className="font-display text-2xl text-[#356b43]">
             Chưa có bài viết nào
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#45614a]">
@@ -88,7 +88,7 @@ export default async function DashboardPostsPage() {
           </p>
           <Link
             href="/dashboard/posts/new"
-            className="mt-6 inline-flex rounded-xl bg-[#15602c] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
+            className="mt-6 inline-flex rounded-xl bg-[#356b43] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260]"
           >
             Viết bài đầu tiên
           </Link>
@@ -107,7 +107,7 @@ export default async function DashboardPostsPage() {
                     ? { backgroundImage: `url(${post.coverImageUrl})` }
                     : {
                         background:
-                          "linear-gradient(135deg, #207b58 0%, #15602c 100%)",
+                          "linear-gradient(135deg, #568260 0%, #356b43 100%)",
                       }
                 }
               />
@@ -116,7 +116,7 @@ export default async function DashboardPostsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
+                      <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#9d6046]">
                         {post.category}
                       </span>
                       <span
@@ -125,7 +125,7 @@ export default async function DashboardPostsPage() {
                         {POST_STATUS_LABELS[post.status]}
                       </span>
                     </div>
-                    <h2 className="mt-2 line-clamp-1 font-display text-xl text-[#15602c]">
+                    <h2 className="mt-2 line-clamp-1 font-display text-xl text-[#356b43]">
                       {post.title}
                     </h2>
                   </div>

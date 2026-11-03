@@ -42,10 +42,10 @@ export default async function AdminReviewPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#93381f]">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#9d6046]">
           Quản trị
         </p>
-        <h1 className="mt-1 font-display text-3xl text-[#15602c]">
+        <h1 className="mt-1 font-display text-3xl text-[#356b43]">
           Duyệt bài viết
         </h1>
         <p className="mt-1 text-sm text-[#45614a]">
@@ -77,14 +77,14 @@ export default async function AdminReviewPage() {
                     ? { backgroundImage: `url(${post.coverImageUrl})` }
                     : {
                         background:
-                          "linear-gradient(135deg, #207b58 0%, #15602c 100%)",
+                          "linear-gradient(135deg, #568260 0%, #356b43 100%)",
                       }
                 }
               />
 
               <div className="flex min-w-0 flex-1 flex-col p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
+                  <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#9d6046]">
                     {post.category}
                   </span>
                   <span
@@ -97,7 +97,7 @@ export default async function AdminReviewPage() {
                   </span>
                 </div>
 
-                <h3 className="mt-2 font-display text-xl text-[#15602c]">
+                <h3 className="mt-2 font-display text-xl text-[#356b43]">
                   {post.title}
                 </h3>
                 <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-[#45614a]">
@@ -129,7 +129,7 @@ export default async function AdminReviewPage() {
                 className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-[#15602c]">
+                  <p className="truncate font-medium text-[#356b43]">
                     {post.title}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-[#9a8f7a]">

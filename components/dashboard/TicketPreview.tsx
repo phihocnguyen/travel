@@ -3,7 +3,10 @@ import type {
   PointerEvent as ReactPointerEvent,
   Ref,
 } from "react";
-import type { TicketDesign } from "@/lib/tickets/types";
+import {
+  DEFAULT_TICKET_TITLE_TRANSFORM,
+  type TicketDesign,
+} from "@/lib/tickets/types";
 
 export const VOUCHER_TEMPLATE = "/voucher-template.jpg";
 
@@ -23,6 +26,10 @@ type Props = {
   onImagePointerDown?: (
     event: ReactPointerEvent<HTMLDivElement>,
   ) => void;
+  onTitlePointerDown?: (
+    event: ReactPointerEvent<HTMLHeadingElement>,
+  ) => void;
+  onTextPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
 function PhotoFrame({
@@ -32,7 +39,7 @@ function PhotoFrame({
   design: TicketDesign;
   onPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
-  const { image, theme } = design;
+  const { image } = design;
   const interactive = Boolean(onPointerDown);
 
   return (
@@ -41,10 +48,7 @@ function PhotoFrame({
       className={`relative h-full w-full overflow-hidden rounded-[1.3cqw] ${
         interactive ? "cursor-move touch-none" : ""
       }`}
-      style={{
-        background: `linear-gradient(140deg, ${theme.accent} 0%, ${theme.ink} 100%)`,
-        boxShadow: `0 0 0 0.28cqw ${theme.background}, 0 0 0 0.5cqw ${theme.accent}`,
-      }}
+      style={{ backgroundColor: "transparent" }}
     >
       {image.url ? (
         <div
@@ -56,22 +60,7 @@ function PhotoFrame({
             transform: `translate(${image.x}%, ${image.y}%) scale(${image.scale})`,
           }}
         />
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[1.4cqw] text-center">
-          <span
-            className="font-display tracking-[0.3em] opacity-85"
-            style={{ fontSize: "3.2cqw", color: theme.background }}
-          >
-            ĐỒNG THÁP
-          </span>
-          <span
-            className="uppercase tracking-[0.28em] opacity-55"
-            style={{ fontSize: "1.25cqw", color: theme.background }}
-          >
-            Ảnh kỷ niệm
-          </span>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -104,31 +93,47 @@ function FromTo({
 function TextCard({
   design,
   variant = "panel",
+  onTitlePointerDown,
+  onTextPointerDown,
 }: {
   design: TicketDesign;
   variant?: "panel" | "overlay";
+  onTitlePointerDown?: (event: ReactPointerEvent<HTMLHeadingElement>) => void;
+  onTextPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   const overlay = variant === "overlay";
+  const titleTransform =
+    design.titleTransform ?? DEFAULT_TICKET_TITLE_TRANSFORM;
+  const textTransform =
+    design.textTransform ?? { scale: 0.88, x: 0, y: 0 };
 
   return (
     <div
-      className={`flex min-h-0 flex-col justify-between rounded-[1.3cqw] ${
+      onPointerDown={onTextPointerDown}
+      className={`relative z-10 flex min-h-0 flex-col justify-between ${
         overlay
-          ? "w-[74%] p-[3.2%] shadow-2xl backdrop-blur-sm"
-          : "h-full p-[4.5%] shadow-sm"
-      }`}
+          ? "w-[64%] p-[2.6%]"
+          : "h-[82%] w-[84%] self-center justify-self-center p-[2%]"
+      } ${onTextPointerDown ? "cursor-move touch-none" : ""}`}
       style={{
-        backgroundColor: `${design.theme.background}${overlay ? "f2" : "ff"}`,
         color: design.theme.ink,
-        boxShadow: `inset 0 0 0 0.16cqw ${design.theme.accent}33`,
+        transform: `translate(${textTransform.x}cqw, ${textTransform.y}cqw) scale(${textTransform.scale})`,
+        transformOrigin: "center",
       }}
     >
       <FromTo design={design} />
 
       <div className="min-h-0">
         <h3
-          className="font-display leading-[1.05] tracking-tight break-words"
-          style={{ fontSize: overlay ? "3.4cqw" : "3.2cqw" }}
+          onPointerDown={onTitlePointerDown}
+          className={`w-full font-display leading-[1.05] tracking-tight break-words ${
+            onTitlePointerDown ? "cursor-move touch-none select-none" : ""
+          }`}
+          style={{
+            fontSize: overlay ? "2.9cqw" : "2.7cqw",
+            transform: `translate(${titleTransform.x}cqw, ${titleTransform.y}cqw) scale(${titleTransform.scale})`,
+            transformOrigin: "left center",
+          }}
         >
           {design.title}
         </h3>
@@ -161,14 +166,22 @@ function TextCard({
 function LeftLayout({
   design,
   onImagePointerDown,
+  onTitlePointerDown,
+  onTextPointerDown,
 }: {
   design: TicketDesign;
   onImagePointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onTitlePointerDown?: (event: ReactPointerEvent<HTMLHeadingElement>) => void;
+  onTextPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   return (
     <div className="grid h-full grid-cols-[43%_1fr] gap-[4%]">
       <PhotoFrame design={design} onPointerDown={onImagePointerDown} />
-      <TextCard design={design} />
+      <TextCard
+        design={design}
+        onTitlePointerDown={onTitlePointerDown}
+        onTextPointerDown={onTextPointerDown}
+      />
     </div>
   );
 }
@@ -176,13 +189,21 @@ function LeftLayout({
 function RightLayout({
   design,
   onImagePointerDown,
+  onTitlePointerDown,
+  onTextPointerDown,
 }: {
   design: TicketDesign;
   onImagePointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onTitlePointerDown?: (event: ReactPointerEvent<HTMLHeadingElement>) => void;
+  onTextPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   return (
     <div className="grid h-full grid-cols-[1fr_43%] gap-[4%]">
-      <TextCard design={design} />
+      <TextCard
+        design={design}
+        onTitlePointerDown={onTitlePointerDown}
+        onTextPointerDown={onTextPointerDown}
+      />
       <PhotoFrame design={design} onPointerDown={onImagePointerDown} />
     </div>
   );
@@ -191,9 +212,13 @@ function RightLayout({
 function FullLayout({
   design,
   onImagePointerDown,
+  onTitlePointerDown,
+  onTextPointerDown,
 }: {
   design: TicketDesign;
   onImagePointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onTitlePointerDown?: (event: ReactPointerEvent<HTMLHeadingElement>) => void;
+  onTextPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   return (
     <div className="relative h-full w-full">
@@ -201,15 +226,13 @@ function FullLayout({
         <PhotoFrame design={design} onPointerDown={onImagePointerDown} />
       </div>
 
-      <div
-        className="absolute inset-0 rounded-[1.3cqw]"
-        style={{
-          background: `linear-gradient(180deg, ${design.theme.ink}00 25%, ${design.theme.ink}99 100%)`,
-        }}
-      />
-
       <div className="absolute bottom-[4%] left-[4%]">
-        <TextCard design={design} variant="overlay" />
+        <TextCard
+          design={design}
+          variant="overlay"
+          onTitlePointerDown={onTitlePointerDown}
+          onTextPointerDown={onTextPointerDown}
+        />
       </div>
     </div>
   );
@@ -226,6 +249,8 @@ export default function TicketPreview({
   onPointerUp,
   onPointerCancel,
   onImagePointerDown,
+  onTitlePointerDown,
+  onTextPointerDown,
 }: Props) {
   const interactive = Boolean(onStickerPointerDown);
   const rootStyle = {
@@ -252,16 +277,22 @@ export default function TicketPreview({
           <FullLayout
             design={design}
             onImagePointerDown={onImagePointerDown}
+            onTitlePointerDown={onTitlePointerDown}
+            onTextPointerDown={onTextPointerDown}
           />
         ) : design.layout === "right" ? (
           <RightLayout
             design={design}
             onImagePointerDown={onImagePointerDown}
+            onTitlePointerDown={onTitlePointerDown}
+            onTextPointerDown={onTextPointerDown}
           />
         ) : (
           <LeftLayout
             design={design}
             onImagePointerDown={onImagePointerDown}
+            onTitlePointerDown={onTitlePointerDown}
+            onTextPointerDown={onTextPointerDown}
           />
         )}
       </div>

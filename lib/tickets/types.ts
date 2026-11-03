@@ -24,6 +24,31 @@ export type TicketImage = {
   y: number;
 };
 
+export type TicketTitleTransform = {
+  scale: number;
+  x: number;
+  y: number;
+};
+
+export type TicketTextTransform = {
+  scale: number;
+  x: number;
+  y: number;
+};
+
+export const DEFAULT_TICKET_TITLE_TRANSFORM: TicketTitleTransform = {
+  scale: 0.88,
+  x: 0,
+  y: 0,
+};
+
+export const DEFAULT_TICKET_IMAGE_SCALE = 0.62;
+export const DEFAULT_TICKET_TEXT_TRANSFORM: TicketTextTransform = {
+  scale: 0.88,
+  x: 0,
+  y: 0,
+};
+
 export type TicketDesign = {
   id: string;
   title: string;
@@ -34,6 +59,8 @@ export type TicketDesign = {
   theme: TicketTheme;
   stickers: TicketSticker[];
   image: TicketImage;
+  titleTransform: TicketTitleTransform;
+  textTransform: TicketTextTransform;
   createdAt: string;
   updatedAt: string;
 };
@@ -51,6 +78,8 @@ export type TicketInput = {
     x: number;
     y: number;
   };
+  titleTransform?: TicketTitleTransform;
+  textTransform?: TicketTextTransform;
   imageDataUrl?: string | null;
   removeImage?: boolean;
 };

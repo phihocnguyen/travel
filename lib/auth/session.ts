@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 export const SESSION_COOKIE = "dt_session";
 
@@ -109,6 +110,7 @@ export function verifySession(token: string | undefined): Session | null {
 }
 
 export async function getSession(): Promise<Session | null> {
+  await connection();
   const store = await cookies();
   return verifySession(store.get(SESSION_COOKIE)?.value);
 }

@@ -39,10 +39,10 @@ export default async function TicketsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#93381f]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#9d6046]">
             Thư viện
           </p>
-          <h1 className="mt-1 font-display text-3xl text-[#15602c] md:text-4xl">
+          <h1 className="mt-1 font-display text-3xl text-[#356b43] md:text-4xl">
             Bộ sưu tập vé
           </h1>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-[#45614a]">
@@ -54,7 +54,7 @@ export default async function TicketsPage() {
 
         <Link
           href="/dashboard/tickets/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#15602c] px-5 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#356b43] px-5 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260]"
         >
           + Vé mới
         </Link>
@@ -64,7 +64,7 @@ export default async function TicketsPage() {
         <div className="overflow-hidden rounded-[2rem] border border-[#d8dfc1] bg-[#fffdf0]">
           <div className="grid gap-6 p-8 md:grid-cols-[1.1fr_1fr] md:items-center md:p-10">
             <div>
-              <p className="font-display text-3xl leading-tight text-[#15602c]">
+              <p className="font-display text-3xl leading-tight text-[#356b43]">
                 Tấm vé đầu tiên đang chờ bạn.
               </p>
               <p className="mt-3 text-sm leading-relaxed text-[#45614a]">
@@ -74,15 +74,15 @@ export default async function TicketsPage() {
               </p>
               <Link
                 href="/dashboard/tickets/new"
-                className="mt-6 inline-flex rounded-xl bg-[#15602c] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
+                className="mt-6 inline-flex rounded-xl bg-[#356b43] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260]"
               >
                 Thiết kế vé đầu tiên
               </Link>
             </div>
 
             <div className="rounded-2xl border border-[#d8dfc1] bg-[#fefbdf] p-4">
-              <div className="aspect-[103/58] w-full rounded-xl bg-[#15602c] p-5">
-                <p className="text-[9px] uppercase tracking-[0.3em] text-[#feb212]">
+              <div className="aspect-[103/58] w-full rounded-xl bg-[#356b43] p-5">
+                <p className="text-[9px] uppercase tracking-[0.3em] text-[#efc666]">
                   Dong Thap · The Waterways
                 </p>
                 <p className="mt-3 font-display text-2xl leading-tight text-[#fffdf0]">
@@ -114,14 +114,14 @@ export default async function TicketsPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="truncate font-semibold text-[#15602c]">
+                    <h2 className="truncate font-semibold text-[#356b43]">
                       {ticket.title}
                     </h2>
                     <p className="mt-0.5 truncate text-xs text-[#45614a]">
                       {ticket.from} → {ticket.to}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[#fefbdf] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
+                  <span className="shrink-0 rounded-full bg-[#fefbdf] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#9d6046]">
                     {LAYOUT_LABELS[ticket.layout]}
                   </span>
                 </div>

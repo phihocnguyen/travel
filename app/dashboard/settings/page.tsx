@@ -30,13 +30,13 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-forest-mid">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#568260]">
           Tài khoản
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
           Cài đặt
         </h1>
-        <p className="mt-1 text-sm text-forest/60">
+        <p className="mt-1 text-sm text-[#356b43]/60">
           Thông tin tài khoản và dữ liệu thiết kế của bạn.
         </p>
       </div>
@@ -44,7 +44,7 @@ export default async function SettingsPage() {
       <section className="overflow-hidden rounded-2xl border border-forest/10 bg-cream-soft shadow-sm">
         <div className="flex items-center gap-4 border-b border-forest/10 p-5">
           <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-forest-mid bg-cover bg-center text-lg font-bold text-white"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#568260] bg-cover bg-center text-lg font-bold text-white"
             style={
               session.picture
                 ? { backgroundImage: `url(${session.picture})` }
@@ -58,7 +58,7 @@ export default async function SettingsPage() {
           </span>
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold">{session.name}</p>
-            <p className="truncate text-sm text-forest/60">{session.email}</p>
+            <p className="truncate text-sm text-[#356b43]/60">{session.email}</p>
           </div>
         </div>
 
@@ -68,8 +68,8 @@ export default async function SettingsPage() {
               key={row.label}
               className="flex flex-wrap items-center justify-between gap-2 px-5 py-4"
             >
-              <dt className="text-sm text-forest/60">{row.label}</dt>
-              <dd className="text-sm font-medium text-ink">
+              <dt className="text-sm text-[#356b43]/60">{row.label}</dt>
+              <dd className="text-sm font-medium text-[#345840]">
                 {row.value}
               </dd>
             </div>
@@ -79,13 +79,13 @@ export default async function SettingsPage() {
 
       <section className="rounded-2xl border border-forest/10 bg-cream-soft p-5 shadow-sm">
         <h2 className="font-semibold">Dữ liệu thiết kế</h2>
-        <p className="mt-2 text-sm leading-relaxed text-forest/60">
+        <p className="mt-2 text-sm leading-relaxed text-[#356b43]/60">
           Mỗi lần lưu, nội dung vé, màu sắc, sticker, bố cục và ảnh đã cắt khung
           được gắn với tài khoản của bạn trên máy chủ. Bạn có thể quay lại chỉnh
           sửa bất cứ lúc nào từ mục{" "}
           <Link
             href="/dashboard/tickets"
-            className="font-medium text-forest-mid hover:underline"
+            className="font-medium text-[#568260] hover:underline"
           >
             Thiết kế vé
           </Link>
@@ -96,7 +96,7 @@ export default async function SettingsPage() {
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-forest/10 bg-cream-soft p-5 shadow-sm">
         <div>
           <h2 className="font-semibold">Phiên đăng nhập</h2>
-          <p className="mt-1 text-sm text-forest/60">
+          <p className="mt-1 text-sm text-[#356b43]/60">
             Đăng xuất khỏi dashboard trên thiết bị này.
           </p>
         </div>

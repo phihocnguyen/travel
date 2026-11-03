@@ -60,10 +60,10 @@ export default async function DashboardOverviewPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-7">
-      <section className="relative overflow-hidden rounded-[2rem] bg-[#15602c] text-[#fefbdf]">
+      <section className="relative overflow-hidden rounded-[2rem] bg-[#356b43] text-[#fefbdf]">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#feb212]/20"
+          className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border border-[#efc666]/20"
         />
         <div
           aria-hidden="true"
@@ -71,7 +71,7 @@ export default async function DashboardOverviewPage() {
         />
         <div className="relative flex flex-col gap-8 p-7 md:flex-row md:items-end md:justify-between md:p-10">
           <div className="max-w-2xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-[#feb212]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-[#efc666]">
               {today} · Đồng Tháp
             </p>
             <h1 className="mt-3 font-display text-4xl leading-[1.05] tracking-tight text-[#fffdf0] md:text-5xl">
@@ -88,7 +88,7 @@ export default async function DashboardOverviewPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/dashboard/tickets/new"
-                className="rounded-xl bg-[#feb212] px-5 py-3 text-sm font-semibold text-[#15602c] transition hover:bg-[#fdc510]"
+                className="rounded-xl bg-[#efc666] px-5 py-3 text-sm font-semibold text-[#356b43] transition hover:bg-[#f4d88b]"
               >
                 Thiết kế vé mới
               </Link>
@@ -123,14 +123,14 @@ export default async function DashboardOverviewPage() {
       {admin && pending.length > 0 ? (
         <Link
           href="/dashboard/admin"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#feb212]/50 bg-[#fff8e8] px-5 py-4 transition hover:bg-mango/15"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#efc666]/50 bg-[#fff7e4] px-5 py-4 transition hover:bg-mango/15"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#feb212] text-sm font-bold text-[#15602c]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#efc666] text-sm font-bold text-[#356b43]">
               {pending.length}
             </span>
             <div>
-              <p className="text-sm font-semibold text-[#15602c]">
+              <p className="text-sm font-semibold text-[#356b43]">
                 {pending.length} bài viết đang chờ bạn duyệt
               </p>
               <p className="text-xs text-[#8a7449]">
@@ -141,7 +141,7 @@ export default async function DashboardOverviewPage() {
               </p>
             </div>
           </div>
-          <span className="text-sm font-semibold text-[#93381f]">
+          <span className="text-sm font-semibold text-[#9d6046]">
             Mở hàng đợi →
           </span>
         </Link>
@@ -175,10 +175,10 @@ export default async function DashboardOverviewPage() {
             href={stat.href}
             className="group rounded-2xl border border-[#d8dfc1] bg-[#fffdf0] p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#93381f]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9d6046]">
               {stat.label}
             </p>
-            <p className="mt-2 font-display text-3xl text-[#15602c]">
+            <p className="mt-2 font-display text-3xl text-[#356b43]">
               {stat.value}
             </p>
             <p className="mt-1 truncate text-sm text-[#45614a]">{stat.hint}</p>
@@ -190,7 +190,7 @@ export default async function DashboardOverviewPage() {
         <section className="rounded-3xl border border-[#d8dfc1] bg-[#fffdf0] p-5 shadow-sm md:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl text-[#15602c]">
+              <h2 className="font-display text-2xl text-[#356b43]">
                 Vé gần đây
               </h2>
               <p className="text-xs text-[#9a8f7a]">
@@ -199,7 +199,7 @@ export default async function DashboardOverviewPage() {
             </div>
             <Link
               href="/dashboard/tickets"
-              className="text-sm font-medium text-[#207b58] hover:underline"
+              className="text-sm font-medium text-[#568260] hover:underline"
             >
               Xem tất cả
             </Link>
@@ -207,12 +207,12 @@ export default async function DashboardOverviewPage() {
 
           {recentTickets.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#d8dfc1] p-8 text-center">
-              <p className="text-sm font-medium text-[#17331f]">
+              <p className="text-sm font-medium text-[#345840]">
                 Chưa có thiết kế nào được lưu.
               </p>
               <Link
                 href="/dashboard/tickets/new"
-                className="mt-4 inline-flex rounded-xl bg-[#15602c] px-5 py-2.5 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
+                className="mt-4 inline-flex rounded-xl bg-[#356b43] px-5 py-2.5 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260]"
               >
                 Tạo vé đầu tiên
               </Link>
@@ -231,10 +231,10 @@ export default async function DashboardOverviewPage() {
                   />
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-2">
-                      <h3 className="truncate font-semibold text-[#15602c]">
+                      <h3 className="truncate font-semibold text-[#356b43]">
                         {ticket.title}
                       </h3>
-                      <span className="shrink-0 rounded-full bg-[#fefbdf] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
+                      <span className="shrink-0 rounded-full bg-[#fefbdf] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#9d6046]">
                         {LAYOUT_LABELS[ticket.layout]}
                       </span>
                     </div>
@@ -254,7 +254,7 @@ export default async function DashboardOverviewPage() {
         <section className="rounded-3xl border border-[#d8dfc1] bg-[#fffdf0] p-5 shadow-sm md:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl text-[#15602c]">
+              <h2 className="font-display text-2xl text-[#356b43]">
                 Bài viết
               </h2>
               <p className="text-xs text-[#9a8f7a]">
@@ -263,7 +263,7 @@ export default async function DashboardOverviewPage() {
             </div>
             <Link
               href="/dashboard/posts"
-              className="text-sm font-medium text-[#207b58] hover:underline"
+              className="text-sm font-medium text-[#568260] hover:underline"
             >
               Quản lý
             </Link>
@@ -271,12 +271,12 @@ export default async function DashboardOverviewPage() {
 
           {recentPosts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#d8dfc1] p-8 text-center">
-              <p className="text-sm font-medium text-[#17331f]">
+              <p className="text-sm font-medium text-[#345840]">
                 Bạn chưa viết bài nào.
               </p>
               <Link
                 href="/dashboard/posts/new"
-                className="mt-4 inline-flex rounded-xl bg-[#15602c] px-5 py-2.5 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58]"
+                className="mt-4 inline-flex rounded-xl bg-[#356b43] px-5 py-2.5 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260]"
               >
                 Viết câu chuyện đầu tiên
               </Link>
@@ -298,7 +298,7 @@ export default async function DashboardOverviewPage() {
                       }
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-[#15602c]">
+                      <span className="block truncate text-sm font-medium text-[#356b43]">
                         {post.title}
                       </span>
                       <span className="mt-0.5 block text-xs text-[#9a8f7a]">

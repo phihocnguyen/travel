@@ -15,7 +15,7 @@ import {
 } from "@/lib/posts/types";
 
 const inputClass =
-  "w-full rounded-xl border border-[#d8dfc1] bg-[#fffdf0] px-3.5 py-2.5 text-sm text-[#21352a] outline-none transition placeholder:text-[#9a8f7a] focus:border-[#207b58] focus:ring-2 focus:ring-[#207b58]/15";
+  "w-full rounded-xl border border-[#d8dfc1] bg-[#fffdf0] px-3.5 py-2.5 text-sm text-[#345840] outline-none transition placeholder:text-[#9a8f7a] focus:border-[#568260] focus:ring-2 focus:ring-[#568260]/15";
 
 const STATUS_STYLES: Record<BlogPost["status"], string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -158,10 +158,10 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             ←
           </Link>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#93381f]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#9d6046]">
               {postId ? "Chỉnh sửa bài viết" : "Bài viết mới"}
             </p>
-            <h1 className="mt-0.5 font-display text-2xl font-normal tracking-tight text-[#15602c]">
+            <h1 className="mt-0.5 font-display text-2xl font-normal tracking-tight text-[#356b43]">
               {postId ? "Cập nhật câu chuyện" : "Viết câu chuyện chuyến đi"}
             </h1>
           </div>
@@ -183,7 +183,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
           <button
             onClick={handleSave}
             disabled={saving || uploading}
-            className="rounded-xl bg-[#15602c] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#207b58] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-[#356b43] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Đang gửi..." : "Lưu & gửi duyệt"}
           </button>
@@ -206,7 +206,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-5 rounded-3xl border border-[#d8dfc1] bg-cream-soft p-5 shadow-sm md:p-6">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-[#17331f]">
+            <label className="block text-sm font-medium text-[#345840]">
               Tiêu đề
             </label>
             <input
@@ -220,7 +220,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
 
           <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-[#17331f]">
+              <label className="block text-sm font-medium text-[#345840]">
                 Danh mục
               </label>
               <select
@@ -239,7 +239,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-[#17331f]">
+              <label className="block text-sm font-medium text-[#345840]">
                 Mô tả ngắn
               </label>
               <input
@@ -254,7 +254,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-[#17331f]">
+            <label className="block text-sm font-medium text-[#345840]">
               Nội dung
             </label>
             <textarea
@@ -269,7 +269,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
 
         <div className="space-y-5">
           <div className="rounded-3xl border border-[#d8dfc1] bg-cream-soft p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-[#17331f]">Ảnh bìa</h2>
+            <h2 className="text-sm font-semibold text-[#345840]">Ảnh bìa</h2>
 
             <input
               ref={fileInputRef}
@@ -286,7 +286,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
                   ? { backgroundImage: `url(${coverUrl})` }
                   : {
                       background:
-                        "linear-gradient(135deg, #207b58 0%, #15602c 100%)",
+                        "linear-gradient(135deg, #568260 0%, #356b43 100%)",
                     }
               }
             >
@@ -306,7 +306,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl border border-[#d8dfc1] py-2 text-sm font-medium text-[#17331f] transition hover:bg-[#fefbdf] disabled:opacity-50"
+                className="rounded-xl border border-[#d8dfc1] py-2 text-sm font-medium text-[#345840] transition hover:bg-[#fefbdf] disabled:opacity-50"
               >
                 {uploading ? "Đang xử lý..." : coverUrl ? "Đổi ảnh" : "Tải ảnh"}
               </button>
@@ -325,7 +325,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
           </div>
 
           <div className="rounded-3xl border border-[#d8dfc1] bg-[#fffdf0] p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-[#17331f]">
+            <h2 className="text-sm font-semibold text-[#345840]">
               Xem trước thẻ blog
             </h2>
 
@@ -337,15 +337,15 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
                     ? { backgroundImage: `url(${coverUrl})` }
                     : {
                         background:
-                          "linear-gradient(135deg, #207b58 0%, #15602c 100%)",
+                          "linear-gradient(135deg, #568260 0%, #356b43 100%)",
                       }
                 }
               />
               <div className="p-4">
-                <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#93381f]">
+                <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#9d6046]">
                   {category}
                 </span>
-                <h3 className="mt-3 font-display text-xl leading-tight text-[#15602c]">
+                <h3 className="mt-3 font-display text-xl leading-tight text-[#356b43]">
                   {title || "Tiêu đề bài viết"}
                 </h3>
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[#45614a]">

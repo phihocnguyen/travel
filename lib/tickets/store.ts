@@ -5,10 +5,15 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   TICKET_LAYOUTS,
+  DEFAULT_TICKET_IMAGE_SCALE,
+  DEFAULT_TICKET_TEXT_TRANSFORM,
+  DEFAULT_TICKET_TITLE_TRANSFORM,
   type TicketDesign,
   type TicketInput,
   type TicketLayout,
   type TicketSticker,
+  type TicketTextTransform,
+  type TicketTitleTransform,
   type TicketTheme,
 } from "./types";
 
@@ -138,14 +143,22 @@ function normalizeStickers(value: unknown): TicketSticker[] {
 function normalizeLayout(value: unknown): TicketLayout {
   return TICKET_LAYOUTS.includes(value as TicketLayout)
     ? (value as TicketLayout)
-    : "classic";
+    : "left";
 }
 
-type NormalizedTicket = Omit<TicketInput, "imageDataUrl" | "removeImage">;
+type NormalizedTicket = Omit<
+  TicketInput,
+  "imageDataUrl" | "removeImage" | "titleTransform" | "textTransform"
+> & {
+  titleTransform: TicketTitleTransform;
+  textTransform: TicketTextTransform;
+};
 
 function normalizeInput(value: unknown): NormalizedTicket {
   const raw = (value ?? {}) as Record<string, unknown>;
   const image = (raw.image ?? {}) as Record<string, unknown>;
+  const titleTransform = (raw.titleTransform ?? {}) as Record<string, unknown>;
+  const textTransform = (raw.textTransform ?? {}) as Record<string, unknown>;
 
   return {
     title: text(raw.title, "Vé du lịch Đồng Tháp", 90),
@@ -159,8 +172,23 @@ function normalizeInput(value: unknown): NormalizedTicket {
     layout: normalizeLayout(raw.layout),
     theme: normalizeTheme(raw.theme),
     stickers: normalizeStickers(raw.stickers),
+    titleTransform: {
+      scale: number(
+        titleTransform.scale,
+        DEFAULT_TICKET_TITLE_TRANSFORM.scale,
+        0.55,
+        1.5,
+      ),
+      x: number(titleTransform.x, 0, -24, 24),
+      y: number(titleTransform.y, 0, -10, 10),
+    } satisfies TicketTitleTransform,
+    textTransform: {
+      scale: number(textTransform.scale, DEFAULT_TICKET_TEXT_TRANSFORM.scale, 0.55, 1.2),
+      x: number(textTransform.x, DEFAULT_TICKET_TEXT_TRANSFORM.x, -24, 24),
+      y: number(textTransform.y, DEFAULT_TICKET_TEXT_TRANSFORM.y, -10, 10),
+    } satisfies TicketTextTransform,
     image: {
-      scale: number(image.scale, 1, 1, 4),
+      scale: number(image.scale, DEFAULT_TICKET_IMAGE_SCALE, 0.2, 2.5),
       x: number(image.x, 0, -100, 100),
       y: number(image.y, 0, -100, 100),
     },
