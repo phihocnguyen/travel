@@ -1,14 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useMapUI } from "@/components/map/MapUIContext";
-
-const EXIT_MS = 900;
 
 export default function IntroSequence() {
   const { introOpen, ready, loadProgress, dismissIntro } = useMapUI();
-  const [leaving, setLeaving] = useState(false);
+  const leaving = ready;
   const progress = Math.round(loadProgress * 100);
 
   // Hold the page at the first chapter until the atlas is actually usable.
@@ -18,7 +16,6 @@ export default function IntroSequence() {
     const htmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    window.scrollTo(0, 0);
     return () => {
       document.body.style.overflow = bodyOverflow;
       document.documentElement.style.overflow = htmlOverflow;
@@ -27,18 +24,11 @@ export default function IntroSequence() {
 
   // Enter automatically as soon as the atlas is ready — no "begin" button.
   useEffect(() => {
-    if (!introOpen || !ready) return;
-    setLeaving(true);
-  }, [introOpen, ready]);
-
-  useEffect(() => {
     if (!leaving) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = window.setTimeout(
-      () => dismissIntro(),
-      reduced ? 0 : EXIT_MS,
-    );
-    return () => window.clearTimeout(timer);
+    if (!reduced) return;
+    const frame = window.requestAnimationFrame(dismissIntro);
+    return () => window.cancelAnimationFrame(frame);
   }, [leaving, dismissIntro]);
 
   if (!introOpen) return null;
@@ -52,6 +42,11 @@ export default function IntroSequence() {
       }`}
       aria-label="Vị Xoài Dẫn Lối — Trạm Hẹn Cao Lãnh"
       aria-hidden={leaving}
+      onTransitionEnd={(event) => {
+        if (leaving && event.target === event.currentTarget && event.propertyName === "transform") {
+          dismissIntro();
+        }
+      }}
     >
       {/* Soft brand atmosphere */}
       <div
@@ -125,7 +120,7 @@ export default function IntroSequence() {
         <div className="relative hidden lg:block">
           <div className="relative aspect-square overflow-hidden rounded-[2.25rem] border border-forest/10 shadow-brand">
             <Image
-              src="/theme.jpg"
+              src="/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg"
               alt="Minh họa Vị Xoài Dẫn Lối — thuyền xoài trên sông miệt vườn"
               fill
               priority

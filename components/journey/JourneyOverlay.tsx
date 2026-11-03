@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS } from "./journeyData";
@@ -18,11 +18,13 @@ export default function JourneyOverlay() {
   const root = useRef<HTMLDivElement>(null);
   const {
     explored, ready, explore, journeyProgress,
-    setActiveChapter, activeChapter, season, setSeason,
+    setActiveChapter, activeChapter, season, setSeason, setJourneyProgress,
   } = useMapUI();
 
-  useEffect(() => {
-    if (explored || !root.current) return;
+  useLayoutEffect(() => {
+    // Wait until the map's intro/loading cover is ready to leave. This avoids
+    // initializing the chapter timeline once during loading and again at reveal.
+    if (explored || !ready || !root.current) return;
     gsap.registerPlugin(ScrollTrigger);
     const container = root.current.closest<HTMLElement>("[data-journey-scroll-space]");
     const stage = root.current.closest<HTMLElement>("[data-journey-stage]");
@@ -51,7 +53,7 @@ export default function JourneyOverlay() {
     timeline.to({}, { duration: 0.01 }, maxIndex);
 
     const onProgress = (p: number) => {
-      journeyProgress.current = p;
+      setJourneyProgress(p);
       timeline.progress(p);
       if (bar) bar.style.transform = `scaleX(${p})`;
       const raw = p * maxIndex;
@@ -84,20 +86,10 @@ export default function JourneyOverlay() {
       timeline.kill();
       stage.style.setProperty("--focus-strength", "0");
     };
-  }, [explored, ready, journeyProgress, setActiveChapter]);
-
-  const goTo = (index: number) => {
-    const space = root.current?.closest<HTMLElement>("[data-journey-scroll-space]");
-    if (!space) return;
-    const start = space.getBoundingClientRect().top + window.scrollY;
-    const length = space.offsetHeight - window.innerHeight;
-    const y = start + length * (index / (JOURNEY_CHAPTERS.length - 1));
-    window.scrollTo({ top: y, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-  };
+  }, [explored, ready, journeyProgress, setActiveChapter, setJourneyProgress]);
 
   const startExploring = () => {
     explore(false);
-    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   if (explored) return null;
@@ -129,23 +121,16 @@ export default function JourneyOverlay() {
         aria-label="Chọn một trạm dừng"
       >
         {JOURNEY_CHAPTERS.map((chapter, i) => (
-          <button
+          <span
             key={chapter.index}
-            type="button"
-            className={`group flex items-center gap-2.5 text-[10px] font-semibold transition-colors ${
+            className={`flex items-center gap-2.5 text-[10px] font-semibold ${
               activeChapter === i ? "text-mango" : "text-cream/60 hover:text-cream"
             }`}
-            onClick={() => goTo(i)}
             aria-current={activeChapter === i ? "step" : undefined}
             aria-label={`Đến chương ${i + 1}: ${chapter.emphasis}`}
-            title={chapter.emphasis}
           >
             <span
-              className={`hidden max-w-0 overflow-hidden whitespace-nowrap text-right transition-all duration-300 lg:block ${
-                activeChapter === i
-                  ? "max-w-48 opacity-100"
-                  : "opacity-0 group-hover:max-w-48 group-hover:opacity-100"
-              }`}
+              className={`hidden whitespace-nowrap text-right lg:block ${activeChapter === i ? "opacity-100" : "opacity-0"}`}
             >
               {chapter.emphasis}
             </span>
@@ -156,13 +141,14 @@ export default function JourneyOverlay() {
                   : "border-cream/70 bg-transparent"
               }`}
             />
-          </button>
+          </span>
         ))}
       </nav>
 
       <div className="absolute inset-0" aria-live="off">
         {JOURNEY_CHAPTERS.map((chapter, i) => {
           const position = POSITION_CLASSES[chapter.position];
+          const isCentered = chapter.position === "center";
 
           return (
             <article
@@ -172,10 +158,15 @@ export default function JourneyOverlay() {
               aria-label={`Chương ${i + 1}`}
             >
               <div
-                className={`pointer-events-auto w-full ${
-                  chapter.variant === "event" ? "max-w-3xl" : "max-w-2xl"
+                className={`journey-card pointer-events-auto w-full ${
+                  chapter.variant === "event" ? "max-w-3xl" : "max-w-xl"
                 }`}
               >
+                <div className="journey-card__index" aria-hidden="true">
+                  <span>{String(i + 1).padStart(2, "0")}</span>
+                  <span className="journey-card__index-line" />
+                  <span>{String(JOURNEY_CHAPTERS.length).padStart(2, "0")}</span>
+                </div>
                 <div>
                   <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.24em] text-mango">
                     <span className="block h-px w-6 bg-mango" />
@@ -188,12 +179,12 @@ export default function JourneyOverlay() {
                     <em className="font-normal not-italic text-mango">{chapter.emphasis}</em>
                   </h1>
 
-                  <p className={`mt-4 text-[13px] leading-relaxed text-cream/80 drop-shadow-[0_1px_10px_rgba(4,20,14,0.6)] sm:text-sm ${position === "center" ? "mx-auto max-w-xl" : "max-w-lg"}`}>
+                  <p className={`mt-4 text-[13px] leading-relaxed text-cream/80 drop-shadow-[0_1px_10px_rgba(4,20,14,0.6)] sm:text-sm ${isCentered ? "mx-auto max-w-xl" : "max-w-lg"}`}>
                     {chapter.description}
                   </p>
 
                     {chapter.bullets && (
-                      <ul className={`mt-4 grid gap-2 ${position === "center" ? "mx-auto max-w-lg" : "max-w-lg"} text-left`}>
+                      <ul className={`mt-4 grid gap-2 ${isCentered ? "mx-auto max-w-lg" : "max-w-lg"} text-left`}>
                         {chapter.bullets.map((item) => (
                           <li key={item} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-cream/80">
                             <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-mango" />
@@ -204,7 +195,7 @@ export default function JourneyOverlay() {
                     )}
 
                     {chapter.meta && (
-                      <dl className={`mt-4 flex flex-wrap gap-2.5 ${position === "center" ? "justify-center" : ""}`}>
+                      <dl className={`mt-4 flex flex-wrap gap-2.5 ${isCentered ? "justify-center" : ""}`}>
                         {chapter.meta.map((item) => (
                           <div key={item.label} className="rounded-xl border border-cream/20 bg-forest/60 px-3.5 py-2 text-left backdrop-blur-md">
                             <dt className="text-[8px] font-bold uppercase tracking-[0.22em] text-cream/60">
@@ -229,7 +220,7 @@ export default function JourneyOverlay() {
                       </p>
                     )}
 
-                    <div className={`mt-5 flex flex-wrap items-center gap-2.5 ${position === "center" ? "justify-center" : ""}`}>
+                    <div className={`mt-5 flex flex-wrap items-center gap-2.5 ${isCentered ? "justify-center" : ""}`}>
                       {chapter.cta && (
                         <Link
                           href={chapter.cta.href}

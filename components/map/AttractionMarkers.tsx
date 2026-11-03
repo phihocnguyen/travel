@@ -145,7 +145,7 @@ function ExtrudedCheckpointIcon({
     <mesh
       geometry={geometry}
       material={[frontMaterial, sideMaterial]}
-      scale={emphasis ? 1.1 : 0.82}
+      scale={emphasis ? 1.22 : 1.04}
     />
   );
 }
@@ -481,12 +481,16 @@ export function AttractionMarkers({ assets, y }: Props) {
         const kind = resolveIconKind(attraction);
         const emphasis = activeIndex === index;
         return (
-          <group key={`${attraction.name}-${index}`} position={[x, y + BEAM_HEIGHT + 0.3, z]} scale={emphasis ? 0.98 : 0.7}>
+          <group key={`${attraction.name}-${index}`} position={[x, y + BEAM_HEIGHT + 0.3, z]} scale={emphasis ? 1.65 : 1.4}>
             <mesh position={[0, -0.08, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={NO_RAYCAST}>
-              <ringGeometry args={[0.52, 0.7, 22]} />
+              <ringGeometry args={[1.05, 1.28, 28]} />
               <meshBasicMaterial color={accent} transparent opacity={emphasis ? 0.46 : 0.26} toneMapped={false} />
             </mesh>
             <IconBillboard>
+              <mesh position={[0, 0.7, -0.12]} raycast={NO_RAYCAST}>
+                <circleGeometry args={[0.94, 32]} />
+                <meshBasicMaterial color="#fff6d6" toneMapped={false} />
+              </mesh>
               <ExtrudedCheckpointIcon kind={kind} tint={accent} emphasis={emphasis} />
             </IconBillboard>
           </group>
@@ -526,7 +530,7 @@ export function AttractionMarkers({ assets, y }: Props) {
             >
               {activePoint.attraction.category}
             </span>
-            <span className="text-[12px] font-semibold text-forest">
+            <span className="max-w-[280px] truncate whitespace-nowrap text-[13px] font-semibold text-forest">
               {activePoint.attraction.name}
             </span>
           </div>

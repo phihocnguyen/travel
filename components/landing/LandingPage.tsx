@@ -4,9 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Manrope, Playfair_Display } from "next/font/google";
+import { EVENT } from "@/components/campaign/campaignData";
 
 const sans = Manrope({ subsets: ["latin", "vietnamese"], variable: "--font-dm-sans", display: "swap" });
 const serif = Playfair_Display({ subsets: ["latin", "vietnamese"], variable: "--font-editorial", display: "swap" });
+const HERO_ART_IMAGE = "https://images.openai.com/static-rsc-4/nTBpwrJj7tdHKXwcDumzEIXVSo3IqlV6Lguyt9RWlpAnyzWXylQXbtxfTkfi2zx2cjZYJIImzJfD6_TTSPo-iPeEeP8e_sqcVtFi10Hy3WyzmrguCZAsVIfaKKB90u93TmQ92g1_NzSBl4gzA3QgAFV0N6i84Td7nl5RmA_cR4dfoJcR6OTb8M0Y-AdmXBbI?purpose=fullsize";
 
 const projects = [
   { title: "The Taste of Mango", category: "MANGO ORCHARDS · CAO LANH", description: "Wander through lush orchards where golden mangoes ripen under the Mekong sun. Discover the flavour that defines Cao Lanh.", image: "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=1500&q=85" },
@@ -42,30 +44,40 @@ export default function LandingPage() {
     };
     hero.onload = finish;
     hero.onerror = finish;
-    hero.src = "/hero-section.png";
+    hero.src = HERO_ART_IMAGE;
     return () => { active = false; };
   }, []);
   useEffect(() => {
     const dot = cursorDot.current;
     const ring = cursorRing.current;
-    if (!dot || !ring || !window.matchMedia("(pointer: fine)").matches || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!dot || !ring || !window.matchMedia("(pointer: fine)").matches) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     gsap.set([dot, ring], { xPercent: -50, yPercent: -50 });
-    const setDotX = gsap.quickTo(dot, "x", { duration: .12, ease: "power3.out" });
-    const setDotY = gsap.quickTo(dot, "y", { duration: .12, ease: "power3.out" });
-    const setRingX = gsap.quickTo(ring, "x", { duration: .42, ease: "power3.out" });
-    const setRingY = gsap.quickTo(ring, "y", { duration: .42, ease: "power3.out" });
+    const setDotX = gsap.quickSetter(dot, "x", "px");
+    const setDotY = gsap.quickSetter(dot, "y", "px");
+    const setRingX = gsap.quickSetter(ring, "x", "px");
+    const setRingY = gsap.quickSetter(ring, "y", "px");
+    let positioned = false;
     const move = (e: PointerEvent) => {
+      if (!positioned) {
+        gsap.set([dot, ring], { x: e.clientX, y: e.clientY });
+        positioned = true;
+        root.current?.setAttribute("data-cursor-ready", "true");
+      }
       setDotX(e.clientX); setDotY(e.clientY);
       setRingX(e.clientX); setRingY(e.clientY);
-      gsap.to([dot, ring], { autoAlpha: 1, duration: .2, overwrite: "auto" });
+      gsap.to([dot, ring], { autoAlpha: 1, duration: reduceMotion ? 0 : .2, overwrite: "auto" });
       const target = e.target instanceof Element ? e.target : null;
       const interactive = !!target?.closest("a, button, [data-cursor-interactive]");
-      gsap.to(ring, { scale: interactive ? 1.75 : 1, borderColor: interactive ? "#e1a735" : "#39754b", duration: .25, overwrite: "auto" });
-      gsap.to(dot, { scale: interactive ? .5 : 1, duration: .25, overwrite: "auto" });
+      gsap.to(ring, { scale: interactive ? 1.75 : 1, borderColor: interactive ? "#e1a735" : "#39754b", duration: reduceMotion ? 0 : .25, overwrite: "auto" });
+      gsap.to(dot, { scale: interactive ? .5 : 1, duration: reduceMotion ? 0 : .25, overwrite: "auto" });
     };
-    const leave = () => gsap.to([dot, ring], { autoAlpha: 0, duration: .2 });
-    const down = () => gsap.to(ring, { scale: .75, duration: .15 });
-    const up = () => gsap.to(ring, { scale: 1, duration: .2 });
+    const leave = () => {
+      root.current?.removeAttribute("data-cursor-ready");
+      gsap.to([dot, ring], { autoAlpha: 0, duration: reduceMotion ? 0 : .2 });
+    };
+    const down = () => gsap.to(ring, { scale: .75, duration: reduceMotion ? 0 : .15 });
+    const up = () => gsap.to(ring, { scale: 1, duration: reduceMotion ? 0 : .2 });
     window.addEventListener("pointermove", move);
     document.addEventListener("pointerleave", leave);
     window.addEventListener("pointerdown", down);
@@ -75,6 +87,7 @@ export default function LandingPage() {
       document.removeEventListener("pointerleave", leave);
       window.removeEventListener("pointerdown", down);
       window.removeEventListener("pointerup", up);
+      root.current?.removeAttribute("data-cursor-ready");
       gsap.killTweensOf([dot, ring]);
     };
   }, []);
@@ -87,21 +100,11 @@ export default function LandingPage() {
     const rootEl = root.current;
     if (loading) return;
     const ctx = gsap.context(() => {
-      // Set entrance initial state and play within one GSAP context after loading.
-      gsap.set("[data-hero-reveal]", { y: 58, autoAlpha: 0, filter: "blur(8px)" });
-      gsap.set("[data-hero-art]", { y: 80, rotation: -7, autoAlpha: 0, scale: .88 });
-      gsap.set("[data-hero-orbit]", { rotation: -30, autoAlpha: 0 });
+      // Keep the hero art in its resting position after the loader reveals it.
       gsap.set("[data-hero-float]", { y: 0, rotation: 0 });
-      gsap.to("[data-hero-orbit]", { rotation: 330, duration: 60, ease: "none", repeat: -1, paused: window.matchMedia("(prefers-reduced-motion: reduce)").matches });
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const entrance = gsap.timeline({ defaults: { ease: "power3.out" }, paused: true });
-      entrance.to("[data-hero-reveal]", { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: reduce ? .01 : 1.05, stagger: reduce ? 0 : .16 }, .12)
-        .to("[data-hero-art]", { y: 0, rotation: 0, autoAlpha: 1, scale: 1, duration: reduce ? .01 : 1.55, ease: "expo.out" }, .35)
-        .to("[data-hero-orbit]", { autoAlpha: 1, duration: reduce ? .01 : .9 }, .8)
-        .fromTo("[data-hero-stamp]", { y: 30, rotation: -12, autoAlpha: 0 }, { y: 0, rotation: -8, autoAlpha: 1, duration: reduce ? .01 : .9, stagger: .12 }, 1.05);
+      gsap.to("[data-hero-orbit]", { rotation: 360, duration: 60, ease: "none", repeat: -1, paused: reduce });
       if (!reduce) gsap.to("[data-hero-float]", { y: -13, rotation: 1.5, duration: 4.5, ease: "sine.inOut", repeat: -1, yoyo: true, delay: 2.4 });
-      // Entrance is played only after React has removed the loader from the DOM.
-      requestAnimationFrame(() => requestAnimationFrame(() => entrance.play(0)));
       const stage = rootEl.querySelector<HTMLElement>("[data-stage]")!;
       const track = rootEl.querySelector<HTMLElement>("[data-track]")!;
       const cards = gsap.utils.toArray<HTMLElement>("[data-arc-card]", rootEl);
@@ -230,9 +233,9 @@ export default function LandingPage() {
     return () => { navigation.current = null; ctx.revert(); };
   }, [loading]);
 
-  return <main ref={root} className={`${sans.variable} ${serif.variable} w-full overflow-x-clip bg-[#faf8e8] text-[#205b37] font-[family-name:var(--font-dm-sans)]`}>
-    <div ref={cursorRing} aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[300] hidden h-10 w-10 rounded-full border-[1.5px] border-[#39754b] bg-[#e1a735]/10 opacity-0 md:block" />
-    <div ref={cursorDot} aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[301] hidden h-2.5 w-2.5 rounded-full bg-[#e1a735] opacity-0 md:block" />
+  return <main ref={root} data-custom-cursor data-cursor-ready="false" className={`${sans.variable} ${serif.variable} w-full overflow-x-clip bg-[#faf8e8] text-[#205b37] font-[family-name:var(--font-dm-sans)]`}>
+    <div ref={cursorRing} aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[300] h-10 w-10 rounded-full border-[1.5px] border-[#39754b] bg-[#e1a735]/10 opacity-0" />
+    <div ref={cursorDot} aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[301] h-2.5 w-2.5 rounded-full bg-[#e1a735] opacity-0" />
     {loading && <div ref={loaderRef} role="status" aria-label="Loading Mango Trails" className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-[#f7f6e5] text-[#235e3b] transition-opacity duration-700">
       <div className="absolute -left-20 -bottom-28 h-80 w-80 rounded-full bg-[#dcebb6]/60 blur-3xl" />
       <div className="absolute -right-20 -top-28 h-80 w-80 rounded-full bg-[#f4e2a0]/50 blur-3xl" />
@@ -287,7 +290,7 @@ export default function LandingPage() {
               <div className="pointer-events-none absolute inset-[8%] rotate-[-15deg] rounded-[42%_58%_60%_40%/55%_36%_64%_45%] bg-[#dce9bb]" />
               <div className="pointer-events-none absolute inset-[13%] rotate-[13deg] rounded-[56%_44%_43%_57%/42%_59%_41%_58%] bg-[#f3dda1]/60" />
               <div data-hero-float className="relative z-10 flex h-[90%] w-[90%] items-center justify-center overflow-hidden rounded-[46%_54%_59%_41%/41%_48%_52%_59%] shadow-[0_32px_80px_rgba(46,89,49,.19)]">
-                <img src="https://images.openai.com/static-rsc-4/nTBpwrJj7tdHKXwcDumzEIXVSo3IqlV6Lguyt9RWlpAnyzWXylQXbtxfTkfi2zx2cjZYJIImzJfD6_TTSPo-iPeEeP8e_sqcVtFi10Hy3WyzmrguCZAsVIfaKKB90u93TmQ92g1_NzSBl4gzA3QgAFV0N6i84Td7nl5RmA_cR4dfoJcR6OTb8M0Y-AdmXBbI?purpose=fullsize" alt="Minh họa hành trình khám phá xoài Cao Lãnh, Đồng Tháp" className="h-full w-full object-cover object-center" />
+                <img src={HERO_ART_IMAGE} alt="Minh họa hành trình khám phá xoài Cao Lãnh, Đồng Tháp" className="h-full w-full object-cover object-center" />
               </div>
               <div data-hero-stamp className="pointer-events-none absolute -bottom-[1%] -left-[2%] z-20 hidden rotate-[-8deg] rounded-2xl border border-[#e2dec7] bg-[#fffdf5]/95 px-5 py-4 shadow-[0_14px_40px_rgba(39,75,40,.1)] md:block">
                 <p className="text-[9px] font-extrabold uppercase tracking-[.2em] text-[#87957b]">THE MANGO LAND</p>
@@ -359,16 +362,31 @@ export default function LandingPage() {
         </section>
         <section className="relative flex h-full w-screen shrink-0 items-center justify-center overflow-hidden bg-[#eaf0d1] px-6 text-center text-[#205b37]">
           <div className="pointer-events-none absolute -right-[15vw] -top-[35vh] h-[85vh] w-[85vw] rounded-full bg-[#f8f7e6] blur-[75px]" />
-          <div className="relative z-10 max-w-[900px] pt-16">
-            <p data-closing-reveal className="mb-7 text-[10px] font-extrabold uppercase tracking-[.3em] text-[#6c9454]">04 / HÀNH TRÌNH CỦA BẠN</p>
-            <h2 data-closing-reveal className="font-[family-name:var(--font-editorial)] text-[clamp(46px,6.8vw,110px)] leading-[.93] tracking-[-.06em]">Cao Lãnh đang<br /><span className="italic text-[#dba11a]">đợi bạn.</span></h2>
-            <p data-closing-reveal className="mx-auto mt-7 max-w-xl font-[family-name:var(--font-editorial)] text-[clamp(20px,2.3vw,32px)] italic text-[#638e4e]">Theo dấu hương xoài, tìm về miền ký ức.</p>
-            <div data-closing-reveal className="mx-auto my-7 h-px w-24 bg-[#7aa16a]/50" />
-            <p data-closing-reveal className="mx-auto max-w-lg text-sm leading-7 text-[#536b50]">Tìm những khu vườn, điểm đến và trải nghiệm thú vị trên bản đồ tương tác — rồi bắt đầu hành trình Cao Lãnh theo cách của riêng bạn.</p>
-            <div data-closing-reveal className="mt-9 flex flex-wrap justify-center gap-4">
-              <a href="/map" className="rounded-full bg-[#24643e] px-8 py-4 text-xs font-extrabold tracking-wider text-[#fffbed] transition-transform hover:-translate-y-1">KHÁM PHÁ BẢN ĐỒ ↗</a>
-              <a href="/login" className="rounded-full border-2 border-[#24643e] px-8 py-4 text-xs font-extrabold tracking-wider text-[#24643e] transition-transform hover:-translate-y-1">ĐĂNG NHẬP ↗</a>
+          <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pt-16 text-center sm:px-8">
+            <p data-closing-reveal className="mb-2 text-[10px] font-extrabold uppercase tracking-[.3em] text-[#6c9454]">06 / 06 · {EVENT.name}</p>
+            <h2 data-closing-reveal className="font-[family-name:var(--font-editorial)] text-[clamp(38px,5.2vw,72px)] leading-[.96] tracking-[-.06em]">Trạm Hẹn<br /><span className="italic text-[#dba11a]">Cao Lãnh.</span></h2>
+            <p data-closing-reveal className="mx-auto mt-3 max-w-3xl text-[12px] leading-5 text-[#536b50] sm:text-sm">{EVENT.description}</p>
+            <div className="mx-auto mt-4 grid max-w-4xl grid-cols-2 gap-2 text-left">
+              {EVENT.highlights.map((highlight, index) => (
+                <div key={highlight} data-closing-reveal className="flex items-start gap-2 rounded-2xl border border-[#b7c9a9]/70 bg-[#fffdf3]/65 px-3 py-2.5">
+                  <span className="font-[family-name:var(--font-editorial)] text-lg italic text-[#c9932e]">0{index + 1}</span>
+                  <span className="text-[10px] leading-4 text-[#536b50] sm:text-xs sm:leading-5">{highlight}</span>
+                </div>
+              ))}
             </div>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {EVENT.meta.map((item) => (
+                <div key={item.label} data-closing-reveal className="rounded-full border border-[#9db48b]/50 bg-[#fffdf3]/70 px-4 py-2 text-left">
+                  <span className="mr-2 text-[9px] font-bold uppercase tracking-wider text-[#829274]">{item.label}</span>
+                  <span className="text-[10px] font-semibold text-[#315d40]">{item.value}</span>
+                </div>
+              ))}
+            </div>
+            <div data-closing-reveal className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              <a href={EVENT.ticketHref} className="rounded-full bg-[#24643e] px-7 py-3 text-xs font-extrabold tracking-wider text-[#fffbed] shadow-md transition-transform hover:-translate-y-1">Tạo Vé Hẹn Chu Du ↗</a>
+              <a href="/map" className="rounded-full border border-[#24643e]/35 px-5 py-3 text-xs font-extrabold tracking-wider text-[#24643e] transition-colors hover:bg-[#24643e]/10">Xem lại bản đồ</a>
+            </div>
+            <p data-closing-reveal className="mx-auto mt-2 max-w-2xl text-[10px] italic text-[#71836c]">{EVENT.ticketNote}</p>
           </div>
         </section>
       </div>

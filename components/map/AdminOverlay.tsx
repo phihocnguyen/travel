@@ -42,13 +42,13 @@ export function AdminOverlay({ assets, y }: Props) {
       position={[activePos[0], y + 0.4, activePos[1]]}
       center
       zIndexRange={[40, 0]}
-      style={{ pointerEvents: "none" }}
+      style={{ pointerEvents: "none", whiteSpace: "nowrap" }}
     >
-      <div className="rounded-xl border border-forest/10 bg-cream/95 px-3.5 py-2 shadow-card backdrop-blur">
-        <span className="block text-[8px] font-bold uppercase tracking-[0.22em] text-forest/50">
+      <div className="w-max max-w-none whitespace-nowrap rounded-xl border border-forest/10 bg-cream/95 px-3.5 py-2 shadow-card backdrop-blur">
+        <span className="block whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.22em] text-forest/50">
           {KIND_LABELS[active.kind] ?? active.kind}
         </span>
-        <span className="mt-0.5 block text-sm font-semibold text-forest">
+        <span className="mt-0.5 block whitespace-nowrap text-sm font-semibold text-forest">
           {active.name}
         </span>
       </div>

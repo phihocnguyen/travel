@@ -21,11 +21,11 @@ export function NeighborLabels({ projector, neighbors, y }: Props) {
             position={[x, y, z]}
             center
             zIndexRange={[20, 0]}
-            style={{ pointerEvents: "none" }}
+            style={{ pointerEvents: "none", whiteSpace: "nowrap" }}
           >
-            <div className="flex items-center gap-2 rounded-full border border-forest/10 bg-cream/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-forest shadow-card backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-mango" />
-              {neighbor.name}
+            <div className="inline-flex w-max flex-nowrap items-center gap-2 whitespace-nowrap rounded-full border border-forest/10 bg-cream/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-forest shadow-card backdrop-blur">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mango" />
+              <span className="shrink-0 whitespace-nowrap">{neighbor.name}</span>
             </div>
           </Html>
         );

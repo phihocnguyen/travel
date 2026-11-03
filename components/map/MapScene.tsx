@@ -154,8 +154,18 @@ function SceneContent() {
   const invalidate = useThree((state) => state.invalidate);
 
   useEffect(() => {
-    if (assets) invalidate();
-  }, [assets, invalidate]);
+    if (!assets) return;
+    invalidate();
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      invalidate();
+      secondFrame = window.requestAnimationFrame(() => setReady(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [assets, invalidate, setReady]);
 
   useEffect(() => {
     let cancelled = false;
@@ -169,7 +179,6 @@ function SceneContent() {
         if (cancelled) return;
         setAssets(next);
         setLoadProgress(1);
-        setReady(true);
       })
       .catch((error: unknown) => {
         console.error("Không tải được dữ liệu bản đồ", error);
