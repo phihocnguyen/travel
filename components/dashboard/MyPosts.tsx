@@ -1,0 +1,14 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { POST_STATUS_LABELS,type BlogPost } from "@/lib/posts/types";
+import { Table,TableHeader,TableBody,TableHead,TableRow,TableCell } from "@/components/ui/table";
+import { useTablePageSize,TablePagination } from "./TablePagination";
+import { DeletePostButton } from "./DeletePostButton";
+export default function MyPosts({posts}:{posts:BlogPost[]}){
+  const [query,setQuery]=useState(""),[page,setPage]=useState(0),{ref,size}=useTablePageSize(61);
+  const filtered=posts.filter(post=>post.title.toLocaleLowerCase("vi").includes(query.toLocaleLowerCase("vi"))),pages=Math.max(1,Math.ceil(filtered.length/size)),current=Math.min(page,pages-1);
+  return <div className="flex h-full min-h-0 flex-col gap-4"><header className="flex shrink-0 items-center justify-between gap-3"><div><h1 className="text-xl font-semibold tracking-tight">Bài viết của tôi</h1><p className="mt-1 text-xs text-zinc-500">Theo dõi và cập nhật những câu chuyện đã gửi.</p></div><Link href="/dashboard/posts/new" className="shrink-0 rounded-md bg-zinc-900 px-3 py-2 text-xs font-medium text-white">Viết bài</Link></header><input aria-label="Tìm bài viết của tôi" placeholder="Tìm tiêu đề bài viết…" value={query} onChange={event=>{setQuery(event.target.value);setPage(0);}} className="h-9 shrink-0 rounded-md border border-zinc-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-zinc-300"/>
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white"><div ref={ref} className="min-h-0 flex-1 overflow-auto"><Table><TableHeader><TableRow><TableHead>Tiêu đề</TableHead><TableHead>Danh mục</TableHead><TableHead>Trạng thái</TableHead><TableHead>Cập nhật</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader><TableBody>{filtered.slice(current*size,(current+1)*size).map(post=><TableRow key={post.id}><TableCell className="max-w-64 truncate font-medium">{post.title}</TableCell><TableCell className="whitespace-nowrap text-xs">{post.category}</TableCell><TableCell className="whitespace-nowrap text-xs text-zinc-500">{POST_STATUS_LABELS[post.status]}</TableCell><TableCell className="whitespace-nowrap text-xs text-zinc-500">{new Date(post.updatedAt).toLocaleDateString("vi-VN")}</TableCell><TableCell><div className="flex items-center justify-end gap-3"><Link href={`/dashboard/posts/${post.id}`} className="whitespace-nowrap text-xs font-medium hover:underline">Chỉnh sửa</Link><DeletePostButton postId={post.id} title={post.title}/></div></TableCell></TableRow>)}{!filtered.length&&<TableRow><TableCell colSpan={5} className="h-40 text-center text-zinc-500">{query?"Không tìm thấy bài viết.":"Chưa có bài viết. Bắt đầu bằng một câu chuyện của bạn."}</TableCell></TableRow>}</TableBody></Table></div><TablePagination page={current} pages={pages} total={filtered.length} onChange={setPage}/></section>
+  </div>;
+}

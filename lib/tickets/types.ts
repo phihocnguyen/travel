@@ -51,6 +51,8 @@ export const DEFAULT_TICKET_TEXT_TRANSFORM: TicketTextTransform = {
 
 export type TicketDesign = {
   id: string;
+  code?: string;
+  printLocked?: boolean;
   title: string;
   from: string;
   to: string;

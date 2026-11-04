@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { listApprovedPosts } from "@/lib/posts/store";
+import { postPlainText } from "@/lib/posts/content";
 
 export const instant = false;
 
@@ -92,7 +93,7 @@ export default async function BlogPage() {
                     {post.title}
                   </h2>
                   <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[#6b7a6f]">
-                    {post.excerpt || post.content}
+                    {post.excerpt || postPlainText(post.content)}
                   </p>
                   <p className="mt-4 text-xs text-[#9a8f7a]">
                     {post.author.name} · {formatDate(post.updatedAt)}

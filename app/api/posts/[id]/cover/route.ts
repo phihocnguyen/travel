@@ -33,7 +33,7 @@ export async function GET(_request: Request, context: RouteContext) {
   return new Response(new Uint8Array(image), {
     headers: {
       "Content-Type": "image/jpeg",
-      "Cache-Control": "private, max-age=31536000, immutable",
+      "Cache-Control": "private, no-store",
     },
   });
 }

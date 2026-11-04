@@ -23,6 +23,7 @@ export type BlogPost = {
   category: PostCategory;
   excerpt: string;
   content: string;
+  contentFormat?: "plain" | "html";
   coverImageUrl: string | null;
   status: PostStatus;
   author: PostAuthor;
@@ -37,6 +38,7 @@ export type PostInput = {
   category: PostCategory;
   excerpt: string;
   content: string;
+  contentFormat?: "plain" | "html";
   coverImageDataUrl?: string | null;
   removeCover?: boolean;
 };

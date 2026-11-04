@@ -1,3 +1,5 @@
+"use client";
+
 import type {
   CSSProperties,
   PointerEvent as ReactPointerEvent,
@@ -265,6 +267,7 @@ export default function TicketPreview({
   return (
     <div
       ref={rootRef}
+      data-ticket-preview
       onClick={onBackgroundClick}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -319,6 +322,9 @@ export default function TicketPreview({
           {sticker.emoji}
         </span>
       ))}
+      <div className="pointer-events-none absolute bottom-[5%] right-[8.5%] z-30 rounded bg-white/90 px-[1.2%] py-[0.4%] font-sans font-bold tracking-wider text-[#26392e]" style={{ fontSize: "1.6cqw" }}>
+        {design.code ?? "MÃ VÉ CẤP KHI LƯU"}
+      </div>
     </div>
   );
 }

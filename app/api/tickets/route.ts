@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { ensureDatabaseUser } from "@/lib/auth/user";
 import {
   createTicket,
   listTickets,
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
 
   try {
+    await ensureDatabaseUser(session);
     const ticket = await createTicket(session.sub, body);
     return NextResponse.json({ ticket }, { status: 201 });
   } catch (error) {

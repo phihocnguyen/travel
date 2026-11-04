@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { canManageTickets } from "@/lib/auth/user";
 import {
   readTicketImage,
   TicketValidationError,
@@ -18,7 +19,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
 
   try {
-    const image = await readTicketImage(session.sub, id);
+    const image = await readTicketImage(session.sub, id, await canManageTickets(session));
 
     if (!image) {
       return new Response("Not found", { status: 404 });
@@ -27,7 +28,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return new Response(new Uint8Array(image.data), {
       headers: {
         "Content-Type": image.contentType,
-        "Cache-Control": "private, max-age=31536000, immutable",
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (error) {

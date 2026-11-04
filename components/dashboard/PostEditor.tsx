@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import RichTextEditor from "./RichTextEditor";
 import {
   useRef,
   useState,
@@ -15,7 +16,7 @@ import {
 } from "@/lib/posts/types";
 
 const inputClass =
-  "w-full rounded-xl border border-[#d8dfc1] bg-[#fffdf0] px-3.5 py-2.5 text-sm text-[#345840] outline-none transition placeholder:text-[#9a8f7a] focus:border-[#568260] focus:ring-2 focus:ring-[#568260]/15";
+  "w-full rounded-md border border-[#e4e4e7] bg-[#ffffff] px-3.5 py-2.5 text-sm text-[#27272a] outline-none transition placeholder:text-[#a1a1aa] focus:border-[#52525b] focus:ring-2 focus:ring-[#52525b]/15";
 
 const STATUS_STYLES: Record<BlogPost["status"], string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -57,6 +58,9 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
   );
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [content, setContent] = useState(post?.content ?? "");
+  const [contentFormat,setContentFormat] = useState<"plain"|"html">(post?.contentFormat??"plain");
+  const [contentText,setContentText] = useState((post?.content??"").replace(/<[^>]*>/g," "));
+  const [inlineUploading,setInlineUploading] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string | null>(
     post?.coverImageUrl ?? null,
   );
@@ -111,6 +115,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
       category,
       excerpt,
       content,
+      contentFormat,
       ...(pendingCover ? { coverImageDataUrl: pendingCover } : {}),
       ...(coverRemoved ? { removeCover: true } : {}),
     };
@@ -145,23 +150,25 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
   }
 
   const status = post?.status;
+  const [mobileView,setMobileView] = useState<"content"|"media">("content");
+  const [sidePanel,setSidePanel] = useState<"cover"|"preview">("cover");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto flex h-full min-h-0 max-w-6xl flex-col gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/posts"
-            className="rounded-xl border border-[#ddd2bd] bg-cream-soft p-2.5 text-[#45614a] shadow-sm transition hover:bg-[#fefbdf]"
+            className="rounded-md border border-[#e4e4e7] bg-white p-2.5 text-[#71717a] shadow-sm transition hover:bg-[#f4f4f5]"
             aria-label="Quay lại danh sách bài viết"
           >
             ←
           </Link>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#9d6046]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#52525b]">
               {postId ? "Chỉnh sửa bài viết" : "Bài viết mới"}
             </p>
-            <h1 className="mt-0.5 font-display text-2xl font-normal tracking-tight text-[#356b43]">
+            <h1 className="mt-0.5 font-sans text-2xl font-normal tracking-tight text-[#18181b]">
               {postId ? "Cập nhật câu chuyện" : "Viết câu chuyện chuyến đi"}
             </h1>
           </div>
@@ -182,8 +189,8 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
 
           <button
             onClick={handleSave}
-            disabled={saving || uploading}
-            className="rounded-xl bg-[#356b43] px-6 py-3 text-sm font-semibold text-[#fefbdf] transition hover:bg-[#568260] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={saving || uploading || inlineUploading}
+            className="rounded-md bg-[#18181b] px-6 py-3 text-sm font-semibold text-[#f4f4f5] transition hover:bg-[#52525b] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Đang gửi..." : "Lưu & gửi duyệt"}
           </button>
@@ -191,22 +198,23 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
       </div>
 
       {error ? (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
       {status === "rejected" && post?.reviewNote ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <p className="font-semibold">Bài viết bị từ chối</p>
           <p className="mt-1">{post.reviewNote}</p>
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-5 rounded-3xl border border-[#d8dfc1] bg-cream-soft p-5 shadow-sm md:p-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-[#345840]">
+      <div className="flex shrink-0 gap-1 rounded-md bg-zinc-100 p-1 lg:hidden" role="group" aria-label="Soạn bài viết">{([["content","Nội dung"],["media","Ảnh & xem trước"]] as const).map(([value,label])=><button type="button" key={value} aria-pressed={mobileView===value} onClick={()=>setMobileView(value)} className={`flex-1 rounded px-3 py-1.5 text-xs ${mobileView===value?"bg-white font-medium shadow-sm":"text-zinc-500"}`}>{label}</button>)}</div>
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className={`min-h-0 flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4 ${mobileView==="content"?"flex":"hidden lg:flex"}`}>
+          <div className="shrink-0 space-y-2">
+            <label className="block text-sm font-medium text-[#27272a]">
               Tiêu đề
             </label>
             <input
@@ -218,9 +226,9 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
+          <div className="grid shrink-0 gap-3 sm:grid-cols-[150px_1fr]">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-[#345840]">
+              <label className="block text-sm font-medium text-[#27272a]">
                 Danh mục
               </label>
               <select
@@ -239,7 +247,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-[#345840]">
+              <label className="block text-sm font-medium text-[#27272a]">
                 Mô tả ngắn
               </label>
               <input
@@ -253,23 +261,18 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-[#345840]">
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <label className="block text-sm font-medium text-[#27272a]">
               Nội dung
             </label>
-            <textarea
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              rows={16}
-              placeholder="Kể lại hành trình, món ăn, con người và những điều bạn thấy..."
-              className={`${inputClass} resize-y leading-relaxed`}
-            />
+            <RichTextEditor content={content} format={contentFormat} onChange={(html,text)=>{setContent(html);setContentText(text);setContentFormat("html");}} onBusyChange={setInlineUploading}/>
           </div>
         </div>
 
-        <div className="space-y-5">
-          <div className="rounded-3xl border border-[#d8dfc1] bg-cream-soft p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-[#345840]">Ảnh bìa</h2>
+        <div className={`min-h-0 flex-col gap-3 overflow-y-auto ${mobileView==="media"?"flex":"hidden lg:flex"}`}>
+          <div className="flex shrink-0 gap-1 rounded-md bg-zinc-100 p-1" role="group" aria-label="Ảnh bìa và xem trước">{([["cover","Ảnh bìa"],["preview","Xem trước"]] as const).map(([value,label])=><button type="button" key={value} aria-pressed={sidePanel===value} onClick={()=>setSidePanel(value)} className={`flex-1 rounded px-3 py-1.5 text-xs ${sidePanel===value?"bg-white font-medium shadow-sm":"text-zinc-500"}`}>{label}</button>)}</div>
+          <div className={`rounded-lg border border-zinc-200 bg-white p-4 ${sidePanel==="cover"?"":"hidden"}`}>
+            <h2 className="text-sm font-semibold text-[#27272a]">Ảnh bìa</h2>
 
             <input
               ref={fileInputRef}
@@ -280,22 +283,22 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             />
 
             <div
-              className="mt-3 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-[#e8dfc9] bg-cover bg-center"
+              className="mt-3 aspect-[16/9] w-full overflow-hidden rounded-lg bg-[#f4f4f5] bg-cover bg-center"
               style={
                 coverUrl
                   ? { backgroundImage: `url(${coverUrl})` }
                   : {
                       background:
-                        "linear-gradient(135deg, #568260 0%, #356b43 100%)",
+                        "linear-gradient(135deg, #52525b 0%, #18181b 100%)",
                     }
               }
             >
               {!coverUrl ? (
                 <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-                  <span className="font-display text-2xl tracking-[0.2em] text-[#fefbdf]">
+                  <span className="font-sans text-2xl tracking-[0.2em] text-[#f4f4f5]">
                     ĐỒNG THÁP
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.3em] text-[#fefbdf]/60">
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-[#f4f4f5]/60">
                     Ảnh bìa bài viết
                   </span>
                 </div>
@@ -306,7 +309,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl border border-[#d8dfc1] py-2 text-sm font-medium text-[#345840] transition hover:bg-[#fefbdf] disabled:opacity-50"
+                className="rounded-md border border-[#e4e4e7] py-2 text-sm font-medium text-[#27272a] transition hover:bg-[#f4f4f5] disabled:opacity-50"
               >
                 {uploading ? "Đang xử lý..." : coverUrl ? "Đổi ảnh" : "Tải ảnh"}
               </button>
@@ -317,19 +320,19 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
                   setCoverRemoved(true);
                 }}
                 disabled={!coverUrl}
-                className="rounded-xl border border-red-200 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-40"
+                className="rounded-md border border-red-200 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-40"
               >
                 Xoá ảnh
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#d8dfc1] bg-[#fffdf0] p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-[#345840]">
+          <div className={`rounded-lg border border-zinc-200 bg-white p-4 ${sidePanel==="preview"?"":"hidden"}`}>
+            <h2 className="text-sm font-semibold text-[#27272a]">
               Xem trước thẻ blog
             </h2>
 
-            <article className="mt-3 overflow-hidden rounded-2xl border border-[#d8dfc1] bg-cream-soft">
+            <article className="mt-3 overflow-hidden rounded-lg border border-[#e4e4e7] bg-white">
               <div
                 className="aspect-[16/9] w-full bg-cover bg-center"
                 style={
@@ -337,23 +340,23 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
                     ? { backgroundImage: `url(${coverUrl})` }
                     : {
                         background:
-                          "linear-gradient(135deg, #568260 0%, #356b43 100%)",
+                          "linear-gradient(135deg, #52525b 0%, #18181b 100%)",
                       }
                 }
               />
               <div className="p-4">
-                <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#9d6046]">
+                <span className="rounded-full bg-[#f4f4f5] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#52525b]">
                   {category}
                 </span>
-                <h3 className="mt-3 font-display text-xl leading-tight text-[#356b43]">
+                <h3 className="mt-3 font-sans text-xl leading-tight text-[#18181b]">
                   {title || "Tiêu đề bài viết"}
                 </h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[#45614a]">
+                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-[#71717a]">
                   {excerpt ||
-                    content ||
+                    contentText ||
                     "Mô tả ngắn của bài viết sẽ xuất hiện ở đây."}
                 </p>
-                <p className="mt-3 text-xs text-[#9a8f7a]">
+                <p className="mt-3 text-xs text-[#a1a1aa]">
                   {post?.author.name ?? "Bạn"} ·{" "}
                   {post
                     ? new Intl.DateTimeFormat("vi-VN", {
@@ -365,7 +368,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
             </article>
           </div>
 
-          <p className="rounded-2xl bg-[#fefbdf] px-4 py-3 text-xs leading-relaxed text-[#6b5a3d]">
+          <p className="rounded-lg bg-[#f4f4f5] px-4 py-3 text-xs leading-relaxed text-[#52525b]">
             Bài viết sẽ ở trạng thái chờ duyệt cho đến khi quản trị viên phê
             duyệt. Bạn vẫn có thể chỉnh sửa và gửi lại.
           </p>

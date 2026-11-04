@@ -26,7 +26,7 @@ import {
 } from "@/lib/tickets/types";
 
 const inputClass =
-  "w-full rounded-xl border border-[#d8dfc1] bg-[#fffdf0] px-3.5 py-2.5 text-sm text-[#356b43] outline-none transition placeholder:text-[#9a8f7a] focus:border-[#568260] focus:ring-2 focus:ring-[#568260]/15";
+  "w-full rounded-md border border-[#e4e4e7] bg-[#ffffff] px-3.5 py-2.5 text-sm text-[#18181b] outline-none transition placeholder:text-[#a1a1aa] focus:border-[#52525b] focus:ring-2 focus:ring-[#52525b]/15";
 
 const TABS = [
   { id: "content", label: "Nội dung" },
@@ -115,11 +115,11 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-[#345840]">
+      <label className="block text-sm font-medium text-[#27272a]">
         {label}
       </label>
       {children}
-      {hint ? <p className="text-xs text-[#9a8f7a]">{hint}</p> : null}
+      {hint ? <p className="text-xs text-[#a1a1aa]">{hint}</p> : null}
     </div>
   );
 }
@@ -128,6 +128,8 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
   const router = useRouter();
 
   const [ticketId, setTicketId] = useState<string | null>(ticket?.id ?? null);
+  const [ticketCode, setTicketCode] = useState(ticket?.code);
+  const [savedAt, setSavedAt] = useState(ticket?.updatedAt);
   const [title, setTitle] = useState(ticket?.title ?? "Vé du lịch Đồng Tháp");
   const [from, setFrom] = useState(ticket?.from ?? "Đồng Tháp");
   const [to, setTo] = useState(ticket?.to ?? "Người bạn");
@@ -169,6 +171,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [imageRemoved, setImageRemoved] = useState(false);
   const [tab, setTab] = useState<Tab>("content");
+  const [mobileView,setMobileView] = useState<"controls"|"preview">("controls");
   const [uploading, setUploading] = useState(false);
   const [removingBackground, setRemovingBackground] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -215,6 +218,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
 
   const previewDesign: TicketDesign = {
     id: ticketId ?? "preview",
+    code: ticketCode,
     title,
     from,
     to,
@@ -500,6 +504,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
     setStatus(null);
 
     const payload = {
+      expectedUpdatedAt: savedAt,
       title,
       from,
       to,
@@ -539,6 +544,8 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
       const saved = data.ticket;
 
       setTicketId(saved.id);
+      setTicketCode(saved.code);
+      setSavedAt(saved.updatedAt);
       setImageUrl(saved.image.url);
       setPendingImage(null);
       setImageRemoved(false);
@@ -573,12 +580,12 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto flex h-full min-h-0 max-w-7xl flex-col gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/tickets"
-            className="rounded-lg border border-[#d8dfc1] bg-cream-soft p-2.5 text-[#45614a] shadow-sm transition hover:bg-[#fefbdf] hover:text-[#356b43]"
+            className="rounded-lg border border-[#e4e4e7] bg-white p-2.5 text-[#71717a] shadow-sm transition hover:bg-[#f4f4f5] hover:text-[#18181b]"
             aria-label="Quay lại thư viện"
           >
             <svg
@@ -597,10 +604,10 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
           </Link>
 
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#9d6046]">
-              {ticketId ? "Chỉnh sửa" : "Tạo mới"}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#52525b]">
+              {ticketCode ?? "Tạo vé của tôi"}
             </p>
-            <h1 className="mt-0.5 font-display text-2xl tracking-tight text-[#356b43] md:text-3xl">
+            <h1 className="mt-0.5 font-sans text-2xl tracking-tight text-[#18181b] md:text-3xl">
               {ticketId ? "Chỉnh sửa vé du lịch" : "Thiết kế vé du lịch"}
             </h1>
           </div>
@@ -622,25 +629,27 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
 
           <button
             onClick={handleSave}
-            disabled={saving || uploading || removingBackground}
-            className="rounded-xl bg-[#356b43] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#568260] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={saving || uploading || removingBackground || ticket?.printLocked}
+            className="rounded-md bg-[#18181b] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#52525b] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Đang lưu..." : "Lưu thiết kế"}
           </button>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <div className="self-start overflow-hidden rounded-2xl border border-[#d8dfc1] bg-cream-soft shadow-sm xl:sticky xl:top-24">
-          <div className="flex overflow-x-auto border-b border-[#d8dfc1]">
+      {ticket?.printLocked && <p role="status" className="rounded-md border border-black/15 bg-white/70 p-4 text-sm">Vé đang in, đã in hoặc đã trao. Bạn vẫn có thể xem vé; thiết kế hiện được khóa để khớp bản in.</p>}
+      <div className="flex shrink-0 gap-1 rounded-md bg-zinc-100 p-1 lg:hidden" role="group" aria-label="Chế độ thiết kế vé">{([["controls","Chỉnh sửa"],["preview","Xem trước & kéo ảnh"]] as const).map(([value,label])=><button type="button" key={value} aria-pressed={mobileView===value} onClick={()=>setMobileView(value)} className={`flex-1 rounded px-3 py-1.5 text-xs ${mobileView===value?"bg-white font-medium shadow-sm":"text-zinc-500"}`}>{label}</button>)}</div>
+      <div className={`grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] ${ticket?.printLocked ? "pointer-events-none opacity-70" : ""}`}>
+        <div className={`min-h-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white ${mobileView==="controls"?"flex":"hidden lg:flex"}`}>
+          <div className="flex shrink-0 overflow-x-auto border-b border-zinc-200 p-1">
             {TABS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setTab(item.id)}
                 className={`whitespace-nowrap px-4 py-3 text-xs font-semibold transition ${
                   tab === item.id
-                    ? "border-b-2 border-[#9d6046] text-[#9d6046]"
-                    : "text-[#45614a] hover:bg-[#fefbdf] hover:text-[#356b43]"
+                    ? "border-b-2 border-[#52525b] text-[#52525b]"
+                    : "text-[#71717a] hover:bg-[#f4f4f5] hover:text-[#18181b]"
                 }`}
               >
                 {item.label}
@@ -648,7 +657,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
             ))}
           </div>
 
-          <div className="max-h-[calc(100dvh-12rem)] space-y-5 overflow-y-auto p-5">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
             {tab === "content" ? (
               <>
                 <Field label="Tiêu đề vé">
@@ -677,7 +686,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                         scale: Number(event.target.value),
                       }))
                     }
-                    className="w-full accent-[#568260]"
+                    className="w-full accent-[#52525b]"
                   />
                 </Field>
 
@@ -694,7 +703,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                           x: Number(event.target.value),
                         }))
                       }
-                      className="w-full accent-[#568260]"
+                      className="w-full accent-[#52525b]"
                     />
                   </Field>
                   <Field label="Tiêu đề dọc">
@@ -709,7 +718,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                           y: Number(event.target.value),
                         }))
                       }
-                      className="w-full accent-[#568260]"
+                      className="w-full accent-[#52525b]"
                     />
                   </Field>
                 </div>
@@ -719,7 +728,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                   onClick={() =>
                     setTitleTransform(DEFAULT_TICKET_TITLE_TRANSFORM)
                   }
-                  className="w-full rounded-lg border border-[#d8dfc1] py-2 text-sm font-medium text-[#345840] transition hover:bg-[#fefbdf]"
+                  className="w-full rounded-lg border border-[#e4e4e7] py-2 text-sm font-medium text-[#27272a] transition hover:bg-[#f4f4f5]"
                 >
                   Căn giữa và đặt lại cỡ tiêu đề
                 </button>
@@ -740,7 +749,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                         scale: Number(event.target.value),
                       }))
                     }
-                    className="w-full accent-[#568260]"
+                    className="w-full accent-[#52525b]"
                   />
                 </Field>
 
@@ -749,7 +758,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                   onClick={() =>
                     setTextTransform(DEFAULT_TICKET_TEXT_TRANSFORM)
                   }
-                  className="w-full rounded-lg border border-[#d8dfc1] py-2 text-sm font-medium text-[#345840] transition hover:bg-[#fefbdf]"
+                  className="w-full rounded-lg border border-[#e4e4e7] py-2 text-sm font-medium text-[#27272a] transition hover:bg-[#f4f4f5]"
                 >
                   Đặt lại kích thước và vị trí cụm chữ
                 </button>
@@ -803,7 +812,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading || removingBackground}
-                  className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d8dfc1] bg-[#fefbdf] px-4 py-8 text-center transition hover:border-emerald-500 hover:bg-mango/15 disabled:opacity-50"
+                  className="flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-[#e4e4e7] bg-[#f4f4f5] px-4 py-8 text-center transition hover:border-emerald-500 hover:bg-zinc-100 disabled:opacity-50"
                 >
                   <svg
                     width={26}
@@ -814,34 +823,34 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                     strokeWidth={1.6}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-[#568260]"
+                    className="text-[#52525b]"
                     aria-hidden="true"
                   >
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <path d="m21 15-5-5L5 21" />
                   </svg>
-                  <span className="text-sm font-semibold text-[#345840]">
+                  <span className="text-sm font-semibold text-[#27272a]">
                     {uploading
                       ? "Đang xử lý ảnh..."
                       : imageUrl
                         ? "Đổi ảnh khác"
                         : "Tải ảnh lên"}
                   </span>
-                  <span className="text-xs text-[#9a8f7a]">
+                  <span className="text-xs text-[#a1a1aa]">
                     JPG hoặc PNG · tự động nén và cắt theo khung vé
                   </span>
                 </button>
 
                 {imageUrl ? (
                   <div className="space-y-5">
-                    <div className="rounded-xl border border-forest/10 bg-cream-soft p-4">
+                    <div className="rounded-md border border-forest/10 bg-white p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#356b43]">
+                          <p className="text-sm font-semibold text-[#18181b]">
                             Tách chủ thể khỏi nền
                           </p>
-                          <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#356b43]/60">
+                          <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#18181b]/60">
                             Xử lý ngay trên thiết bị để tách người hoặc vật thể. Lần đầu cần tải model.
                           </p>
                         </div>
@@ -849,7 +858,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                           type="button"
                           onClick={handleRemoveBackground}
                           disabled={removingBackground || uploading || saving}
-                          className="rounded-full bg-[#efc666] px-4 py-2 text-xs font-bold text-[#356b43] transition hover:bg-[#f4d88b] disabled:cursor-wait disabled:opacity-60"
+                          className="rounded-full bg-[#efc666] px-4 py-2 text-xs font-bold text-[#18181b] transition hover:bg-[#f4d88b] disabled:cursor-wait disabled:opacity-60"
                         >
                           {removingBackground ? "Đang tách nền…" : "Xóa phông"}
                         </button>
@@ -872,7 +881,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                             scale: Number(event.target.value),
                           }))
                         }
-                        className="w-full accent-[#568260]"
+                        className="w-full accent-[#52525b]"
                       />
                     </Field>
 
@@ -889,7 +898,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                               x: Number(event.target.value),
                             }))
                           }
-                          className="w-full accent-[#568260]"
+                          className="w-full accent-[#52525b]"
                         />
                       </Field>
                       <Field label="Vị trí dọc">
@@ -904,7 +913,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                               y: Number(event.target.value),
                             }))
                           }
-                          className="w-full accent-[#568260]"
+                          className="w-full accent-[#52525b]"
                         />
                       </Field>
                     </div>
@@ -919,7 +928,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                             y: 0,
                           }))
                         }
-                        className="rounded-lg border border-[#d8dfc1] py-2 text-sm font-medium text-[#345840] transition hover:bg-[#fefbdf]"
+                        className="rounded-lg border border-[#e4e4e7] py-2 text-sm font-medium text-[#27272a] transition hover:bg-[#f4f4f5]"
                       >
                         Vừa khung
                       </button>
@@ -932,7 +941,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs leading-relaxed text-[#9a8f7a]">
+                  <p className="text-xs leading-relaxed text-[#a1a1aa]">
                     Chưa có ảnh. Vé sẽ dùng nền màu chủ đề cho đến khi bạn tải
                     ảnh lên.
                   </p>
@@ -951,7 +960,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                       <button
                         key={emoji}
                         onClick={() => addSticker(emoji)}
-                        className="rounded-lg border border-[#d8dfc1] bg-cream-soft py-2 text-xl transition hover:border-[#9d6046] hover:bg-mango/15"
+                        className="rounded-lg border border-[#e4e4e7] bg-white py-2 text-xl transition hover:border-[#52525b] hover:bg-zinc-100"
                         aria-label={`Thêm sticker ${emoji}`}
                       >
                         {emoji}
@@ -969,12 +978,12 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                           onClick={() => setSelectedStickerId(sticker.id)}
                           className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition ${
                             selectedStickerId === sticker.id
-                              ? "border-[#9d6046] bg-[#fdf3da]"
-                              : "border-[#d8dfc1] hover:bg-[#fefbdf]"
+                              ? "border-[#52525b] bg-[#f4f4f5]"
+                              : "border-[#e4e4e7] hover:bg-[#f4f4f5]"
                           }`}
                         >
                           <span className="text-base">{sticker.emoji}</span>
-                          <span className="text-xs text-[#9a8f7a]">
+                          <span className="text-xs text-[#a1a1aa]">
                             {index + 1}
                           </span>
                         </button>
@@ -982,15 +991,15 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                     </div>
                   </Field>
                 ) : (
-                  <p className="text-xs text-[#9a8f7a]">
+                  <p className="text-xs text-[#a1a1aa]">
                     Chưa có sticker nào trên vé.
                   </p>
                 )}
 
                 {selectedSticker ? (
-                  <div className="space-y-4 rounded-xl bg-[#fefbdf] p-4">
+                  <div className="space-y-4 rounded-md bg-[#f4f4f5] p-4">
                     <div className="flex items-center justify-between">
-                      <p className="flex items-center gap-2 text-sm font-semibold text-[#345840]">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-[#27272a]">
                         <span className="text-xl">
                           {selectedSticker.emoji}
                         </span>
@@ -1017,7 +1026,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                             size: Number(event.target.value),
                           })
                         }
-                        className="w-full accent-[#568260]"
+                        className="w-full accent-[#52525b]"
                       />
                     </Field>
 
@@ -1034,7 +1043,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                             rotation: Number(event.target.value),
                           })
                         }
-                        className="w-full accent-[#568260]"
+                        className="w-full accent-[#52525b]"
                       />
                     </Field>
                   </div>
@@ -1050,16 +1059,16 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                       <button
                         key={option.id}
                         onClick={() => setLayout(option.id)}
-                        className={`w-full rounded-xl border p-3 text-left transition ${
+                        className={`w-full rounded-md border p-3 text-left transition ${
                           layout === option.id
-                            ? "border-[#9d6046] bg-[#fdf3da]"
-                            : "border-[#d8dfc1] hover:bg-[#fefbdf]"
+                            ? "border-[#52525b] bg-[#f4f4f5]"
+                            : "border-[#e4e4e7] hover:bg-[#f4f4f5]"
                         }`}
                       >
-                        <span className="block text-sm font-semibold text-[#356b43]">
+                        <span className="block text-sm font-semibold text-[#18181b]">
                           {option.label}
                         </span>
-                        <span className="mt-0.5 block text-xs text-[#45614a]">
+                        <span className="mt-0.5 block text-xs text-[#71717a]">
                           {option.description}
                         </span>
                       </button>
@@ -1073,11 +1082,11 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                       <button
                         key={preset.id}
                         onClick={() => setTheme(preset.theme)}
-                        className={`rounded-xl border p-3 text-left transition ${
+                        className={`rounded-md border p-3 text-left transition ${
                           theme.background === preset.theme.background &&
                           theme.accent === preset.theme.accent
-                            ? "border-[#9d6046] bg-[#fdf3da]"
-                            : "border-[#d8dfc1] hover:bg-[#fefbdf]"
+                            ? "border-[#52525b] bg-[#f4f4f5]"
+                            : "border-[#e4e4e7] hover:bg-[#f4f4f5]"
                         }`}
                       >
                         <span className="flex gap-1">
@@ -1112,13 +1121,13 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                     ).map((item) => (
                       <label
                         key={item.key}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-[#d8dfc1] px-3 py-2"
+                        className="flex items-center justify-between gap-3 rounded-lg border border-[#e4e4e7] px-3 py-2"
                       >
                         <span className="text-sm text-[#4b5d52]">
                           {item.label}
                         </span>
                         <span className="flex items-center gap-2">
-                          <span className="text-xs uppercase text-[#9a8f7a]">
+                          <span className="text-xs uppercase text-[#a1a1aa]">
                             {theme[item.key]}
                           </span>
                           <input
@@ -1130,7 +1139,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                                 [item.key]: event.target.value,
                               }))
                             }
-                            className="h-8 w-10 cursor-pointer rounded border border-[#d8dfc1] bg-cream-soft p-0.5"
+                            className="h-8 w-10 cursor-pointer rounded border border-[#e4e4e7] bg-white p-0.5"
                           />
                         </span>
                       </label>
@@ -1142,27 +1151,27 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
           </div>
         </div>
 
-        <div className="self-start">
-          <div className="rounded-3xl border border-[#d8dfc1] bg-[#fffdf0] p-4 shadow-sm md:p-6">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className={`min-h-0 flex-col ${mobileView==="preview"?"flex":"hidden lg:flex"}`}>
+          <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-zinc-200 bg-white p-4">
+            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="font-display text-xl text-[#356b43]">
+                <h2 className="font-sans text-xl text-[#18181b]">
                   Xem trước & chỉnh trực tiếp
                 </h2>
-                <p className="text-xs text-[#45614a]">
+                <p className="text-xs text-[#71717a]">
                   Kéo ảnh để căn khung; kéo tiêu đề riêng, hoặc kéo phần chữ khác để di chuyển cả cụm. Sticker cũng kéo được.
                 </p>
               </div>
-              <span className="rounded-full bg-[#fefbdf] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#45614a]">
+              <span className="rounded-full bg-[#f4f4f5] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#71717a]">
                 {LAYOUT_LABELS[layout]}
               </span>
             </div>
 
-            <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl shadow-xl ring-1 ring-black/5">
+            <div className="flex min-h-0 flex-1 items-center justify-center [container-type:size]">
               <TicketPreview
                 design={previewDesign}
                 rootRef={previewRef}
-                className="aspect-[103/58] w-full"
+                className="aspect-[103/58] w-[min(100cqw,calc(95cqh*103/58))] rounded-md ring-1 ring-black/5"
                 selectedStickerId={selectedStickerId}
                 onBackgroundClick={() => setSelectedStickerId(null)}
                 onStickerPointerDown={handleStickerPointerDown}
@@ -1175,26 +1184,26 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
               />
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-              <div className="rounded-lg bg-[#fefbdf] px-3 py-2">
-                <p className="text-[#9a8f7a]">Ảnh</p>
-                <p className="font-semibold text-[#345840]">
+            <div className="mt-3 grid shrink-0 grid-cols-4 gap-2 text-[10px]">
+              <div className="rounded-lg bg-[#f4f4f5] px-3 py-2">
+                <p className="text-[#a1a1aa]">Ảnh</p>
+                <p className="font-semibold text-[#27272a]">
                   {imageUrl ? "Đã thêm" : "Chưa có"}
                 </p>
               </div>
-              <div className="rounded-lg bg-[#fefbdf] px-3 py-2">
-                <p className="text-[#9a8f7a]">Sticker</p>
-                <p className="font-semibold text-[#345840]">{stickers.length}</p>
+              <div className="rounded-lg bg-[#f4f4f5] px-3 py-2">
+                <p className="text-[#a1a1aa]">Sticker</p>
+                <p className="font-semibold text-[#27272a]">{stickers.length}</p>
               </div>
-              <div className="rounded-lg bg-[#fefbdf] px-3 py-2">
-                <p className="text-[#9a8f7a]">Bố cục</p>
-                <p className="font-semibold text-[#345840]">
+              <div className="rounded-lg bg-[#f4f4f5] px-3 py-2">
+                <p className="text-[#a1a1aa]">Bố cục</p>
+                <p className="font-semibold text-[#27272a]">
                   {LAYOUT_LABELS[layout]}
                 </p>
               </div>
-              <div className="rounded-lg bg-[#fefbdf] px-3 py-2">
-                <p className="text-[#9a8f7a]">Trạng thái</p>
-                <p className="font-semibold text-[#345840]">
+              <div className="rounded-lg bg-[#f4f4f5] px-3 py-2">
+                <p className="text-[#a1a1aa]">Trạng thái</p>
+                <p className="font-semibold text-[#27272a]">
                   {ticketId ? "Đã lưu" : "Chưa lưu"}
                 </p>
               </div>

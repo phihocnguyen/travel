@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPost } from "@/lib/posts/store";
+import BlogBody from "@/components/blog/BlogBody";
+import { postPlainText } from "@/lib/posts/content";
 
 export const instant = false;
 
@@ -21,7 +23,7 @@ export async function generateMetadata({
 
   return {
     title: `${post.title} · Dong Thap`,
-    description: post.excerpt || post.content.slice(0, 160),
+    description: post.excerpt || postPlainText(post.content).slice(0, 160),
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -45,11 +47,6 @@ export default async function BlogPostPage({ params }: PageProps) {
   if (!post || post.status !== "approved") {
     notFound();
   }
-
-  const paragraphs = post.content
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
 
   return (
     <main className="min-h-dvh bg-[#f6f1e6] text-[#14281e]">
@@ -101,13 +98,7 @@ export default async function BlogPostPage({ params }: PageProps) {
           </p>
         ) : null}
 
-        <div className="mt-8 space-y-5 text-[15px] leading-8 text-[#3c5145]">
-          {paragraphs.map((paragraph, index) => (
-            <p key={index} className="whitespace-pre-line">
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <div className="mt-8"><BlogBody content={post.content} format={post.contentFormat}/></div>
 
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-[#e2d8c3] pt-6">
           <p className="text-sm text-[#6b7a6f]">

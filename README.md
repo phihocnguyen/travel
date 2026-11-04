@@ -11,6 +11,37 @@ npm run dev
 
 Mở [http://localhost:3000](http://localhost:3000).
 
+## PostgreSQL / Neon
+
+Đặt chuỗi kết nối trong `DATABASE_URL` của `.env.local`. File này được Git bỏ qua;
+trên hosting, thêm cùng biến vào cấu hình môi trường của ứng dụng.
+
+Chạy `npm run db:check` để kiểm tra kết nối và TLS bằng truy vấn chỉ đọc.
+Server Components và Route Handlers có thể gọi `getDatabase()` từ `lib/db.ts`,
+ví dụ `await getDatabase().query("SELECT now()")`. Module chỉ chạy phía server,
+khởi tạo pool khi cần và tái sử dụng kết nối khi Next.js tải lại mã.
+
+Vé, ảnh vé, bài viết và ảnh trong bài được lưu trong PostgreSQL. Mỗi user có
+một vé với mã `VXDL000`–`VXDL999`. File in màu xuất ở 4120 × 2320 px, 300 DPI.
+
+```bash
+npm run db:migrate       # tạo/cập nhật schema, có kiểm tra checksum
+npm run db:seed          # dữ liệu chiến dịch, điểm đến, mùa và phân quyền
+npm run db:import-posts  # nhập bài viết cũ từ .data, giữ nguyên file nguồn
+npm run db:verify        # kiểm tra ràng buộc bằng dữ liệu thử được rollback
+npm run test:print       # kiểm tra độ phân giải, DPI và màu file in
+npm run test:tickets     # kiểm thử luồng vé qua API và trình duyệt
+npm run test:blog        # kiểm thử dán ảnh/HTML, lưu, duyệt và đọc bài
+```
+
+Chạy kiểm thử trình duyệt ở môi trường phát triển, với Chromium của Playwright
+đã cài (`npx playwright install chromium-headless-shell`). Không chạy trên DB
+production: kiểm thử tạo tài khoản/bản ghi tạm rồi dọn các bản ghi đó.
+
+`/dashboard` là Tổng quan cá nhân; `/dashboard/admin/overview` là Tổng quan quản
+trị. Admin xem, tra mã và in vé ở `/dashboard/admin/tickets`, duyệt bài ở
+`/dashboard/admin`. Cấu hình email quản trị bằng `ADMIN_EMAILS`.
+
 ```bash
 npm run build   # production build
 npm run lint    # eslint

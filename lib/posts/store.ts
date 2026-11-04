@@ -1,267 +1,62 @@
 import "server-only";
-
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
-import {
-  POST_CATEGORIES,
-  type BlogPost,
-  type PostAuthor,
-  type PostCategory,
-  type PostInput,
-  type PostStatus,
-} from "./types";
-
-const DATA_ROOT =
-  process.env.POSTS_DATA_DIR ??
-  path.join(process.cwd(), ".data", "posts");
-
-const ID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const MAX_COVER_BYTES = 8 * 1024 * 1024;
-
+import { getDatabase } from "@/lib/db";
+import { ensureDatabaseUser } from "@/lib/auth/user";
+import { POST_CATEGORIES,type BlogPost,type PostAuthor,type PostInput,type PostStatus } from "./types";
+import { sanitizePostHtml,plainToHtml,postPlainText } from "./content";
+import type { PoolClient } from "pg";
+import sharp from "sharp";
 export class PostValidationError extends Error {}
-
-function postFile(id: string): string {
-  if (!ID_PATTERN.test(id)) {
-    throw new PostValidationError("Mã bài viết không hợp lệ.");
-  }
-  return path.join(DATA_ROOT, `${id}.json`);
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SELECT=`SELECT p.*,u.auth_subject,u.display_name,u.email,EXISTS(SELECT 1 FROM blog_covers c WHERE c.post_id=p.id) AS has_cover FROM blog_posts p JOIN users u ON u.id=p.author_id`;
+function post(row:Record<string,unknown>):BlogPost{
+  const updatedAt=new Date(row.updated_at as string).toISOString();
+  return {id:String(row.id),title:String(row.title),category:row.category as BlogPost["category"],excerpt:String(row.excerpt),
+    content:sanitizePostHtml(row.content_format==="html"?String(row.content):plainToHtml(String(row.content))),contentFormat:"html",
+    coverImageUrl:row.has_cover?`/api/posts/${row.id}/cover?v=${encodeURIComponent(updatedAt)}`:null,status:row.status as PostStatus,
+    author:{sub:String(row.auth_subject),name:String(row.display_name),email:String(row.email??"")},
+    createdAt:new Date(row.created_at as string).toISOString(),updatedAt,reviewedAt:row.reviewed_at?new Date(row.reviewed_at as string).toISOString():null,reviewNote:row.review_note as string|null};
 }
-
-function coverFile(id: string): string {
-  if (!ID_PATTERN.test(id)) {
-    throw new PostValidationError("Mã bài viết không hợp lệ.");
-  }
-  return path.join(DATA_ROOT, `${id}.jpg`);
+async function list(where="",values:unknown[]=[]):Promise<BlogPost[]>{return(await getDatabase().query(`${SELECT} ${where} ORDER BY p.created_at DESC`,values)).rows.map(post);}
+export async function listAllPosts(){return list();}
+export async function listPostsByAuthor(sub:string){return list("WHERE u.auth_subject=$1",[sub]);}
+export async function listApprovedPosts(){return list("WHERE p.status='approved'");}
+export async function listPendingPosts(){return list("WHERE p.status='pending'");}
+export async function getPost(id:string):Promise<BlogPost|null>{if(!UUID.test(id))return null;const rows=await list("WHERE p.id=$1",[id]);return rows[0]??null;}
+function normalize(value:unknown){
+  if(!value||typeof value!=="object")throw new PostValidationError("Dữ liệu bài viết không hợp lệ.");
+  const raw=value as PostInput;
+  const title=typeof raw.title==="string"?raw.title.trim().slice(0,120):"";
+  if(!title)throw new PostValidationError("Nhập tiêu đề bài viết.");
+  if(typeof raw.content!=="string"||raw.content.length>200000)throw new PostValidationError("Nội dung không hợp lệ hoặc quá dài (tối đa 200.000 ký tự).");
+  const html=sanitizePostHtml(raw.contentFormat==="html"?raw.content:plainToHtml(raw.content));
+  if(!postPlainText(html)&&!/<img\s/i.test(html))throw new PostValidationError("Nội dung bài viết đang trống.");
+  return {title,category:POST_CATEGORIES.includes(raw.category)?raw.category:POST_CATEGORIES[0],excerpt:typeof raw.excerpt==="string"?raw.excerpt.trim().slice(0,320):"",content:html,raw};
 }
-
-function coverUrl(id: string, updatedAt: string): string {
-  return `/api/posts/${id}/cover?v=${encodeURIComponent(updatedAt)}`;
+async function attachments(client:PoolClient,id:string,userId:string,html:string,input:PostInput){
+  const images=[...new Set([...html.matchAll(/\/api\/posts\/images\/([0-9a-f-]{36})/gi)].map(match=>match[1]))];
+  if(images.length>50)throw new PostValidationError("Mỗi bài viết tối đa 50 ảnh.");
+  if(images.length){const own=await client.query("SELECT id FROM blog_images WHERE id=ANY($1::uuid[]) AND owner_id=$2",[images,userId]);if(own.rowCount!==images.length)throw new PostValidationError("Một số ảnh không thuộc tài khoản của bạn. Hãy tải lại ảnh trong bài.");}
+  await client.query("DELETE FROM blog_post_images WHERE post_id=$1",[id]);
+  if(images.length)await client.query("INSERT INTO blog_post_images(post_id,image_id) SELECT $1,unnest($2::uuid[])",[id,images]);
+  if(typeof input.coverImageDataUrl==="string"){
+    if(input.coverImageDataUrl.length>12*1024*1024)throw new PostValidationError("Ảnh bìa vượt 8MB.");
+    const match=/^data:image\/jpeg;base64,([a-z0-9+/=]+)$/i.exec(input.coverImageDataUrl);if(!match)throw new PostValidationError("Ảnh bìa phải là JPEG.");
+    const buffer=Buffer.from(match[1],"base64");if(buffer.length>8*1024*1024)throw new PostValidationError("Ảnh bìa vượt 8MB.");
+    try{await sharp(buffer,{limitInputPixels:40_000_000}).metadata();}catch{throw new PostValidationError("Không thể đọc ảnh bìa.");}
+    await client.query("INSERT INTO blog_covers(post_id,image_data) VALUES ($1,$2) ON CONFLICT(post_id) DO UPDATE SET image_data=EXCLUDED.image_data",[id,buffer]);
+  }else if(input.removeCover)await client.query("DELETE FROM blog_covers WHERE post_id=$1",[id]);
 }
-
-function text(value: unknown, fallback: string, maxLength: number): string {
-  if (typeof value !== "string") return fallback;
-  return value.replace(/\r\n/g, "\n").trim().slice(0, maxLength);
+export async function createPost(author:PostAuthor,value:unknown):Promise<BlogPost>{
+  const input=normalize(value),userId=await ensureDatabaseUser(author),client=await getDatabase().connect();let id:string;
+  try{await client.query("BEGIN");id=(await client.query("INSERT INTO blog_posts(author_id,title,category,excerpt,content,content_format) VALUES ($1,$2,$3,$4,$5,'html') RETURNING id",[userId,input.title,input.category,input.excerpt,input.content])).rows[0].id;await attachments(client,id,userId,input.content,input.raw);await client.query("COMMIT");}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}
+  return (await getPost(id!))!;
 }
-
-function category(value: unknown): PostCategory {
-  return POST_CATEGORIES.includes(value as PostCategory)
-    ? (value as PostCategory)
-    : POST_CATEGORIES[0];
+export async function updatePost(subject:string,id:string,value:unknown):Promise<BlogPost|null>{
+  if(!UUID.test(id))return null;const input=normalize(value),client=await getDatabase().connect();
+  try{await client.query("BEGIN");const row=(await client.query("SELECT p.id,p.author_id FROM blog_posts p JOIN users u ON u.id=p.author_id WHERE p.id=$1 AND u.auth_subject=$2 FOR UPDATE OF p",[id,subject])).rows[0];if(!row){await client.query("ROLLBACK");return null;}
+    await client.query("UPDATE blog_posts SET title=$2,category=$3,excerpt=$4,content=$5,content_format='html',status='pending',reviewed_by=null,reviewed_at=null,review_note=null WHERE id=$1",[id,input.title,input.category,input.excerpt,input.content]);await attachments(client,id,row.author_id,input.content,input.raw);await client.query("COMMIT");
+  }catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}return getPost(id);
 }
-
-function parseDataUrl(dataUrl: unknown): Buffer {
-  if (typeof dataUrl !== "string") {
-    throw new PostValidationError("Ảnh bìa không hợp lệ.");
-  }
-
-  const match = /^data:image\/jpeg;base64,([a-z0-9+/=]+)$/i.exec(dataUrl);
-
-  if (!match) {
-    throw new PostValidationError("Ảnh bìa phải là JPEG sau khi xử lý.");
-  }
-
-  const buffer = Buffer.from(match[1], "base64");
-
-  if (buffer.byteLength === 0 || buffer.byteLength > MAX_COVER_BYTES) {
-    throw new PostValidationError("Ảnh bìa vượt quá dung lượng cho phép.");
-  }
-
-  return buffer;
-}
-
-function normalizeInput(value: unknown): Omit<PostInput, "coverImageDataUrl" | "removeCover"> {
-  const raw = (value ?? {}) as Record<string, unknown>;
-
-  return {
-    title: text(raw.title, "Bài viết mới", 120),
-    category: category(raw.category),
-    excerpt: text(raw.excerpt, "", 320),
-    content: text(raw.content, "", 20000),
-  };
-}
-
-async function persist(post: BlogPost): Promise<void> {
-  await mkdir(DATA_ROOT, { recursive: true });
-  await writeFile(postFile(post.id), JSON.stringify(post, null, 2), "utf8");
-}
-
-async function writeCover(id: string, dataUrl: unknown): Promise<void> {
-  const buffer = parseDataUrl(dataUrl);
-  await mkdir(DATA_ROOT, { recursive: true });
-  await writeFile(coverFile(id), buffer);
-}
-
-async function removeCover(id: string): Promise<void> {
-  await rm(coverFile(id), { force: true });
-}
-
-async function readAll(): Promise<BlogPost[]> {
-  let entries;
-
-  try {
-    entries = await readdir(DATA_ROOT, { withFileTypes: true });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
-  }
-
-  const posts = await Promise.all(
-    entries
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
-      .map(async (entry) => {
-        try {
-          const raw = await readFile(path.join(DATA_ROOT, entry.name), "utf8");
-          const post = JSON.parse(raw) as BlogPost;
-          return typeof post.id === "string" ? post : null;
-        } catch {
-          return null;
-        }
-      }),
-  );
-
-  return posts
-    .filter((post): post is BlogPost => post !== null)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-export async function listAllPosts(): Promise<BlogPost[]> {
-  return readAll();
-}
-
-export async function listPostsByAuthor(sub: string): Promise<BlogPost[]> {
-  return (await readAll()).filter((post) => post.author.sub === sub);
-}
-
-export async function listApprovedPosts(): Promise<BlogPost[]> {
-  return (await readAll()).filter((post) => post.status === "approved");
-}
-
-export async function listPendingPosts(): Promise<BlogPost[]> {
-  return (await readAll()).filter((post) => post.status === "pending");
-}
-
-export async function getPost(id: string): Promise<BlogPost | null> {
-  try {
-    const raw = await readFile(postFile(id), "utf8");
-    return JSON.parse(raw) as BlogPost;
-  } catch {
-    return null;
-  }
-}
-
-export async function createPost(
-  author: PostAuthor,
-  value: unknown,
-): Promise<BlogPost> {
-  const normalized = normalizeInput(value);
-  const raw = (value ?? {}) as PostInput;
-  const id = randomUUID();
-  const now = new Date().toISOString();
-  const hasCover = typeof raw.coverImageDataUrl === "string";
-
-  if (hasCover) {
-    await writeCover(id, raw.coverImageDataUrl);
-  }
-
-  const post: BlogPost = {
-    ...normalized,
-    id,
-    coverImageUrl: hasCover ? coverUrl(id, now) : null,
-    status: "pending",
-    author,
-    createdAt: now,
-    updatedAt: now,
-    reviewedAt: null,
-    reviewNote: null,
-  };
-
-  await persist(post);
-
-  return post;
-}
-
-export async function updatePost(
-  authorSub: string,
-  id: string,
-  value: unknown,
-): Promise<BlogPost | null> {
-  const existing = await getPost(id);
-
-  if (!existing || existing.author.sub !== authorSub) return null;
-
-  const normalized = normalizeInput(value);
-  const raw = (value ?? {}) as PostInput;
-  const now = new Date().toISOString();
-
-  let cover = existing.coverImageUrl;
-
-  if (typeof raw.coverImageDataUrl === "string") {
-    await writeCover(id, raw.coverImageDataUrl);
-    cover = coverUrl(id, now);
-  } else if (raw.removeCover === true) {
-    await removeCover(id);
-    cover = null;
-  }
-
-  const post: BlogPost = {
-    ...existing,
-    ...normalized,
-    id,
-    coverImageUrl: cover,
-    status: "pending",
-    updatedAt: now,
-    reviewedAt: null,
-    reviewNote: null,
-  };
-
-  await persist(post);
-
-  return post;
-}
-
-export async function deletePost(
-  authorSub: string,
-  id: string,
-): Promise<boolean> {
-  const existing = await getPost(id);
-
-  if (!existing || existing.author.sub !== authorSub) return false;
-
-  await rm(postFile(id), { force: true });
-  await removeCover(id);
-
-  return true;
-}
-
-export async function reviewPost(
-  id: string,
-  status: Extract<PostStatus, "approved" | "rejected">,
-  note: string | null,
-): Promise<BlogPost | null> {
-  const existing = await getPost(id);
-  if (!existing) return null;
-
-  const now = new Date().toISOString();
-  const post: BlogPost = {
-    ...existing,
-    status,
-    updatedAt: now,
-    reviewedAt: now,
-    reviewNote: note,
-  };
-
-  await persist(post);
-
-  return post;
-}
-
-export async function readCover(id: string): Promise<Buffer | null> {
-  try {
-    return await readFile(coverFile(id));
-  } catch {
-    return null;
-  }
-}
+export async function deletePost(subject:string,id:string){if(!UUID.test(id))return false;return (await getDatabase().query("DELETE FROM blog_posts p USING users u WHERE p.author_id=u.id AND u.auth_subject=$1 AND p.id=$2",[subject,id])).rowCount===1;}
+export async function reviewPost(id:string,status:Extract<PostStatus,"approved"|"rejected">,note:string|null){if(!UUID.test(id))return null;await getDatabase().query("UPDATE blog_posts SET status=$2,reviewed_at=now(),review_note=$3 WHERE id=$1",[id,status,note?.slice(0,2000)??null]);return getPost(id);}
+export async function readCover(id:string):Promise<Buffer|null>{if(!UUID.test(id))return null;return (await getDatabase().query("SELECT image_data FROM blog_covers WHERE post_id=$1",[id])).rows[0]?.image_data??null;}
