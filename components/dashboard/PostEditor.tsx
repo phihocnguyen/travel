@@ -169,7 +169,7 @@ export default function PostEditor({ post }: { post?: BlogPost }) {
               {postId ? "Chỉnh sửa bài viết" : "Bài viết mới"}
             </p>
             <h1 className="mt-0.5 font-sans text-2xl font-normal tracking-tight text-[#18181b]">
-              {postId ? "Cập nhật câu chuyện" : "Viết câu chuyện chuyến đi"}
+              {postId ? "Chỉnh sửa bài viết" : "Viết bài"}
             </h1>
           </div>
         </div>
