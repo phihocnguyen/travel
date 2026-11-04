@@ -1,14 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
-  SESSION_COOKIE,
-  BYPASS_USER,
-  createSession,
-  isAuthBypassEnabled,
-  sessionCookieOptions,
-  signSession,
-} from "@/lib/auth/session";
-import {
   GOOGLE_AUTH_ENDPOINT,
   OAUTH_COOKIE_MAX_AGE,
   OAUTH_NEXT_COOKIE,
@@ -21,22 +13,9 @@ import {
 const isProduction = process.env.NODE_ENV === "production";
 
 export async function GET(request: Request) {
-  if (isAuthBypassEnabled()) {
-    const next = safeNextPath(
-      new URL(request.url).searchParams.get("next"),
-    );
-    const response = NextResponse.redirect(new URL(next, request.url));
-    response.cookies.set(
-      SESSION_COOKIE,
-      signSession(createSession(BYPASS_USER)),
-      sessionCookieOptions(),
-    );
-    return response;
-  }
-
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
-  if (!clientId) {
+  if (!clientId || !process.env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.redirect(
       new URL("/login?error=google-not-configured", request.url),
     );

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { safeNextPath } from "@/lib/auth/oauth";
-import { isAuthBypassEnabled } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Đăng nhập · Vị Xoài Dẫn Lối",
@@ -21,6 +20,10 @@ type LoginPageProps = {
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
+  "email-unverified": "Vui lòng sử dụng tài khoản Google đã xác minh email.",
+  "account-conflict": "Email này đã liên kết với tài khoản khác. Vui lòng liên hệ ban tổ chức.",
+  "account-save-failed": "Chưa lưu được tài khoản. Vui lòng thử đăng nhập lại.",
+  "account-disabled": "Tài khoản đã bị khóa. Vui lòng liên hệ ban tổ chức.",
   "google-not-configured":
     "Đăng nhập Google chưa được cấu hình. Vui lòng thêm thông tin Google OAuth để tiếp tục.",
   "google-denied": "Bạn đã huỷ đăng nhập Google.",
@@ -71,7 +74,6 @@ async function LoginCard({
   const initialError = errorCode
     ? ERROR_MESSAGES[errorCode] ?? "Không thể hoàn tất đăng nhập."
     : null;
-  const bypass = isAuthBypassEnabled();
 
   return (
     <section className="w-full max-w-md rounded-[2rem] bg-forest p-7 text-cream shadow-brand sm:p-9">
@@ -83,14 +85,8 @@ async function LoginCard({
         Chào mừng trở lại
       </h2>
       <p className="mt-3 text-[13px] leading-relaxed text-cream/70">
-        Dùng Google hoặc email đã gắn với hành trình của bạn.
+        Đăng nhập bằng Google. Tài khoản sẽ được tạo tự động trong lần đầu tiên.
       </p>
-
-      {bypass ? (
-        <p className="mt-4 rounded-xl bg-mango/15 px-4 py-3 text-[11px] leading-relaxed text-mango">
-          Chế độ thử nghiệm đang bật — mọi tài khoản đều mở được bản đồ.
-        </p>
-      ) : null}
 
       <LoginForm next={next} initialError={initialError} />
 

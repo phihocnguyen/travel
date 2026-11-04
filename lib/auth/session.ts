@@ -1,6 +1,7 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { getDatabase } from "@/lib/db";
 
 export const SESSION_COOKIE = "dt_session";
 
@@ -15,37 +16,21 @@ export type Session = {
   picture?: string;
   provider: SessionProvider;
   exp: number;
+  sid?: string;
+  role?: "admin" | "user";
 };
-
-/**
- * Development defaults to a demo session so the project can be previewed
- * without OAuth credentials. Set AUTH_BYPASS=false to exercise real auth.
- * Production never bypasses authentication unless explicitly configured.
- */
-export function isAuthBypassEnabled(): boolean {
-  const value = (process.env.AUTH_BYPASS ?? "").trim().toLowerCase();
-  if (!value) return process.env.NODE_ENV === "development";
-  return value === "1" || value === "true" || value === "yes";
-}
 
 export function isAdmin(session: Session | null): boolean {
   if (!session) return false;
-  if (session.sub === BYPASS_USER.sub) return true;
+  if(session.role==="admin")return true;
 
-  const configured = (process.env.ADMIN_EMAILS ?? process.env.AUTH_DEMO_EMAIL ?? "")
+  const configured = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
 
   return configured.includes(session.email.toLowerCase());
 }
-
-export const BYPASS_USER = {
-  sub: "bypass:local",
-  name: "Local Explorer",
-  email: "explorer@localhost",
-  provider: "credentials" as const,
-};
 
 function secret(): string {
   const value = process.env.AUTH_SECRET;
@@ -65,6 +50,7 @@ export function createSession(
 ): Session {
   return {
     ...user,
+    sid: randomUUID(),
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
   };
 }
@@ -112,7 +98,14 @@ export function verifySession(token: string | undefined): Session | null {
 export async function getSession(): Promise<Session | null> {
   await connection();
   const store = await cookies();
-  return verifySession(store.get(SESSION_COOKIE)?.value);
+  const token=store.get(SESSION_COOKIE)?.value;
+  const session=verifySession(token);
+  if(!session||session.provider!=="google")return null;
+  const result=await getDatabase().query(`SELECT u.status, EXISTS(SELECT 1 FROM user_roles r WHERE r.user_id=u.id AND r.role_id='admin') AS admin, EXISTS(SELECT 1 FROM user_sessions s
+    WHERE s.token_hash=$2 AND s.ended_at IS NOT NULL) AS revoked FROM users u WHERE u.auth_subject=$1`,
+    [session.sub,createHash("sha256").update(token!).digest("hex")]);
+  if(result.rows[0]?.status==='disabled'||result.rows[0]?.revoked)return null;
+  return {...session,role:result.rows[0]?.admin?"admin":"user"};
 }
 
 export function sessionCookieOptions() {

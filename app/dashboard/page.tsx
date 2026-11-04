@@ -12,7 +12,7 @@ export default async function DashboardOverviewPage(){
   const [tickets,posts]=await Promise.all([listTickets(session.sub),listPostsByAuthor(session.sub)]);
   const ticket=tickets[0],link="inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs font-medium hover:bg-zinc-50";
   return <div className="flex h-full min-h-0 flex-col gap-4">
-    <header className="shrink-0"><h1 className="text-xl font-semibold tracking-tight">Tổng quan</h1><p className="mt-1 text-xs text-zinc-500">Chào {session.name}. Vé và những câu chuyện của bạn ở đây.</p></header>
+    <header className="shrink-0"><h1 className="text-xl font-semibold tracking-tight">Tổng quan</h1><p className="mt-1 text-xs text-zinc-500">Chào {session.name}. Vé và bài viết của bạn ở đây.</p></header>
     <div className="grid shrink-0 grid-cols-3 divide-x divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
       {[["Mã vé",ticket?.code??"Chưa tạo"],["Bài viết",String(posts.length)],["Đã xuất bản",String(posts.filter(post=>post.status==="approved").length)]].map(([label,value])=><div key={label} className="px-3 py-3 sm:px-5"><p className="text-[11px] text-zinc-500">{label}</p><p className="mt-1 font-mono text-base font-semibold">{value}</p></div>)}
     </div>

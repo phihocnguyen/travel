@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { registerLogin } from "@/lib/auth/activity";
 import type { NextRequest } from "next/server";
 import {
   GOOGLE_TOKEN_ENDPOINT,
@@ -108,6 +109,7 @@ export async function GET(request: NextRequest) {
   if (!profile.sub || !profile.email) {
     return clearOAuthCookies(failure(request, "profile-incomplete"));
   }
+  if(profile.email_verified!==true)return clearOAuthCookies(failure(request,"email-unverified"));
 
   const session = createSession({
     sub: profile.sub,
@@ -117,10 +119,17 @@ export async function GET(request: NextRequest) {
     provider: "google",
   });
 
+  const token=signSession(session);
+  try{
+    if(!await registerLogin(session,token))return clearOAuthCookies(failure(request,"account-disabled"));
+  }catch(error){
+    const code=error&&typeof error==="object"&&"code" in error?error.code:null;
+    return clearOAuthCookies(failure(request,code==="23505"?"account-conflict":"account-save-failed"));
+  }
   const response = NextResponse.redirect(new URL(next, request.url));
   response.cookies.set(
     SESSION_COOKIE,
-    signSession(session),
+    token,
     sessionCookieOptions(),
   );
 
