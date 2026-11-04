@@ -1,187 +1,75 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
-import { ATTRACTIONS, CATEGORY_COLORS, type Attraction } from "@/lib/map/attractions";
+import { useEffect, useRef, useState } from "react";
+import { ATTRACTIONS, CATEGORY_LABELS } from "@/lib/map/attractions";
 import { useMapUI } from "@/components/map/MapUIContext";
-
-const EXIT_MS = 480;
 
 export default function AttractionModal() {
   const { selectedAttractionId, setSelectedAttractionId } = useMapUI();
-  const attraction =
-    selectedAttractionId == null
-      ? null
-      : ATTRACTIONS[selectedAttractionId] ?? null;
-  const [shown, setShown] = useState<Attraction | null>(attraction);
-  const [open, setOpen] = useState(false);
-
-  // Keep the last card mounted long enough to slide out, while a new
-  // selection updates the content in place without closing the panel.
-  useEffect(() => {
-    let frame = 0;
-    let timer = 0;
-    if (attraction) {
-      frame = requestAnimationFrame(() => {
-        setShown(attraction);
-        setOpen(true);
-      });
-    } else {
-      frame = requestAnimationFrame(() => setOpen(false));
-      timer = window.setTimeout(() => setShown(null), EXIT_MS);
-    }
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
-    };
-  }, [attraction]);
-
+  const attraction = selectedAttractionId == null ? null : ATTRACTIONS[selectedAttractionId];
+  const [failedImage, setFailedImage] = useState<string | null>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const scrollBody = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!attraction) return;
+    const previous = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    scrollBody.current?.scrollTo(0, 0);
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedAttractionId(null);
+      if (event.key === "Tab") {
+        const elements = closeButton.current?.closest("article")?.querySelectorAll<HTMLElement>("button, a[href], [tabindex='0']");
+        if (!elements?.length) return;
+        const first = elements[0], last = elements[elements.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+      if (previous instanceof HTMLElement) previous.focus();
+    };
   }, [attraction, setSelectedAttractionId]);
-
-  return (
-    <>
-      {open && (
-        <button
-          type="button"
-          className="fixed inset-0 z-[70] cursor-default bg-forest/40 backdrop-blur-[2px]"
-          onClick={() => setSelectedAttractionId(null)}
-          aria-label="Đóng thông tin điểm đến"
-        />
-      )}
-
-      <div
-        className="pointer-events-none fixed inset-0 z-[80] flex items-end justify-end p-3 sm:p-6"
-        role="dialog"
-        aria-modal={open}
-        aria-label={shown?.name ?? "Điểm đến"}
-        aria-hidden={!open}
-      >
-        {shown && (
-          <article
-            className={`pointer-events-auto flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-[1.75rem] border border-white/60 bg-cream shadow-brand transition-all duration-500 ease-out ${
-              open ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
-            style={
-              {
-                "--attraction-color": CATEGORY_COLORS[shown.category],
-              } as CSSProperties
-            }
-          >
-            <div
-              className="relative overflow-hidden px-6 pb-6 pt-5 text-cream"
-              style={{
-                background: `linear-gradient(135deg, var(--attraction-color) 0%, #15602c 85%)`,
-              }}
-            >
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-cream/10"
-              />
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-mango/20 blur-xl"
-              />
-
-              <button
-                type="button"
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-cream/20 text-xl leading-none text-cream backdrop-blur transition-colors hover:bg-cream/25"
-                onClick={() => setSelectedAttractionId(null)}
-                aria-label="Đóng thông tin điểm đến"
-              >
-                ×
-              </button>
-
-              <p className="font-display text-4xl font-semibold leading-none text-cream/90">
-                {String(shown.id + 1).padStart(2, "0")}
-              </p>
-              <p className="mt-4 inline-flex rounded-full bg-cream/20 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] backdrop-blur">
-                {shown.category}
-              </p>
-              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-cream/70">
-                {shown.area} · Đồng Tháp
-              </p>
-            </div>
-
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
-              <div>
-                <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
-                  {shown.name}
-                </h2>
-                <p className="mt-2 text-sm font-medium leading-relaxed text-forest/80">
-                  {shown.summary}
-                </p>
-                <p className="mt-2 text-[13px] leading-relaxed text-forest/60">
-                  {shown.description}
-                </p>
-              </div>
-
-              <ul className="flex flex-wrap gap-1.5">
-                {shown.highlights.map((highlight) => (
-                  <li
-                    key={highlight}
-                    className="rounded-full bg-mint/40 px-3 py-1 text-[10px] font-semibold text-forest"
-                  >
-                    {highlight}
-                  </li>
-                ))}
-              </ul>
-
-              <dl className="grid grid-cols-2 gap-2.5">
-                <div className="rounded-2xl bg-mint/25 px-4 py-3">
-                  <dt className="text-[8px] font-bold uppercase tracking-[0.2em] text-forest/50">
-                    Thời điểm đẹp
-                  </dt>
-                  <dd className="mt-1 text-[12px] font-medium leading-snug text-forest/80">
-                    {shown.bestTime}
-                  </dd>
-                </div>
-                <div className="rounded-2xl bg-mint/25 px-4 py-3">
-                  <dt className="text-[8px] font-bold uppercase tracking-[0.2em] text-forest/50">
-                    Toạ độ
-                  </dt>
-                  <dd className="mt-1 text-[12px] font-medium leading-snug text-forest/80">
-                    {shown.lat.toFixed(4)}°N · {shown.lon.toFixed(4)}°E
-                  </dd>
-                </div>
-              </dl>
-
-              <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${shown.lat},${shown.lon}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full bg-forest px-5 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-cream transition-colors hover:bg-forest-mid"
-                >
-                  Mở trên Maps
-                  <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4">
-                    <path
-                      d="M5 12h13M12.5 6.5L19 12l-6.5 5.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </a>
-                <button
-                  type="button"
-                  className="rounded-full px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-forest/60 transition-colors hover:bg-forest/5 hover:text-forest"
-                  onClick={() => setSelectedAttractionId(null)}
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </article>
-        )}
+  if (!attraction) return null;
+  const failed = failedImage === attraction.image;
+  const image = failed ? "/cao-lanh-orchard.jpg" : attraction.image;
+  const caption = failed ? "Ảnh minh họa miệt vườn Cao Lãnh" : attraction.imageCaption;
+  return <div className="checkpoint-fonts fixed inset-0 z-[80] flex items-end justify-end p-3 sm:items-center sm:p-6">
+    <button type="button" className="absolute inset-0 cursor-default bg-black/30 backdrop-blur-[3px]" onClick={() => setSelectedAttractionId(null)} aria-label="Đóng thông tin điểm đến" />
+    <article role="dialog" aria-modal="true" aria-labelledby="checkpoint-title" className="relative flex max-h-[90dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-[#f8f7f3] text-[#292c28] shadow-2xl">
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-black/10 px-5 py-4 sm:px-6">
+        <div>
+          <p className="text-[9px] uppercase tracking-[0.15em] text-black/45">Điểm {String(attraction.id + 1).padStart(2, "0")} · {CATEGORY_LABELS[attraction.category]}</p>
+          <h2 id="checkpoint-title" className="mt-2 text-xl font-semibold leading-snug tracking-tight">{attraction.name}</h2>
+          <p className="mt-1 text-xs text-black/50">{attraction.area}</p>
+        </div>
+        <button ref={closeButton} type="button" onClick={() => setSelectedAttractionId(null)} aria-label="Đóng thông tin điểm đến" className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-black/15 text-xl hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2">×</button>
+      </header>
+      <div ref={scrollBody} tabIndex={0} aria-label="Nội dung chi tiết điểm đến" className="min-h-0 space-y-5 overflow-y-auto overscroll-contain p-5 text-[13px] leading-relaxed sm:p-6">
+        <p className="font-medium">{attraction.summary}</p>
+        <dl className="space-y-3 border-y border-black/10 py-4">
+          <div><dt className="text-[10px] font-semibold uppercase tracking-widest text-black/40">Loại hình</dt><dd className="mt-1">{attraction.type}</dd></div>
+          <div><dt className="text-[10px] font-semibold uppercase tracking-widest text-black/40">Địa chỉ</dt><dd className="mt-1">{attraction.address}</dd></div>
+        </dl>
+        <section><h3 className="mb-2 font-semibold">Câu chuyện & đặc trưng</h3><p className="text-black/70">{attraction.description}</p></section>
+        <ul className="flex flex-wrap gap-2" aria-label="Điểm nổi bật">{attraction.highlights.map((highlight) => <li key={highlight} className="rounded-md border border-black/10 px-2.5 py-1 text-[11px] text-black/60">{highlight}</li>)}</ul>
+        <section><h3 className="mb-2 font-semibold">Trải nghiệm</h3><p className="text-black/70">{attraction.experience}</p></section>
+        {attraction.inside && <section className="border-y border-black/10 py-4"><p className="mb-1 text-[9px] uppercase tracking-widest text-black/40">Trong cùng quần thể</p><h3 className="font-semibold">{attraction.inside.name}</h3><p className="mt-2 text-black/70">{attraction.inside.description}</p></section>}
+        <section><h3 className="mb-2 font-semibold">Thông tin tham quan</h3><p className="text-black/70">{attraction.bestTime}</p></section>
+        <figure className="overflow-hidden rounded-xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img key={image} src={image} alt={caption} onError={() => setFailedImage(attraction.image)} className="h-36 w-full object-cover sm:h-40" />
+          <figcaption className="pt-2 text-[10px] text-black/45">{attraction.imageSource && !failed ? <a href={attraction.imageSource} target="_blank" rel="noreferrer" className="underline">{caption}</a> : caption}</figcaption>
+        </figure>
       </div>
-    </>
-  );
+      <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-black/10 px-5 py-3 sm:px-6">
+        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(attraction.name + " " + attraction.address)}`} target="_blank" rel="noreferrer" className="inline-flex rounded-full border border-black/20 px-4 py-2 text-xs hover:bg-black/5">Mở trên Google Maps ↗</a>
+        <button type="button" onClick={() => setSelectedAttractionId(null)} className="px-3 py-2 text-xs text-black/60">Quay lại bản đồ</button>
+      </footer>
+    </article>
+  </div>;
 }

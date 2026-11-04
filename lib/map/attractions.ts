@@ -1,238 +1,30 @@
-export type AttractionCategory =
-  | "Ecology"
-  | "Heritage"
-  | "Culture"
-  | "Coast";
-
-export type Attraction = {
-  id: number;
-  name: string;
-  category: AttractionCategory;
-  area: string;
-  lon: number;
-  lat: number;
-  summary: string;
-  description: string;
-  highlights: string[];
-  bestTime: string;
-};
-
-export const ATTRACTIONS: Attraction[] = [
-  {
-    id: 0,
-    name: "Tram Chim National Park",
-    category: "Ecology",
-    area: "Tam Nong",
-    lon: 105.50011,
-    lat: 10.72989,
-    summary:
-      "A vast wetland where melaleuca forest, sedge meadows and sarus cranes share the same horizon.",
-    description:
-      "Tram Chim is one of the most important wetlands in the Mekong Delta. In the dry season the water retreats to reveal fields of sedge, drawing hundreds of waterbird species. It is one of the rare places where visitors can watch sarus cranes in the wild.",
-    highlights: ["Sarus cranes", "Lotus ponds", "Birdwatching towers"],
-    bestTime: "December – April, the dry season when birds gather",
-  },
-  {
-    id: 1,
-    name: "Gao Giong Melaleuca Forest",
-    category: "Ecology",
-    area: "Cao Lanh",
-    lon: 105.61012,
-    lat: 10.58323,
-    summary:
-      "A green melaleuca forest threaded with canals, a familiar escape in the western delta.",
-    description:
-      "Gao Giong is an eco-tourism site often called the green lung of Dong Thap. Visitors glide through the melaleuca forest in a three-plank sampan, listen to birds calling and taste straw-roasted snakehead fish. The stilt huts along the canals are ideal for watching the sunset.",
-    highlights: ["Sampan rides", "Waterbirds", "Countryside cuisine"],
-    bestTime: "Flood season, August – November",
-  },
-  {
-    id: 2,
-    name: "Go Thap Relic Site",
-    category: "Heritage",
-    area: "Thap Muoi",
-    lon: 105.82746,
-    lat: 10.60654,
-    summary:
-      "An archaeological and spiritual complex in the heart of Dong Thap Muoi, linked to Oc Eo culture.",
-    description:
-      "Go Thap is a cluster of ancient towers, shrines and archaeological remains dating back thousands of years. Every lunar March the Go Thap festival draws crowds offering incense. Surrounding the site are lotus fields and the characteristic acid sulphate soils of Thap Muoi.",
-    highlights: ["Ancient tower", "Go Thap festival", "Lotus fields"],
-    bestTime: "Lunar March, during the festival",
-  },
-  {
-    id: 3,
-    name: "Nguyen Sinh Sac Memorial Tomb",
-    category: "Heritage",
-    area: "Cao Lanh",
-    lon: 105.63166,
-    lat: 10.4472,
-    summary:
-      "A memorial to the father of President Ho Chi Minh, set in a quiet, tree-shaded garden.",
-    description:
-      "The site includes the tomb of scholar Nguyen Sinh Sac, an exhibition house and a solemn memorial space. It is a key cultural and historical destination in Dong Thap, often visited together with nearby pagodas and the Dong Thap Museum.",
-    highlights: ["Scholar's tomb", "Exhibition house", "Memorial garden"],
-    bestTime: "Year round, dress respectfully",
-  },
-  {
-    id: 4,
-    name: "Huynh Thuy Le Ancient House",
-    category: "Culture",
-    area: "Sa Dec",
-    lon: 105.7683,
-    lat: 10.29392,
-    summary:
-      "A century-old house blending French and Chinese architecture, tied to Marguerite Duras' love story.",
-    description:
-      "Set beside the Sa Dec river, the house was built in the early 20th century with rare timber and intricate carvings. It once inspired Marguerite Duras' novel The Lover. Nearby stands Kien An Cung pagoda, a landmark of Sa Dec architecture.",
-    highlights: ["French–Chinese architecture", "The Duras story", "Kien An Cung pagoda"],
-    bestTime: "Year round, mornings are quieter",
-  },
-  {
-    id: 5,
-    name: "Sa Dec Flower Village",
-    category: "Culture",
-    area: "Sa Dec",
-    lon: 105.74972,
-    lat: 10.31538,
-    summary:
-      "The largest flower-growing area in the delta, at its brightest in the weeks before Tet.",
-    description:
-      "Tan Quy Dong flower village sits along the Tien River, where hundreds of households grow flowers for the whole of southern Vietnam. Visitors can walk or cycle between the flower beds, visit bonsai gardens and stop at Hoa Khanh bridge. The Tet season is when the village is at its most colourful.",
-    highlights: ["Tet flowers", "Bonsai gardens", "Hoa Khanh bridge"],
-    bestTime: "November – January, the peak before Tet",
-  },
-  {
-    id: 6,
-    name: "Xeo Quyt Eco-Tourism Site",
-    category: "Ecology",
-    area: "Cao Lanh",
-    lon: 105.80362,
-    lat: 10.3985,
-    summary:
-      "Primary melaleuca forest and a wartime base, hidden among a maze of canals.",
-    description:
-      "Xeo Quyt is a historical and ecological site with melaleuca forest, reeds and boat paths cutting through the trees. During the war it served as an important base. Today visitors take boats to watch birds, tour the exhibition house and learn about the wetland ecosystem.",
-    highlights: ["Forest boat paths", "Wartime base", "Waterbirds"],
-    bestTime: "December – April, low water makes wildlife easier to spot",
-  },
-  {
-    id: 7,
-    name: "Dong Hoa Hiep Ancient Village",
-    category: "Culture",
-    area: "Cai Be",
-    lon: 106.00793,
-    lat: 10.34652,
-    summary:
-      "A river village on the Tien with century-old houses and lush fruit orchards.",
-    description:
-      "Dong Hoa Hiep preserves old wooden houses, ancient wells and the rhythms of orchard life. Visitors cycle along village lanes, stop at guava and rambutan gardens, and stay in homestays run by local families.",
-    highlights: ["Century-old houses", "Fruit orchards", "Garden homestays"],
-    bestTime: "Year round, fruit season May – August",
-  },
-  {
-    id: 8,
-    name: "Cai Be Floating Market",
-    category: "Culture",
-    area: "Cai Be",
-    lon: 106.03906,
-    lat: 10.33916,
-    summary:
-      "A river market on the Tien that opens at dawn, busy with fruit boats and traders.",
-    description:
-      "Cai Be floating market grew from the waterborne trade of the delta. Large boats sell fruit wholesale while small boats serve breakfast and coffee. The market is liveliest in the early morning, before the sun clears the water coconut palms.",
-    highlights: ["Fruit boats", "Breakfast on the river", "Sunrise on the Tien"],
-    bestTime: "5 – 7 am, especially during flood season",
-  },
-  {
-    id: 9,
-    name: "Vinh Trang Pagoda",
-    category: "Culture",
-    area: "My Tho",
-    lon: 106.37357,
-    lat: 10.36284,
-    summary:
-      "My Tho's oldest pagoda, where Asian and European architecture meet in a shady garden.",
-    description:
-      "Built in the 19th century, Vinh Trang pagoda is known for its triple gate, main hall and large Buddha statues. Its architecture blends Vietnamese, Chinese and French influences. It remains a famous pilgrimage and cultural site of the former Tien Giang province.",
-    highlights: ["Triple gate", "Large Buddha statues", "Asian–European architecture"],
-    bestTime: "Year round, Buddha's birthday in lunar April",
-  },
-  {
-    id: 10,
-    name: "Thoi Son Islet",
-    category: "Ecology",
-    area: "My Tho",
-    lon: 106.3207,
-    lat: 10.33241,
-    summary:
-      "An islet in the Tien River with orchards, horse carts and southern folk music.",
-    description:
-      "Thoi Son is a well-known islet of My Tho, where visitors ride horse carts along village lanes, visit longan orchards, sip honey tea and listen to don ca tai tu folk music. Sampan rides through water coconut creeks are a quintessential delta experience.",
-    highlights: ["Horse carts", "Folk music", "Longan orchards and honey"],
-    bestTime: "Year round, flood season September – November",
-  },
-  {
-    id: 11,
-    name: "Rach Gam – Xoai Mut Monument",
-    category: "Heritage",
-    area: "Chau Thanh",
-    lon: 106.24792,
-    lat: 10.32506,
-    summary:
-      "A historical site marking the Tay Son victory on the Tien River in 1785.",
-    description:
-      "Rach Gam – Xoai Mut is the stretch of the Tien River tied to the famous naval battle between the Tay Son and Siamese forces. The site has a monument, an exhibition house and a memorial space beside the river. It is a key historical stop on any journey through Tien Giang.",
-    highlights: ["Victory monument", "Exhibition house", "Tien River views"],
-    bestTime: "Year round, cool mornings",
-  },
-  {
-    id: 12,
-    name: "Tan Thanh Beach",
-    category: "Coast",
-    area: "Go Cong Dong",
-    lon: 106.74933,
-    lat: 10.31469,
-    summary:
-      "A beach near Saigon with coconut palms, fresh seafood and mangrove forest.",
-    description:
-      "Tan Thanh is the beach of the Go Cong area, where the Tien River meets the East Sea. The sand is gently sloping, the waves are calm and coconut palms frame a peaceful scene. Visitors often combine a swim with seafood and a walk through the coastal mangroves.",
-    highlights: ["Beach", "Seafood", "Protective mangrove forest"],
-    bestTime: "December – April, calm seas",
-  },
-  {
-    id: 13,
-    name: "Dong Thap Muoi Nature Reserve",
-    category: "Ecology",
-    area: "Tan Phuoc",
-    lon: 106.14908,
-    lat: 10.53154,
-    summary:
-      "A remaining patch of melaleuca forest and wetland from the old Dong Thap Muoi.",
-    description:
-      "The Dong Thap Muoi Nature Reserve protects wetland habitat, melaleuca forest and native bird species. It is a place to watch birds, learn about the ecosystem and feel the quiet beauty of the vast acid sulphate plain.",
-    highlights: ["Melaleuca forest", "Birdwatching", "Wetland ecosystem"],
-    bestTime: "Dry season, December – April",
-  },
-  {
-    id: 14,
-    name: "Kien An Cung Pagoda",
-    category: "Heritage",
-    area: "Sa Dec",
-    lon: 105.76712,
-    lat: 10.29459,
-    summary:
-      "An old Chinese pagoda in central Sa Dec, known for its architecture and wood carvings.",
-    description:
-      "Kien An Cung was built in the early 20th century by the Chinese community of Sa Dec. It stands out for its curved tiled roof, dragon and phoenix motifs and refined wooden carvings. The pagoda is a fine example of artistic architecture, close to the Huynh Thuy Le ancient house.",
-    highlights: ["Chinese architecture", "Wood carvings", "Old-world atmosphere"],
-    bestTime: "Year round, especially during the New Year festival",
-  },
+export type AttractionCategory = "Ecology" | "Heritage" | "Culture" | "Coast";
+export type Attraction = { id: number; name: string; category: AttractionCategory; area: string; lon: number; lat: number; type: string; address: string; summary: string; description: string; experience: string; highlights: string[]; bestTime: string; image: string; imageCaption: string; imageSource?: string; inside?: { name: string; description: string } };
+export const CATEGORY_LABELS: Record<AttractionCategory, string> = { Ecology: "Sinh thái & nhà vườn", Heritage: "Di tích lịch sử", Culture: "Văn hóa & cộng đồng", Coast: "Ven sông" };
+export const CATEGORY_COLORS: Record<AttractionCategory, string> = { Ecology: "#36594b", Heritage: "#36594b", Culture: "#36594b", Coast: "#36594b" };
+type Entry = [string, AttractionCategory, number, number, string, string, string, string, string, string[]];
+const entries: Entry[] = [
+ ["Khu di tích Nguyễn Sinh Sắc", "Heritage", 105.63166, 10.4472, "Di tích lịch sử, không gian tưởng niệm", "123/1 Phạm Hữu Lầu, phường Cao Lãnh, tỉnh Đồng Tháp", "Nơi yên nghỉ của cụ Phó bảng Nguyễn Sinh Sắc, thân sinh Chủ tịch Hồ Chí Minh.", "Khu mộ và không gian tưởng niệm gắn với hình tượng sen; khuôn viên có cây xanh và các hạng mục trưng bày giúp tìm hiểu cuộc đời cụ, dấu ấn của cụ tại Cao Lãnh.", "Viếng mộ, nghe thuyết minh, tham quan trưng bày. Miễn phí vé vào cổng; dịch vụ bổ sung nếu có tính riêng.", ["Khu mộ", "Không gian sen", "Trưng bày"]],
+ ["Mộ và đền thờ ông bà Đỗ Công Tường", "Heritage", 105.6378, 10.4604, "Di tích lịch sử, tín ngưỡng dân gian", "64 Lê Lợi, Phường 2, thành phố Cao Lãnh (địa chỉ trước sắp xếp)", "Đền thờ ông bà Chủ chợ Cao Lãnh, những người gắn với việc hình thành chợ và lịch sử khai phá vùng đất.", "Di tích quốc gia năm 2019. Không gian thờ tự gắn trực tiếp với ký ức về ông bà Đỗ Công Tường, kể câu chuyện nguồn gốc đô thị Cao Lãnh và truyền thống tưởng nhớ người có công.", "Tham quan đền và khu mộ, tìm hiểu nhân vật lịch sử địa phương.", ["Ông bà Chủ chợ", "Di tích quốc gia 2019"]],
+ ["Di tích Địa điểm tập kết ra Bắc năm 1954 tại Cao Lãnh", "Heritage", 105.6158, 10.4338, "Di tích lịch sử cách mạng, không gian tưởng niệm ven sông", "Bờ sông Tiền, gần bến phà Cao Lãnh cũ; Phường 6 (địa chỉ trước sắp xếp)", "Gắn với sự kiện tập kết, chuyển quân ra miền Bắc năm 1954 sau Hiệp định Genève.", "Cao Lãnh – Đồng Tháp Mười là khu vực tập kết 100 ngày ở Nam Bộ. Di tích quốc gia có tượng đài, phù điêu, sân lễ và hoa viên nhìn ra sông Tiền. Công trình đưa vào sử dụng năm 2019.", "Tìm hiểu sự kiện tập kết, quan sát hình tượng tưởng niệm và cảm nhận mối liên hệ giữa bến sông với lịch sử địa phương.", ["Tập kết 100 ngày", "Tượng đài, phù điêu", "Sông Tiền"]],
+ ["Khu lưu niệm Chi bộ An Nam Cộng sản Đảng", "Heritage", 105.6224, 10.4422, "Di tích, lưu niệm và giáo dục lịch sử", "Phường Cao Lãnh, tỉnh Đồng Tháp", "Ghi dấu Chi bộ An Nam Cộng sản Đảng ra đời tại làng Hòa An tháng 11/1929, do đồng chí Phạm Hữu Lầu làm Bí thư.", "Quần thể hơn 5 ha được tôn tạo, mở rộng và khánh thành ngày 23/9/2025. Gồm Nhà lưu niệm, Nhà truyền thống vùng đất Cao Lãnh, Biểu tượng Hòa bình và cảnh quan. Có tư liệu về chi bộ, tưởng niệm đồng chí Phạm Hữu Lầu và đồng chí Trần Thị Nhượng.", "Xem tư liệu, hiện vật, tìm hiểu lịch sử cách mạng và quá trình phát triển địa phương.", ["Nhà lưu niệm", "Nhà truyền thống", "Biểu tượng Hòa bình"]],
+ ["Khu du lịch sinh thái Gáo Giồng", "Ecology", 105.61012, 10.58323, "Du lịch sinh thái đất ngập nước", "Ấp 6, xã Gáo Giồng, huyện Cao Lãnh (địa danh cũ)", "Rừng tràm, kênh rạch, đồng sen và nơi cư trú của chim nước.", "Toàn vùng có khoảng 1.700 ha rừng tràm, trong đó khoảng 36 ha là nơi chim trú ngụ, sinh sản. Đây là quy mô vùng rừng, không phải toàn bộ diện tích khu dịch vụ du lịch. Xuồng ba lá, tiếng chim và cảnh quan đất ngập nước tạo nét riêng của điểm đến.", "Đi xuồng theo kênh, quan sát chim, khám phá cảnh quan rừng và đồng sen.", ["Xuồng ba lá", "Chim nước", "Rừng tràm"]],
+ ["Khu di tích Xẻo Quýt", "Heritage", 105.80362, 10.3985, "Di tích lịch sử kết hợp sinh thái", "Hai xã Mỹ Long và Mỹ Hiệp, huyện Cao Lãnh (địa danh cũ); cách trung tâm Cao Lãnh hơn 30 km", "Căn cứ của Tỉnh ủy Kiến Phong giai đoạn 1960–1975, được địa hình rừng và kênh rạch che chở.", "Khoảng 50 ha, trong đó khoảng 20 ha rừng tràm. Rừng, dây leo, lạch nước nhỏ bao quanh hệ thống hầm, lán và công sự được bảo tồn, phục dựng. Nổi bật có hầm tránh bom chữ A, hầm bí mật chữ L, công sự chiến đấu chữ Z.", "Đi bộ theo đường mòn hoặc đi xuồng ba lá qua lạch nước, kết hợp nghe kể chuyện về căn cứ.", ["Hầm chữ A, L", "Công sự chữ Z", "Rừng tràm"]],
+ ["Khu du lịch sinh thái Mỹ Phước Thành", "Ecology", 105.6556, 10.4752, "Du lịch sinh thái, nghỉ ngơi và chụp ảnh", "Cổng vào 264–266 Tôn Đức Thắng, phường Mỹ Phú, thành phố Cao Lãnh (địa chỉ trước sắp xếp)", "Không gian đồng sen, cảnh quan đồng quê và những góc tham quan mang hình ảnh làng quê miền Tây.", "Điểm đến phù hợp cho một buổi nghỉ ngơi nhẹ nhàng, ngắm cảnh và chụp ảnh giữa không gian đồng sen.", "Dạo ngắm cảnh, chụp ảnh và thư giãn. Dịch vụ, hoạt động cụ thể cần xác nhận với đơn vị vận hành.", ["Đồng sen", "Cảnh quan đồng quê"]],
+ ["Chùa Phước Kiển · Chùa Lá Sen", "Culture", 105.8463, 10.2494, "Tham quan tâm linh kết hợp tìm hiểu thực vật", "Xã Hòa Tân, huyện Châu Thành, tỉnh Đồng Tháp (địa danh cũ); không thuộc Cao Lãnh", "Ngôi chùa được biết đến với hồ có những lá sen khổng lồ dạng nia.", "Gân lá lớn và mép lá dựng cao là dấu hiệu nhận diện nổi bật của hồ sen. Đây là điểm mở rộng hành trình ngoài khu vực Cao Lãnh.", "Vãn cảnh, lễ Phật, quan sát hồ sen và chụp ảnh cảnh quan.", ["Lá sen khổng lồ", "Ngoài Cao Lãnh"]],
+ ["The Mango Trail Farmstay", "Ecology", 105.7415, 10.4325, "Du lịch nông nghiệp, nghỉ dưỡng sinh thái", "Ấp Mỹ Xương, xã Mỹ Thọ, tỉnh Đồng Tháp; trước đây thuộc xã Mỹ Xương, huyện Cao Lãnh", "Điểm tham quan du lịch, nghỉ dưỡng Vườn Xoài do bà Hồ Thị Thu Thủy phát triển.", "Sản phẩm du lịch OCOP 3 sao được trao chứng nhận ngày 16/01/2026. Mô hình kết hợp trồng xoài, nuôi cá với lưu trú và trải nghiệm đời sống nhà vườn. Bungalow giữa vườn xoài xanh mát tạo cảnh quan yên bình, mộc mạc, góp phần quảng bá xoài Cao Lãnh, nâng cao giá trị nông nghiệp qua du lịch.", "Lưu trú, đạp xe đường quê, chèo xuồng, chèo SUP, cho cá ăn; tham quan và hái xoài theo mùa tại vườn liên kết, thưởng thức ẩm thực, tìm hiểu đời sống người làm vườn.", ["OCOP 3 sao", "Bungalow", "Vườn xoài"]],
+ ["Phủ thờ Thư Ngọc Hầu – Nguyễn Văn Thư", "Heritage", 105.7541, 10.4413, "Di tích lịch sử – văn hóa, không gian thờ tự", "Khu vực Mỹ Xương, xã Mỹ Thọ, tỉnh Đồng Tháp; trước đây thuộc xã Mỹ Xương, huyện Cao Lãnh", "Nơi thờ Thư Ngọc Hầu Nguyễn Văn Thư, nhân vật lịch sử thời Nguyễn, gắn với cây xoài tổ và lịch sử giống xoài Cát Chu.", "Không gian thờ tự mang kiến trúc truyền thống Nam Bộ, lưu giữ ký ức lịch sử và những thế hệ gắn bó với nghề trồng xoài. Cây xoài lâu năm thể hiện mối liên hệ giữa văn hóa địa phương và sản vật Cao Lãnh.", "Tham quan phủ thờ, nghe chuyện Thư Ngọc Hầu, tìm hiểu cây xoài tổ, xoài Cát Chu và văn hóa Nam Bộ; thưởng thức món ăn từ xoài theo chương trình.", ["Thư Ngọc Hầu", "Cây xoài tổ", "Văn hóa Nam Bộ"]],
+ ["Vườn xoài Tư Mách", "Ecology", 105.7474, 10.4492, "Du lịch nông nghiệp, trải nghiệm nghề làm vườn", "Xã Mỹ Thọ, tỉnh Đồng Tháp; khu vực xã Mỹ Xương, huyện Cao Lãnh (địa danh cũ)", "Vườn của ông Nguyễn Văn Mách, một trong những hộ phát triển du lịch gắn với sản xuất xoài tại địa phương.", "Không gian vườn xoài Cát Chu giới thiệu quy trình canh tác và công việc thường ngày của người trồng xoài Cao Lãnh. Cây được chăm sóc, thu hoạch theo mùa vụ, giúp du khách tiếp cận công việc nhà vườn trong môi trường thực tế.", "Dạo vườn, tìm hiểu chăm sóc cây, quan sát bao trái, tỉa cành, phòng trừ sâu bệnh và thu hoạch khi đến mùa; trò chuyện với chủ vườn.", ["Xoài Cát Chu", "Quy trình canh tác", "Gặp chủ vườn"]],
+ ["Chợ quê cù lao Tân Thuận Đông", "Culture", 105.6049, 10.4788, "Du lịch cộng đồng, văn hóa – ẩm thực", "Cù lao Tân Thuận Đông, phường Cao Lãnh, tỉnh Đồng Tháp; trước đây thuộc xã Tân Thuận Đông, thành phố Cao Lãnh", "Chợ quê hình thành tháng 12/2022, giới thiệu nông sản, món ăn truyền thống và sinh hoạt vùng cù lao.", "Thuộc Điểm du lịch cộng đồng Tân Thuận Đông được tỉnh công nhận năm 2023. Khoảng 35 gian hàng mái lá ven sông Tiền giới thiệu trái cây theo mùa, bánh dân gian và món ăn truyền thống. Đờn ca tài tử, trò chơi dân gian góp phần gìn giữ văn hóa và tạo sinh kế địa phương.", "Dạo chợ, thưởng thức đặc sản, mua xoài Cát, ổi, nhãn theo mùa; nghe đờn ca tài tử, tham gia trò chơi theo chương trình, giao lưu với người dân và ngắm cảnh sông Tiền.", ["Khoảng 35 gian hàng", "Bánh dân gian", "Đờn ca tài tử"]],
 ];
+// Overview positions; directions search by destination name and address.
+export const ATTRACTIONS: Attraction[] = entries.map(([name, category, lon, lat, type, address, summary, description, experience, highlights], id) => ({ id, name, category, lon, lat, type, address, area: id === 7 ? "Ngoài Cao Lãnh" : "Cao Lãnh, Đồng Tháp", summary, description, experience, highlights, bestTime: id === 11 ? "Thứ Bảy hằng tuần · 14:00–20:00" : "Liên hệ điểm đến để xác nhận giờ tham quan và dịch vụ.", image: "/cao-lanh-orchard.jpg", imageCaption: "Ảnh minh họa không gian miệt vườn Cao Lãnh" }));
+Object.assign(ATTRACTIONS[0], { image: "https://scontent.iocvnpt.com/resources/portal/Images/DTP/superadminportal.dtp/trangchu/portal/luutru/diadiem/ditichnguyensinhsac/h5.jpg_636758375127465174.jpg", imageCaption: "Khu di tích Nguyễn Sinh Sắc · Cổng du lịch Đồng Tháp", imageSource: "https://dulich.dongthap.gov.vn/vi/ditichnguyensinhsac" });
+Object.assign(ATTRACTIONS[5], { image: "https://sgtt.thesaigontimes.vn/wp-content/uploads/2025/07/xeo-quyt-1.jpg", imageCaption: "Xẻo Quýt · Sài Gòn Tiếp Thị", imageSource: "https://sgtt.thesaigontimes.vn/di-xuong-nghe-ke-chuyen-xua-giua-rung-tram-xeo-quyt/" });
+Object.assign(ATTRACTIONS[7], { image: "https://luhanhvietnam.com.vn/du-lich/vnt_upload/news/07_2021/avartYnh_FB_Chua_la_sen-min.jpg", imageCaption: "Chùa Lá Sen · Lữ hành Việt Nam", imageSource: "https://luhanhvietnam.com.vn/du-lich/vieng-chua-la-sen-dong-thap.html" });
+ATTRACTIONS[3].inside = { name: "Nhà truyền thống vùng đất Cao Lãnh", description: "Không gian trưng bày lịch sử – văn hóa khoảng 988 m² với sáu không gian: sự hình thành tên gọi Cao Lãnh; khai hoang lập ấp; lịch sử trước năm 1929; hai cuộc kháng chiến; xây dựng, phát triển từ năm 1975 và trưng bày chuyên đề. Tìm hiểu câu chuyện tổng thể về vùng đất, con người và bối cảnh lịch sử trước khi khám phá các di tích ngoài thực địa." };
 
-export const CATEGORY_COLORS: Record<AttractionCategory, string> = {
-  Ecology: "#7faf2d",
-  Heritage: "#feb212",
-  Culture: "#93381f",
-  Coast: "#207b58",
-};
+// Locality comes from the destination address, never a nearest-centre lookup.
+const LOCALITIES = ["Phường Cao Lãnh", "Phường Cao Lãnh", "Cao Lãnh · bến phà cũ", "Phường Cao Lãnh", "Gáo Giồng · địa danh cũ", "Mỹ Long – Mỹ Hiệp · địa danh cũ", "Mỹ Phú · địa danh cũ", "Xã Tân Nhuận Đông · ngoài Cao Lãnh", "Xã Mỹ Thọ", "Xã Mỹ Thọ", "Xã Mỹ Thọ", "Phường Cao Lãnh · cù lao Tân Thuận Đông"];
+ATTRACTIONS.forEach((attraction, index) => { attraction.area = LOCALITIES[index]; });
+ATTRACTIONS[7].address = "Xã Tân Nhuận Đông, tỉnh Đồng Tháp; trước đây thuộc xã Hòa Tân, huyện Châu Thành. Không thuộc Cao Lãnh.";

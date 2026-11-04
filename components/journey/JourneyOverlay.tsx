@@ -3,7 +3,8 @@
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS } from "./journeyData";
+import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS, getJourneyFrame } from "./journeyData";
+import JourneyStopCard from "./JourneyStopCard";
 import { useMapUI } from "../map/MapUIContext";
 
 const POSITION_CLASSES = {
@@ -17,7 +18,7 @@ export default function JourneyOverlay() {
   const root = useRef<HTMLDivElement>(null);
   const {
     explored, ready, explore, journeyProgress,
-    setActiveChapter, activeChapter, season, setSeason, setJourneyProgress,
+    setActiveChapter, activeChapter, season, setSeason, setJourneyProgress, setSelectedAttractionId, selectedAttractionId,
   } = useMapUI();
 
   useLayoutEffect(() => {
@@ -31,40 +32,27 @@ export default function JourneyOverlay() {
     const chapters = gsap.utils.toArray<HTMLElement>("[data-journey-chapter]", root.current);
     const bar = root.current.querySelector<HTMLElement>("[data-journey-progress]");
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const maxIndex = JOURNEY_CHAPTERS.length - 1;
     let lastIndex = -1;
 
     gsap.set(chapters, { autoAlpha: 0, y: reduced ? 0 : 30, filter: reduced ? "none" : "blur(10px)" });
     gsap.set(chapters[0], { autoAlpha: 1, y: 0, filter: "blur(0px)" });
-    const timeline = gsap.timeline({ paused: true });
-    // Stage one chapter per unit; chapter is stable during checkpoint approach/hold.
-    for (let i = 0; i <= maxIndex; i++) {
-      if (i > 0) timeline.to(chapters[i], {
-        autoAlpha: 1, y: 0, filter: "blur(0px)", duration: reduced ? 0.02 : 0.27,
-        ease: "power2.out",
-      }, i - 0.08);
-      if (i < maxIndex) timeline.to(chapters[i], {
-        autoAlpha: 0, y: reduced ? 0 : -24,
-        filter: reduced ? "none" : "blur(8px)", duration: reduced ? 0.02 : 0.25,
-        ease: "power2.in",
-      }, i + 0.68);
-    }
-    timeline.to({}, { duration: 0.01 }, maxIndex);
-
     const onProgress = (p: number) => {
       setJourneyProgress(p);
-      timeline.progress(p);
       if (bar) bar.style.transform = `scaleX(${p})`;
-      const raw = p * maxIndex;
-      const nearest = Math.max(0, Math.min(maxIndex, Math.round(raw)));
+      const frame = getJourneyFrame(p);
+      const nearest = frame.moving ? 0 : frame.chapter;
+      chapters.forEach((chapter, index) => {
+        const visible = index === nearest && !frame.moving;
+        chapter.inert = !visible;
+        gsap.set(chapter, { autoAlpha: visible ? 1 : 0, y: 0, filter: "none" });
+      });
       if (nearest !== lastIndex) {
         lastIndex = nearest;
         setActiveChapter(nearest);
       }
       // The focus only blooms near a checkpoint's hold segment; it fades while in transit.
-      const distance = Math.abs(raw - Math.round(raw));
       const focus = nearest > 0 && nearest <= JOURNEY_CHECKPOINTS.length
-        ? Math.max(0, Math.min(1, (0.58 - distance) / 0.17)) : 0;
+        ? (frame.moving ? 0 : 1) : 0;
       stage.style.setProperty("--focus-strength", reduced ? "0" : focus.toFixed(3));
     };
 
@@ -82,7 +70,6 @@ export default function JourneyOverlay() {
     return () => {
       window.removeEventListener("resize", refresh);
       trigger.kill();
-      timeline.kill();
       stage.style.setProperty("--focus-strength", "0");
     };
   }, [explored, ready, journeyProgress, setActiveChapter, setJourneyProgress]);
@@ -144,7 +131,7 @@ export default function JourneyOverlay() {
         ))}
       </nav>
 
-      <div className="absolute inset-0" aria-live="off">
+      <div className="absolute inset-0" aria-live="off" style={{ display: selectedAttractionId == null ? "block" : "none" }}>
         {JOURNEY_CHAPTERS.map((chapter, i) => {
           const position = POSITION_CLASSES[chapter.position];
           const isCentered = chapter.position === "center";
@@ -153,11 +140,16 @@ export default function JourneyOverlay() {
             <article
               key={chapter.index}
               data-journey-chapter
-              className={`absolute inset-0 z-10 flex flex-col justify-center px-4 py-24 sm:px-8 lg:px-16 ${position}`}
+              className={`absolute inset-0 z-10 flex flex-col px-4 py-24 sm:px-8 lg:px-12 ${i === 0 ? "items-start justify-end pb-36 text-left sm:pb-32" : `justify-center ${position}`}`}
               aria-label={`Chương ${i + 1}`}
             >
-              <div
-                className="journey-card pointer-events-auto w-full max-w-xl"
+              {i > 0 ? <JourneyStopCard
+                attraction={JOURNEY_CHECKPOINTS[i - 1].attraction}
+                station={i} total={JOURNEY_CHECKPOINTS.length}
+                onDetails={() => setSelectedAttractionId(JOURNEY_CHECKPOINTS[i - 1].index)}
+                onExplore={i === JOURNEY_CHAPTERS.length - 1 ? startExploring : undefined}
+              /> : <div
+                className="journey-card pointer-events-auto w-full max-w-[360px] text-left"
               >
                 <div className="journey-card__index" aria-hidden="true">
                   <span>{String(i + 1).padStart(2, "0")}</span>
@@ -167,17 +159,17 @@ export default function JourneyOverlay() {
                 <div>
                   <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.24em] text-mango">
                     <span className="block h-px w-6 bg-mango" />
-                    {chapter.eyebrow}
+                    Cao Lãnh · Đồng Tháp
                   </span>
 
-                  <h1 className="mt-3 font-display text-[clamp(1.9rem,4.2vw,3.7rem)] font-semibold leading-[1] tracking-[-0.03em] text-cream drop-shadow-[0_2px_18px_rgba(4,20,14,0.55)]">
+                  <h1 className="mt-3 font-display text-[clamp(1.4rem,2.4vw,2rem)] font-medium leading-[1.15] tracking-[-0.02em] text-cream">
                     {chapter.title}
                     <br />
                     <em className="font-normal not-italic text-mango">{chapter.emphasis}</em>
                   </h1>
 
-                  <p className={`mt-4 text-[13px] leading-relaxed text-cream/80 drop-shadow-[0_1px_10px_rgba(4,20,14,0.6)] sm:text-sm ${isCentered ? "mx-auto max-w-xl" : "max-w-lg"}`}>
-                    {chapter.description}
+                  <p className="mt-3 text-xs leading-relaxed text-cream/75">
+                    Cuộn để ghé những trạm di sản, sông nước và vườn xoài Cao Lãnh.
                   </p>
 
                     <div className={`mt-5 flex flex-wrap items-center gap-2.5 ${isCentered ? "justify-center" : ""}`}>
@@ -199,7 +191,7 @@ export default function JourneyOverlay() {
                       </span>
                     )}
                   </div>
-                </div>
+                </div>}
             </article>
           );
         })}

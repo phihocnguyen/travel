@@ -7,7 +7,6 @@ import {
   BufferGeometry,
   DoubleSide,
   LineBasicMaterial,
-  MeshBasicMaterial,
   ShaderMaterial,
   UniformsLib,
   UniformsUtils,
@@ -16,7 +15,7 @@ import {
 import { idAt } from "@/lib/geo/adminTextures";
 import { forEachRing, geometryContains } from "@/lib/geo/polygon";
 import { applyTextureQuality, type MapAssets } from "@/lib/map/assets";
-import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS } from "@/components/journey/journeyData";
+import { JOURNEY_CHECKPOINTS, getJourneyFrame } from "@/components/journey/journeyData";
 import { useMapUI } from "./MapUIContext";
 
 export const EXAGGERATION = 18;
@@ -140,7 +139,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     color += vec3(0.07, 0.08, 0.06) * rim * 0.08;
 
     float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(vec3(luma), color, 1.16);
+    color = mix(vec3(luma), color, 0.62);
     color = clamp((color - 0.5) * 1.08 + 0.5, 0.0, 1.0);
 
     float elevTint = smoothstep(0.6, 5.5, vHeight);
@@ -153,8 +152,8 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     // The imagery stays intact. Only colour grading changes inside the wave.
     // Dry and flood grades are deliberately deeper so the filter reads clearly.
     vec3 mangoGrade = vec3(1.05, 1.04, 0.95);
-    vec3 dryGrade = vec3(1.06, 0.9, 0.7);
-    vec3 floodGrade = vec3(0.68, 0.97, 1.16);
+    vec3 dryGrade = vec3(1.02, 0.98, 0.90);
+    vec3 floodGrade = vec3(0.92, 1.0, 1.02);
     vec3 oldGrade = uSeasonFrom < 0.5 ? mangoGrade : (uSeasonFrom < 1.5 ? dryGrade : floodGrade);
     vec3 newGrade = uSeasonTo < 0.5 ? mangoGrade : (uSeasonTo < 1.5 ? dryGrade : floodGrade);
     // Slight procedural scalloping prevents the wipe from resembling a hard circular mask.
@@ -428,13 +427,11 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
 
     // Checkpoint focus: reuse the same progress curve as the DOM spotlight so
     // the 3D zones fade exactly when the interface focuses a checkpoint.
-    const maxIndex = JOURNEY_CHAPTERS.length - 1;
-    const raw = journeyProgress.current * maxIndex;
-    const nearest = Math.max(0, Math.min(maxIndex, Math.round(raw)));
+    const frame = getJourneyFrame(journeyProgress.current);
+    const nearest = frame.chapter;
     let targetFocus = 0;
     if (!explored && nearest > 0 && nearest <= JOURNEY_CHECKPOINTS.length) {
-      const distance = Math.abs(raw - Math.round(raw));
-      targetFocus = Math.max(0, Math.min(1, (0.58 - distance) / 0.17));
+      targetFocus = frame.moving ? 0 : 1;
       const attraction = JOURNEY_CHECKPOINTS[nearest - 1].attraction;
       const [focalX, focalZ] = assets.projector.toLocal(attraction.lon, attraction.lat);
       focusTarget.set(
@@ -579,6 +576,7 @@ function buildRiverGeometry(assets: MapAssets, y: number) {
 }
 
 export function Rivers({ assets, y }: RiversProps) {
+  const meshRef = useRef<import("three").Mesh>(null);
   const geometry = useMemo(() => buildRiverGeometry(assets, y), [assets, y]);
   const material = useMemo(
     () =>
@@ -595,7 +593,8 @@ export function Rivers({ assets, y }: RiversProps) {
   );
 
   useFrame((state) => {
-    material.uniforms.uTime.value = state.clock.elapsedTime;
+    const current = meshRef.current?.material;
+    if (current instanceof ShaderMaterial) current.uniforms.uTime.value = state.clock.elapsedTime;
   });
 
   useEffect(() => {
@@ -605,7 +604,7 @@ export function Rivers({ assets, y }: RiversProps) {
     };
   }, [geometry, material]);
 
-  return <mesh geometry={geometry} material={material} matrixAutoUpdate={false} />;
+  return <mesh ref={meshRef} geometry={geometry} material={material} matrixAutoUpdate={false} />;
 }
 
 type OutlineProps = {

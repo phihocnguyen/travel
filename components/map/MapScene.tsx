@@ -115,6 +115,13 @@ function SceneSync({ demand }: { demand: boolean }) {
     invalidate();
   }, [invalidate, demand, explored, hoveredId, selectedAttractionId]);
 
+  useEffect(() => {
+    if (!demand) return;
+    // Keep atmospheric animation alive on software renderers at a capped rate.
+    const timer = window.setInterval(invalidate, 1000 / 24);
+    return () => window.clearInterval(timer);
+  }, [demand, invalidate]);
+
   return null;
 }
 

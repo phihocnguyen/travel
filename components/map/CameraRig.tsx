@@ -5,7 +5,8 @@ import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { CatmullRomCurve3, MathUtils, PerspectiveCamera, Vector3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { JOURNEY_CHECKPOINTS } from "@/components/journey/journeyData";
+import { JOURNEY_CHECKPOINTS, getJourneyFrame } from "@/components/journey/journeyData";
+import { elevationToScene } from "./Terrain";
 import { useMapUI } from "./MapUIContext";
 import type { MapAssets } from "@/lib/map/assets";
 
@@ -22,13 +23,7 @@ type Pose = { position: Vector3; target: Vector3; fov: number };
 const scratchPos = new Vector3();
 const scratchTarget = new Vector3();
 
-const smooth = (t: number) => {
-  const x = MathUtils.clamp(t, 0, 1);
-  return x * x * (3 - 2 * x);
-};
-
 export function CameraRig({ ready, explored, focusPoint, overview, assets }: Props) {
-  const camera = useThree((state) => state.camera);
   const invalidate = useThree((state) => state.invalidate);
   const { journeyProgress } = useMapUI();
   const controls = useRef<OrbitControlsImpl>(null);
@@ -49,21 +44,17 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
       const width = assets.projector.widthKm;
       const depth = assets.projector.depthKm;
       const approach = Math.max(16, Math.min(width, depth) * 0.3);
+      const ground = elevationToScene(assets.maxHeightMeters) + 0.71;
       JOURNEY_CHECKPOINTS.forEach(({ attraction }, index) => {
         const [x, z] = assets.projector.toLocal(attraction.lon, attraction.lat);
         const side = index % 2 === 0 ? 1 : -1;
         poses.push({
-          position: new Vector3(x + side * approach * 0.32, approach * 1.15, z + approach * 1.08),
-          target: new Vector3(x, 0, z),
+          position: new Vector3(x + side * approach * 0.32, ground + approach * 1.15, z + approach * 1.08),
+          target: new Vector3(x, ground, z),
           fov: 38,
         });
       });
     }
-    poses.push({
-      position: new Vector3(overview[0], overview[1] * 0.9, overview[2] * 0.91),
-      target: new Vector3(0, 0, 0),
-      fov: 43,
-    });
     return {
       poses,
       positions: new CatmullRomCurve3(poses.map((p) => p.position), false, "centripetal", 0.35),
@@ -79,7 +70,7 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
     focusing.current = true;
   }, [focusPoint]);
 
-  useFrame((_, rawDt) => {
+  useFrame(({ camera }, rawDt) => {
     if (!ready) return;
     const dt = Math.min(rawDt, 0.06);
     const orbit = controls.current;
@@ -88,12 +79,7 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
       modeRef.current = false;
       if (orbit) orbit.enabled = false;
       const total = route.poses.length - 1;
-      const p = MathUtils.clamp(journeyProgress.current, 0, 1) * total;
-      const segment = Math.min(Math.floor(p), total - 1);
-      const phase = p - segment;
-      // 15% arrival transition; generous stable section near the checkpoint for reading.
-      // Going backward uses the same deterministic path.
-      const transition = smooth(phase / 0.74);
+      const { segment, transition } = getJourneyFrame(journeyProgress.current);
       const curveT = (segment + transition) / total;
       route.positions.getPoint(curveT, scratchPos);
       route.targets.getPoint(curveT, scratchTarget);
@@ -141,7 +127,7 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
     } else if (orbit) {
       orbit.enabled = true;
     }
-  });
+  }, -0.5);
 
   return (
     <OrbitControls

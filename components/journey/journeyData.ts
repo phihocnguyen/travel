@@ -3,6 +3,17 @@ import { CAMPAIGN } from "@/components/campaign/campaignData";
 
 export const CHECKPOINT_COUNT = Math.min(4, ATTRACTIONS.length);
 
+// Shared arrival/hold timing for camera, marker, card and terrain focus.
+export function getJourneyFrame(progress: number) {
+  const raw = Math.max(0, Math.min(1, progress)) * CHECKPOINT_COUNT;
+  const segment = Math.min(Math.floor(raw), CHECKPOINT_COUNT - 1);
+  const phase = raw - segment;
+  const t = Math.max(0, Math.min(1, (phase - 0.12) / 0.60));
+  const transition = t * t * (3 - 2 * t);
+  const moving = phase > 0.12 && phase < 0.72;
+  return { segment, transition, moving, chapter: phase >= 0.72 ? segment + 1 : segment };
+}
+
 // Spread the story across different marker indices rather than inventing coordinates.
 export const JOURNEY_CHECKPOINTS = Array.from({ length: CHECKPOINT_COUNT }, (_, i) => {
   const index = CHECKPOINT_COUNT === 1
@@ -19,12 +30,7 @@ const CATEGORY_LABELS: Record<AttractionCategory, string> = {
 };
 
 // Short, concrete checkpoint copy for the places shown in the journey.
-const CHECKPOINT_DESCRIPTIONS: Record<number, string> = {
-  0: "Mùa khô, nước rút để lộ những bãi cỏ rộng và chim về kiếm ăn. Nếu có thời gian, thử đi thuyền vào vùng lõi để ngắm cảnh đồng nước.",
-  5: "Ở Tân Quy Đông, vườn hoa nằm san sát dọc bờ sông Tiền. Những tuần cận Tết là lúc làng hoa nhộn nhịp và nhiều màu sắc nhất.",
-  9: "Chùa có cổng tam quan, chánh điện và nhiều pho tượng lớn giữa khu vườn rợp bóng. Buổi sáng thường yên hơn để thong thả đi một vòng.",
-  14: "Ngôi chùa người Hoa ở trung tâm Sa Đéc, dễ nhận ra bởi mái ngói uốn cong và các hình chạm rồng phượng. Nhà cổ Huỳnh Thủy Lê ở gần đó, tiện ghé cùng chuyến.",
-};
+const CHECKPOINT_DESCRIPTIONS: Record<number, string> = {};
 
 export type JourneyChapter = {
   index: string;

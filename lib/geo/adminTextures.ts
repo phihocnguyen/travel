@@ -64,7 +64,7 @@ export function buildAdminLayers(
   const img = octx.createImageData(width, height);
   const ids = new Uint16Array(width * height);
   const maskData = mctx.getImageData(0, 0, width, height).data;
-  const colors = communes.map((c) => hexToRgb(c.color));
+  const colors = communes.map((_, index) => hexToRgb(["#647d6b", "#728773", "#80917d", "#6c8274"][index % 4]));
 
   for (let y = 0; y < height; y++) {
     const lat = north - ((y + 0.5) / height) * (north - south);
@@ -84,11 +84,14 @@ export function buildAdminLayers(
           best = i;
         }
       }
+      // Commune centres are labels, not boundary polygons. Do not assign
+      // territory by nearest centre: this mislabels real destinations.
+      if (bestD > 0.000004) continue;
       const [r, g, b] = colors[best];
       img.data[p] = r;
       img.data[p + 1] = g;
       img.data[p + 2] = b;
-      img.data[p + 3] = 120;
+      img.data[p + 3] = 48;
       ids[y * width + x] = best + 1;
     }
   }

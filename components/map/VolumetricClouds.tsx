@@ -188,7 +188,7 @@ const CLOUD_FRAGMENT = /* glsl */ `
 
     // Two overlapping noise fields: broad masses plus cellular billows. The
     // slower second field drifts at a different rate so the edges churn.
-    vec3 wind = vec3(uTime * 0.0062, 0.0, uTime * 0.0040);
+    vec3 wind = vec3(uTime * 0.014, 0.0, uTime * 0.009);
     vec3 q = uvw * vec3(1.55, 1.9, 1.55) + wind;
 
     float shape = texture(uNoise, q).r;
@@ -267,7 +267,7 @@ function lowPowerDevice() {
 
 export function VolumetricClouds({ base, width, depth }: Props) {
   const mesh = useRef<Mesh>(null);
-  const lowPower = useMemo(lowPowerDevice, []);
+  const lowPower = useMemo(() => lowPowerDevice(), []);
   const noise = useMemo(() => makeCloudNoise(lowPower ? 40 : 48), [lowPower]);
   useEffect(() => () => noise.dispose(), [noise]);
 
@@ -314,7 +314,10 @@ export function VolumetricClouds({ base, width, depth }: Props) {
   useEffect(() => () => material.dispose(), [material]);
 
   useFrame((state) => {
-    material.uniforms.uTime.value = state.clock.elapsedTime;
+    const cloudMaterial = mesh.current?.material;
+    if (cloudMaterial instanceof ShaderMaterial) {
+      cloudMaterial.uniforms.uTime.value = state.clock.elapsedTime;
+    }
   });
 
   return (
