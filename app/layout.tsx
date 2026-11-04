@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
+import SiteCursor from "@/components/effects/SiteCursor";
+import UserPresence from "@/components/auth/UserPresence";
 import "./globals.css";
 
 const khaviax = localFont({
@@ -24,7 +27,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${khaviax.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">{children}<Suspense fallback={null}><SiteCursor/><UserPresence/></Suspense></body>
     </html>
   );
 }

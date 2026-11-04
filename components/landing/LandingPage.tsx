@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { EVENT } from "@/components/campaign/campaignData";
+import SiteHeader from "@/components/layout/SiteHeader";
 
 const HERO_ART_IMAGE = "/banner.jpg";
 const INTRO_STORY = "Vị Xoài Dẫn Lối là dự án truyền thông của nhóm sinh viên FPT, giới thiệu du lịch trải nghiệm Cao Lãnh đến người trẻ TP.HCM. Từ xoài Cát, dự án kể về miệt vườn, người trồng và Trạm Hẹn Cao Lãnh.";
+const INTRO_SEEN_KEY = "vxdl:landing-intro:v1";
 
 const projects = [
   { title: "Một sớm ở Tràm Chim", category: "ĐẤT NGẬP NƯỚC", location: "Tam Nông · Đồng Tháp", detail: "Mùa nước nổi", description: "Đi thuyền giữa đồng cỏ và những lối nước len qua rừng tràm. Sáng sớm là lúc dễ bắt gặp chim bay đi kiếm ăn.", image: "/tram-chim.jpg" },
@@ -23,9 +26,17 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const loaderRef = useRef<HTMLDivElement>(null);
   const [galleryFullscreen, setGalleryFullscreen] = useState(false);
-  const cursorDot = useRef<HTMLDivElement>(null);
-  const cursorRing = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  const introStarted = useRef(false);
+  useLayoutEffect(() => {
+    try {
+      if (window.sessionStorage.getItem(INTRO_SEEN_KEY) === "seen" && !introStarted.current) {
+        if (loaderRef.current) loaderRef.current.style.display = "none";
+        const frame=window.requestAnimationFrame(()=>setLoading(false));
+        return ()=>window.cancelAnimationFrame(frame);
+      }
+      introStarted.current=true;
+      window.sessionStorage.setItem(INTRO_SEEN_KEY,"seen");
+    } catch { /* Storage can be unavailable in private browsing. */ }
     let active = true;
     let didFinish = false;
     const started = Date.now();
@@ -51,7 +62,11 @@ export default function LandingPage() {
               const minHold = Math.max(0, 1350 - (Date.now() - started));
               window.setTimeout(() => {
                 if (!active) return;
-                gsap.timeline({ onComplete: () => { if (active) setLoading(false); } })
+                gsap.timeline({ onComplete: () => {
+                  if (!active) return;
+                  try { window.sessionStorage.setItem(INTRO_SEEN_KEY,"seen"); } catch { /* Keep navigation usable without storage. */ }
+                  setLoading(false);
+                } })
                   .to(overlay.querySelectorAll("[data-loader-content]"), { y: -24, autoAlpha: 0, duration: .45, stagger: .055, ease: "power3.inOut" })
                   .to(overlay, { yPercent: -105, duration: .85, ease: "power4.inOut" }, "-=.12");
               }, minHold);
@@ -73,105 +88,6 @@ export default function LandingPage() {
     hero.onerror = finish;
     hero.src = HERO_ART_IMAGE;
     return () => { active = false; };
-  }, []);
-  useEffect(() => {
-    const dot = cursorDot.current;
-    const ring = cursorRing.current;
-    if (!dot || !ring || !window.matchMedia("(any-pointer: fine)").matches) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.set([dot, ring], { xPercent: -50, yPercent: -50 });
-    const setDotX = gsap.quickSetter(dot, "x", "px");
-    const setDotY = gsap.quickSetter(dot, "y", "px");
-    const setRingX = gsap.quickSetter(ring, "x", "px");
-    const setRingY = gsap.quickSetter(ring, "y", "px");
-    type PullTo = { x: (value: number) => void; y: (value: number) => void };
-    const textPulls = new WeakMap<HTMLElement, PullTo>();
-    let activeMagnet: HTMLElement | null = null;
-    let activeTextPulls: Array<{ node: HTMLElement; pull: PullTo }> = [];
-    let positioned = false;
-    const move = (e: PointerEvent) => {
-      if (!positioned) {
-        gsap.set([dot, ring], { x: e.clientX, y: e.clientY });
-        positioned = true;
-      }
-      const target = e.target instanceof Element ? e.target : null;
-      const magnet = target?.closest<HTMLElement>("[data-cursor-magnet]") ?? null;
-      const interactive = !!target?.closest("a, button, [data-cursor-interactive]");
-      let cursorX = e.clientX;
-      let cursorY = e.clientY;
-      let proximity = 0;
-      if (magnet) {
-        const rect = magnet.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const dx = centerX - e.clientX;
-        const dy = centerY - e.clientY;
-        const distance = Math.hypot(dx, dy);
-        const triggerDistance = Math.max(rect.width, rect.height) * 0.6;
-        if (distance < triggerDistance) {
-          proximity = 1 - distance / triggerDistance;
-          const pull = 0.68 + proximity * 0.22;
-          cursorX += dx * pull;
-          cursorY += dy * pull;
-        }
-        if (magnet !== activeMagnet) {
-          activeTextPulls.forEach(({ pull }) => { pull.x(0); pull.y(0); });
-          activeMagnet = magnet;
-          const nodes = Array.from(magnet.querySelectorAll<HTMLElement>("[data-cursor-text]"));
-          if (nodes.length === 0 && magnet.matches("a, button, [data-cursor-interactive]")) nodes.push(magnet);
-          activeTextPulls = nodes.map((node) => {
-            let pull = textPulls.get(node);
-            if (!pull) {
-              pull = {
-                x: gsap.quickTo(node, "x", { duration: reduceMotion ? 0 : 0.3, ease: "power3.out" }),
-                y: gsap.quickTo(node, "y", { duration: reduceMotion ? 0 : 0.3, ease: "power3.out" }),
-              };
-              textPulls.set(node, pull);
-            }
-            return { node, pull };
-          });
-        }
-        activeTextPulls.forEach(({ node, pull }) => {
-          const strength = (node === magnet ? 0.24 : 0.34) * proximity;
-          const maxX = node === magnet ? 24 : 54;
-          const maxY = node === magnet ? 18 : 34;
-          pull.x(Math.max(-maxX, Math.min(maxX, (e.clientX - centerX) * strength)));
-          pull.y(Math.max(-maxY, Math.min(maxY, (e.clientY - centerY) * strength)));
-        });
-      } else if (activeMagnet) {
-        activeTextPulls.forEach(({ pull }) => { pull.x(0); pull.y(0); });
-        activeMagnet = null;
-        activeTextPulls = [];
-      }
-      setDotX(cursorX); setDotY(cursorY);
-      setRingX(cursorX); setRingY(cursorY);
-      gsap.to([dot, ring], { autoAlpha: 1, duration: reduceMotion ? 0 : .2, overwrite: "auto" });
-      gsap.to(ring, {
-        scale: magnet ? 1.85 : interactive ? 1.75 : 1,
-        borderColor: magnet || interactive ? "#e1a735" : "#39754b",
-        duration: reduceMotion ? 0 : .25, overwrite: "auto",
-      });
-      gsap.to(dot, { scale: magnet ? 1.45 : interactive ? .5 : 1, duration: reduceMotion ? 0 : .25, overwrite: "auto" });
-    };
-    const leave = () => {
-      activeTextPulls.forEach(({ pull }) => { pull.x(0); pull.y(0); });
-      activeMagnet = null;
-      activeTextPulls = [];
-      gsap.to([dot, ring], { autoAlpha: 0, duration: reduceMotion ? 0 : .2 });
-    };
-    const down = () => gsap.to(ring, { scale: .75, duration: reduceMotion ? 0 : .15 });
-    const up = () => gsap.to(ring, { scale: 1, duration: reduceMotion ? 0 : .2 });
-    window.addEventListener("pointermove", move);
-    document.addEventListener("pointerleave", leave);
-    window.addEventListener("pointerdown", down);
-    window.addEventListener("pointerup", up);
-    return () => {
-      window.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerleave", leave);
-      window.removeEventListener("pointerdown", down);
-      window.removeEventListener("pointerup", up);
-      gsap.killTweensOf([dot, ring]);
-    };
   }, []);
   const navigation = useRef<((direction: -1 | 1) => void) | null>(null);
   const selectedRef = useRef(0);
@@ -308,7 +224,7 @@ export default function LandingPage() {
       );
       // Navigation only works when the image is fully expanded. It swaps the
       // image/content without touching the card's transform or ScrollTrigger.
-      navigation.current = (direction) => {
+      navigation.current = async (direction) => {
         if (switchingRef.current) return;
         const t = story.time();
         const opened = story.labels["zoom-0"] + 1.95;
@@ -316,12 +232,20 @@ export default function LandingPage() {
         if (t < opened || t >= closing) return;
         switchingRef.current = true;
         const next = (selectedRef.current + direction + projects.length) % projects.length;
-        const content = overlays[0].querySelectorAll<HTMLElement>("p, h3");
+        // Decode before fading, then commit the new content while hidden.
+        const prepared = new window.Image();
+        prepared.src = projects[next].image;
+        try { await prepared.decode(); } catch { switchingRef.current = false; return; }
+        if (!rootEl.isConnected || story.time() < opened || story.time() >= closing) {
+          switchingRef.current = false;
+          return;
+        }
+        const content = overlays[0].querySelectorAll<HTMLElement>("p, h3, span");
         gsap.timeline({ onComplete: () => { switchingRef.current = false; } })
           .to([mainImage, ...Array.from(content)], { opacity: 0, x: -direction * 22, duration: .22, ease: "power2.in" })
           .call(() => {
             selectedRef.current = next;
-            setSelected(next);
+            flushSync(() => setSelected(next));
           })
           .set([mainImage, ...Array.from(content)], { x: direction * 22 })
           .to([mainImage, ...Array.from(content)], { opacity: 1, x: 0, duration: .38, ease: "power2.out" });
@@ -331,51 +255,8 @@ export default function LandingPage() {
         ScrollTrigger.refresh();
       };
       window.addEventListener("resize", onResize);
-      const titleLines = Array.from(rootEl.querySelectorAll<HTMLElement>("[data-hero-title-line]"));
-      const heroImage = rootEl.querySelector<HTMLElement>("[data-hero-image]");
-      const heroArt = rootEl.querySelector<HTMLElement>("[data-hero-art]");
       const removeHoverListeners: Array<() => void> = [];
       if (window.matchMedia("(any-hover: hover) and (any-pointer: fine)").matches) {
-        titleLines.forEach((line) => {
-          const baseColor = window.getComputedStyle(line).color;
-          const enter = () => gsap.to(line, {
-            x: 14, scale: 1.025, color: "#c9932e", filter: "drop-shadow(0 8px 18px rgba(201,147,46,.28))",
-            duration: reduce ? 0 : 0.4, ease: "back.out(1.7)", overwrite: "auto",
-          });
-          const leave = () => gsap.to(line, {
-            x: 0, scale: 1, color: baseColor, filter: "drop-shadow(0 0 0 transparent)",
-            duration: reduce ? 0 : 0.5, ease: "elastic.out(1, 0.55)", overwrite: "auto",
-          });
-          line.addEventListener("pointerenter", enter);
-          line.addEventListener("pointerleave", leave);
-          removeHoverListeners.push(() => {
-            line.removeEventListener("pointerenter", enter);
-            line.removeEventListener("pointerleave", leave);
-          });
-        });
-        if (heroImage && heroArt) {
-          const moveArt = (event: PointerEvent) => {
-            const bounds = heroArt.getBoundingClientRect();
-            const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-            const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-            gsap.to(heroImage, {
-              transformPerspective: 900, scale: 1.12, rotationY: x * 9, rotationX: y * -9,
-              filter: "saturate(1.22) contrast(1.05)",
-              duration: reduce ? 0 : 0.5, ease: "power3.out", overwrite: "auto",
-            });
-          };
-          const leaveArt = () => gsap.to(heroImage, {
-            scale: 1, rotationY: 0, rotationX: 0,
-            filter: "saturate(1) contrast(1)",
-            duration: reduce ? 0 : 0.65, ease: "power3.out", overwrite: "auto",
-          });
-          heroArt.addEventListener("pointermove", moveArt);
-          heroArt.addEventListener("pointerleave", leaveArt);
-          removeHoverListeners.push(() => {
-            heroArt.removeEventListener("pointermove", moveArt);
-            heroArt.removeEventListener("pointerleave", leaveArt);
-          });
-        }
         const featureCards = Array.from(rootEl.querySelectorAll<HTMLElement>("[data-feature-card]"));
         featureCards.forEach((card) => {
           const enter = () => gsap.to(card, {
@@ -385,25 +266,6 @@ export default function LandingPage() {
           const leave = () => gsap.to(card, {
             x: 0, borderColor: "rgba(180,201,165,.65)", backgroundColor: "transparent",
             duration: reduce ? 0 : 0.42, ease: "power3.out", overwrite: "auto",
-          });
-          card.addEventListener("pointerenter", enter);
-          card.addEventListener("pointerleave", leave);
-          removeHoverListeners.push(() => {
-            card.removeEventListener("pointerenter", enter);
-            card.removeEventListener("pointerleave", leave);
-          });
-        });
-        const galleryCards = Array.from(rootEl.querySelectorAll<HTMLElement>("[data-arc-card]"));
-        galleryCards.forEach((card) => {
-          const image = card.querySelector<HTMLElement>("img");
-          if (!image) return;
-          const enter = () => gsap.to(image, {
-            scale: 1.07, filter: "saturate(1.18) contrast(1.04)",
-            duration: reduce ? 0 : 0.45, ease: "power3.out", overwrite: "auto",
-          });
-          const leave = () => gsap.to(image, {
-            scale: 1, filter: "saturate(1) contrast(1)",
-            duration: reduce ? 0 : 0.55, ease: "power3.out", overwrite: "auto",
           });
           card.addEventListener("pointerenter", enter);
           card.addEventListener("pointerleave", leave);
@@ -438,9 +300,7 @@ export default function LandingPage() {
     return () => { navigation.current = null; ctx.revert(); };
   }, [loading]);
 
-  return <main ref={root} data-custom-cursor className="landing-fonts w-full overflow-x-clip bg-[#faf8e8] text-[#205b37] font-[family-name:var(--font-dm-sans)]">
-    <div ref={cursorRing} aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[300] h-10 w-10 rounded-full border-[1.5px] border-[#39754b] bg-[#e1a735]/10 opacity-0" />
-    <div ref={cursorDot} aria-hidden="true" className="pointer-events-none fixed left-0 top-0 z-[301] h-2.5 w-2.5 rounded-full bg-[#e1a735] opacity-0" />
+  return <main ref={root} className="landing-fonts w-full overflow-x-clip bg-[#faf8e8] text-[#205b37] font-[family-name:var(--font-dm-sans)]">
     {loading && <div ref={loaderRef} role="status" aria-label="Loading Mango Trails" className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-[#f7f6e5] text-[#235e3b] transition-opacity duration-700">
       <div className="absolute -left-20 -bottom-28 h-80 w-80 rounded-full bg-[#dcebb6]/60 blur-3xl" />
       <div className="absolute -right-20 -top-28 h-80 w-80 rounded-full bg-[#f4e2a0]/50 blur-3xl" />
@@ -453,17 +313,8 @@ export default function LandingPage() {
       <p data-loader-content className="mt-4 font-mono text-[9px] tracking-[.18em] text-[#7a9970]">MANGO TRAILS · VỊ XOÀI DẪN LỐI</p>
     </div>}
     <section data-stage className="relative h-[100svh] min-h-[580px] overflow-hidden bg-[#faf8e8]">
-      <header className="absolute inset-x-0 top-0 z-[100] flex h-[72px] items-center justify-between !bg-transparent px-[5vw]">
-        <a href="#top" className={`flex items-center gap-3 text-xs font-extrabold tracking-[.12em] transition-colors duration-300 ${galleryFullscreen ? "text-white" : "text-[#205b37]"}`}><img src="/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg" alt="Mango Trails" className="h-11 w-11 rounded-xl object-cover" /><span>MANGO TRAILS<br />CAO LANH</span></a>
-        <nav aria-label="Quick links" className="flex items-center gap-2 sm:gap-3">
-          <a data-cursor-magnet href="/map" className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-[11px] font-extrabold uppercase tracking-wider transition-colors sm:px-5 ${galleryFullscreen ? "border-white/60 text-white hover:bg-white/15" : "border-[#235e3b]/35 text-[#205b37] hover:bg-[#205b37]/10"}`}>
-            Explore Map
-          </a>
-          <a data-cursor-magnet href="/api/auth/google?next=%2Fdashboard" className="inline-flex h-10 items-center justify-center rounded-full bg-[#205b37] px-5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#17462a] sm:px-6">
-            Login
-          </a>
-        </nav>
-      </header>
+      <SiteHeader overlay dark={galleryFullscreen}/>
+
       <div className="absolute inset-x-0 top-[71px] z-[80] h-[2px] bg-transparent"><div data-progress className="h-full w-full origin-left scale-x-0 bg-[#2d8b52]" /></div>
       <div data-track className="flex h-full w-max will-change-transform">
         {/* PANEL 1 — editorial invitation to the mango country */}
@@ -473,9 +324,9 @@ export default function LandingPage() {
             <div data-hero-copy className="relative z-20 flex flex-col items-start justify-center md:pr-[1vw]">
               <div className="mb-6 flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[.23em] text-[#658052] md:mb-8"><span className="h-2 w-2 rounded-full bg-[#d5a137]" /> MỘT DỰ ÁN TRUYỀN THÔNG <span className="h-px w-8 bg-[#b6c59d]" /> CAO LÃNH · ĐỒNG THÁP</div>
               <h1 className="font-[family-name:var(--font-editorial)] text-[clamp(49px,6.5vw,112px)] leading-[1.02] tracking-[-.063em] text-[#204e35]">
-                <span data-hero-title-line data-cursor-magnet className="block"><span data-cursor-text className="inline-block">Theo vị xoài Cát,</span></span>
-                <span data-hero-title-line data-cursor-magnet className="block italic text-[#cf9b2d]"><span data-cursor-text className="inline-block">mở lối</span></span>
-                <span data-hero-title-line data-cursor-magnet className="block"><span data-cursor-text className="inline-block">chu du<span className="text-[#d4a33e]">.</span></span></span>
+                <span data-hero-title-line className="block"><span className="inline-block">Theo vị xoài Cát,</span></span>
+                <span data-hero-title-line className="block italic text-[#cf9b2d]"><span className="inline-block">mở lối</span></span>
+                <span data-hero-title-line className="block"><span className="inline-block">chu du<span className="text-[#d4a33e]">.</span></span></span>
               </h1>
               <div className="mt-7 flex max-w-[510px] items-start gap-4 md:mt-9">
                 <div className="mt-2 h-[72px] w-[3px] shrink-0 rounded-full bg-[#d8a646]" />
@@ -503,7 +354,7 @@ export default function LandingPage() {
             </div>
             <div data-hero-art className="relative mx-auto flex h-[25svh] w-full max-w-[620px] items-center justify-center md:h-[78vh]">
               <div data-hero-orbit className="pointer-events-none absolute inset-[2%] border border-[#96ae7e]/55" />
-              <div data-hero-float data-cursor-magnet className="relative z-10 flex h-[90%] w-[90%] items-center justify-center overflow-hidden border border-[#d5c690] bg-[#e4eacb] shadow-[12px_12px_0_0_rgba(214,222,184,.8)]">
+              <div data-hero-float className="relative z-10 flex h-[90%] w-[90%] items-center justify-center overflow-hidden border border-[#d5c690] bg-[#e4eacb] shadow-[12px_12px_0_0_rgba(214,222,184,.8)]">
                 <img data-hero-image src={HERO_ART_IMAGE} alt="Minh họa hành trình khám phá xoài Cao Lãnh, Đồng Tháp" className="h-full w-full object-cover object-center [transform-style:preserve-3d]" />
               </div>
               <div data-hero-stamp className="pointer-events-none absolute -bottom-[1%] -left-[2%] z-20 hidden border border-[#d5c690] bg-[#fffbed] px-4 py-3 md:block">
@@ -521,8 +372,8 @@ export default function LandingPage() {
           <div className="relative grid h-full grid-cols-1 items-center gap-5 px-[7vw] pb-[6vh] pt-[100px] md:grid-cols-[56%_44%] md:gap-10">
             <div className="relative z-10 max-w-[780px]">
               <p data-story-beat className="mb-6 flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[.25em] text-[#64844e]"><span className="h-px w-8 bg-[#a4b791]" /> 02 / SỢI CHỈ ĐỎ CỦA DỰ ÁN</p>
-              <h2 data-story-beat data-cursor-magnet className="font-[family-name:var(--font-editorial)] text-[clamp(48px,6.2vw,108px)] leading-[1.02] tracking-[-.065em]"><span data-cursor-text className="inline-block">Một trái xoài,</span><br /><span data-cursor-text className="inline-block italic text-[#ce9a2b]">nhiều câu chuyện.</span></h2>
-              <p data-story-beat data-cursor-magnet className="mt-6 max-w-[500px] font-[family-name:var(--font-editorial)] text-[clamp(19px,2vw,31px)] italic text-[#62894f]"><span data-cursor-text className="inline-block">Từ tán cây đến bàn ăn.</span></p>
+              <h2 data-story-beat className="font-[family-name:var(--font-editorial)] text-[clamp(48px,6.2vw,108px)] leading-[1.02] tracking-[-.065em]"><span className="inline-block">Một trái xoài,</span><br /><span className="inline-block italic text-[#ce9a2b]">nhiều câu chuyện.</span></h2>
+              <p data-story-beat className="mt-6 max-w-[500px] font-[family-name:var(--font-editorial)] text-[clamp(19px,2vw,31px)] italic text-[#62894f]"><span className="inline-block">Từ tán cây đến bàn ăn.</span></p>
               <p data-story-beat className="mt-5 max-w-[520px] text-[clamp(13px,1.05vw,16px)] leading-[1.9] text-[#536a53]">Xoài Cát là điểm khởi đầu để nhóm lần theo nhịp sống Cao Lãnh: trái được chăm trong vườn, người làm vườn giữ mùa, rồi hương vị ấy đi vào những món quen.</p>
               <div className="mt-6 grid max-w-[590px] grid-cols-3 gap-2 md:mt-8 md:gap-3">
                 {[
@@ -552,7 +403,7 @@ export default function LandingPage() {
           <div data-gallery-backdrop className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,#fcfbea_0%,#f0f4d8_70%,#e5edc5_100%)]" />
           <div data-gallery-heading className="pointer-events-none absolute inset-x-4 top-[11vh] z-20 text-center">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[.32em] text-[#658a50]">03 / NHỮNG ĐIỂM DỪNG MIỀN TÂY</p>
-            <h2 data-cursor-magnet className="pointer-events-auto font-[family-name:var(--font-editorial)] text-[clamp(35px,5vw,76px)] leading-[.95] text-[#225e3b]"><span data-cursor-text className="inline-block">Mỗi nơi một <i className="text-[#d9a11a]">nhịp sống.</i></span></h2>
+            <h2 className="pointer-events-auto font-[family-name:var(--font-editorial)] text-[clamp(35px,5vw,76px)] leading-[.95] text-[#225e3b]"><span className="inline-block">Mỗi nơi một <i className="text-[#d9a11a]">nhịp sống.</i></span></h2>
             <p className="mt-4 text-xs tracking-widest text-[#678354]">MỖI KHUNG HÌNH · MỘT CÂU CHUYỆN</p>
           </div>
           <div data-gallery-scene className="absolute inset-0 z-30 [perspective:1450px] [transform-style:preserve-3d]">
@@ -569,8 +420,8 @@ export default function LandingPage() {
           </div>
           <div data-gallery-bottom-fade className="pointer-events-none absolute inset-x-0 bottom-0 z-[34] h-[19vh] bg-gradient-to-t from-[#faf8e8] via-[#faf8e8]/65 to-transparent" />
           <div data-gallery-nav className="absolute bottom-[5vh] left-1/2 z-[90] flex -translate-x-1/2 items-center gap-3 opacity-0">
-            <button type="button" aria-label="Previous gallery story" onClick={() => navigation.current?.(-1)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:bg-black/75 active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></button>
-            <button type="button" aria-label="Next gallery story" onClick={() => navigation.current?.(1)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:bg-black/75 active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></button>
+            <button type="button" aria-label="Previous gallery story" onClick={() => navigation.current?.(-1)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/75"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></button>
+            <button type="button" aria-label="Next gallery story" onClick={() => navigation.current?.(1)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/75"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></button>
           </div>
           {[projects[selected]].map((project) => <div key="active-story" data-story-overlay className="pointer-events-none absolute inset-0 z-[55] flex flex-col justify-end bg-gradient-to-r from-black/90 via-black/55 via-50% to-transparent px-[7vw] pb-[16vh] text-[#fffdf0] opacity-0">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.25em] text-[#ffdc69]">{project.category} · 0{selected + 1} / 0{projects.length}</p>
@@ -585,7 +436,7 @@ export default function LandingPage() {
           <div className="relative z-10 mx-auto grid h-full w-full max-w-6xl items-center gap-7 px-3 pb-6 pt-16 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:py-12">
             <div className="text-center lg:text-left">
               <p data-closing-reveal className="mb-2 text-[10px] font-extrabold uppercase tracking-[.3em] text-[#6c9454]">06 / 06 · {EVENT.name}</p>
-              <h2 data-closing-reveal data-cursor-magnet className="font-[family-name:var(--font-editorial)] text-[clamp(38px,5.2vw,72px)] leading-[.96] tracking-[-.06em]"><span data-cursor-text className="inline-block">Trạm Hẹn</span><br /><span data-cursor-text className="inline-block italic text-[#dba11a]">Cao Lãnh.</span></h2>
+              <h2 data-closing-reveal className="font-[family-name:var(--font-editorial)] text-[clamp(38px,5.2vw,72px)] leading-[.96] tracking-[-.06em]"><span className="inline-block">Trạm Hẹn</span><br /><span className="inline-block italic text-[#dba11a]">Cao Lãnh.</span></h2>
               <p data-closing-reveal className="mx-auto mt-3 max-w-3xl text-[12px] leading-5 text-[#536b50] sm:text-sm lg:mx-0">{EVENT.description}</p>
               <div className="mx-auto mt-4 grid max-w-4xl grid-cols-2 gap-2 text-left lg:mx-0">
                 {EVENT.highlights.map((highlight, index) => (
