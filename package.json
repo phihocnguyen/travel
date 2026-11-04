@@ -8,6 +8,7 @@
     "test:print": "node scripts/test-print.mjs",
     "test:tickets": "playwright test tests/tickets.spec.ts",
     "db:migrate": "node scripts/migrate-db.mjs",
+    "db:create-admin": "node scripts/create-admin.mjs",
     "db:seed": "node scripts/seed-db.mjs",
     "db:verify": "node scripts/verify-db.mjs",
     "db:check": "node scripts/check-db.mjs",

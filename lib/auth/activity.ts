@@ -15,7 +15,7 @@ export async function registerLogin(session:Session,token:string){
     const result=await client.query("UPDATE users SET last_login_at=now(),last_login_provider=$2,login_count=login_count+1 WHERE id=$1 AND status='active' RETURNING id",[id,session.provider]);
     if(!result.rowCount){await client.query("ROLLBACK");return false;}
     await client.query("INSERT INTO user_roles(user_id,role_id) VALUES($1,$2) ON CONFLICT DO NOTHING",[id,isAdmin(session)?"admin":"user"]);
-    await client.query(`INSERT INTO auth_accounts(user_id,provider,provider_subject) VALUES($1,'google',$2)
+    if(session.provider==="google")await client.query(`INSERT INTO auth_accounts(user_id,provider,provider_subject) VALUES($1,'google',$2)
       ON CONFLICT(provider,provider_subject) DO NOTHING`,[id,session.sub]);
     await client.query(`INSERT INTO user_sessions(token_hash,user_id,expires_at) VALUES($1,$2,$3)
       ON CONFLICT(token_hash) DO UPDATE SET last_seen_at=now(),ended_at=NULL,expires_at=EXCLUDED.expires_at`,[sessionHash(token),id,new Date(session.exp*1000)]);

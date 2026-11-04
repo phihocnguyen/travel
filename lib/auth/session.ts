@@ -100,11 +100,11 @@ export async function getSession(): Promise<Session | null> {
   const store = await cookies();
   const token=store.get(SESSION_COOKIE)?.value;
   const session=verifySession(token);
-  if(!session||session.provider!=="google")return null;
+  if(!session||!["google","credentials"].includes(session.provider))return null;
   const result=await getDatabase().query(`SELECT u.status, EXISTS(SELECT 1 FROM user_roles r WHERE r.user_id=u.id AND r.role_id='admin') AS admin, EXISTS(SELECT 1 FROM user_sessions s
     WHERE s.token_hash=$2 AND s.ended_at IS NOT NULL) AS revoked FROM users u WHERE u.auth_subject=$1`,
     [session.sub,createHash("sha256").update(token!).digest("hex")]);
-  if(result.rows[0]?.status==='disabled'||result.rows[0]?.revoked)return null;
+  if(!result.rows[0]||result.rows[0].status!=='active'||result.rows[0].revoked)return null;
   return {...session,role:result.rows[0]?.admin?"admin":"user"};
 }
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
+import { getSession,isAdmin } from "@/lib/auth/session";
 import { listTickets } from "@/lib/tickets/store";
 import { listPostsByAuthor } from "@/lib/posts/store";
 import TicketPreview from "@/components/dashboard/TicketPreview";
@@ -9,6 +9,7 @@ export const instant=false;
 export const metadata={title:"Tổng quan · Vị Xoài Dẫn Lối"};
 export default async function DashboardOverviewPage(){
   const session=await getSession();if(!session)redirect("/login?next=/dashboard");
+  if(isAdmin(session))redirect("/dashboard/admin/overview");
   const [tickets,posts]=await Promise.all([listTickets(session.sub),listPostsByAuthor(session.sub)]);
   const ticket=tickets[0],link="inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs font-medium hover:bg-zinc-50";
   return <div className="flex h-full min-h-0 flex-col gap-4">

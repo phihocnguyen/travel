@@ -1,6 +1,28 @@
+"use client";
+import { useState, type FormEvent } from "react";
 type Props={next:string;initialError:string|null};
 export function LoginForm({next,initialError}:Props){
+  const [error,setError]=useState<string|null>(null),[pending,setPending]=useState(false);
+  async function login(event:FormEvent<HTMLFormElement>){
+    event.preventDefault();setPending(true);setError(null);
+    const data=new FormData(event.currentTarget);
+    try{
+      const response=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:data.get("username"),password:data.get("password")})});
+      const result=await response.json();
+      if(!response.ok){setError(result.error);return;}
+      window.location.assign(result.redirect);
+    }catch{setError("Chưa thể kết nối. Vui lòng thử lại.");}finally{setPending(false);}
+  }
   return <div className="mt-6">
+    <details className="mb-6 border-b border-cream/20 pb-6">
+      <summary className="cursor-pointer text-sm font-semibold">Đăng nhập quản trị viên</summary>
+      <form onSubmit={login} className="mt-4 space-y-3">
+        <label className="block text-xs">Tài khoản<input name="username" autoComplete="username" required maxLength={100} className="mt-1 block w-full rounded-lg border border-cream/30 bg-white px-3 py-2 text-sm text-forest"/></label>
+        <label className="block text-xs">Mật khẩu<input name="password" type="password" autoComplete="current-password" required maxLength={256} className="mt-1 block w-full rounded-lg border border-cream/30 bg-white px-3 py-2 text-sm text-forest"/></label>
+        {error&&<p role="alert" className="text-xs text-cream">{error}</p>}
+        <button disabled={pending} type="submit" className="w-full rounded-full bg-mango px-5 py-3 text-sm font-semibold text-forest disabled:opacity-50">{pending?"Đang đăng nhập…":"Đăng nhập quản trị"}</button>
+      </form>
+    </details>
     {initialError&&<p role="alert" className="mb-4 rounded-xl bg-earth/30 px-4 py-3 text-[11px] leading-relaxed text-cream">{initialError}</p>}
     <a href={"/api/auth/google?next="+encodeURIComponent(next)} className="flex items-center justify-center gap-3 rounded-full bg-cream px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.16em] text-forest transition-colors hover:bg-mint">
         <svg className="h-4 w-4" viewBox="0 0 18 18" aria-hidden="true">
