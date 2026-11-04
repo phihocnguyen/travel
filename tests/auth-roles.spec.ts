@@ -21,7 +21,7 @@ test("admin credentials and dashboard role boundaries", async ({page,request,con
   const sub=`test:roles:${randomUUID()}`;
   let id:string|undefined;
   try {
-    id=(await pool.query("INSERT INTO users(auth_subject,display_name,email) VALUES($1,'Role test',$2) RETURNING id",[sub,`${randomUUID()}@example.invalid`])).rows[0].id;
+    id=(await pool.query("INSERT INTO users(auth_subject,display_name,email,avatar_url) VALUES($1,'Role test',$2,'/card.webp') RETURNING id",[sub,`${randomUUID()}@example.invalid`])).rows[0].id;
     await pool.query("INSERT INTO user_roles(user_id,role_id) VALUES($1,'user')",[id]);
     const body=Buffer.from(JSON.stringify({sub,name:"Role test",email:"role-test@example.invalid",provider:"google",exp:Math.floor(Date.now()/1000)+600})).toString("base64url");
     const token=`${body}.${createHmac("sha256",process.env.AUTH_SECRET||"dong-thap-local-development-secret").update(body).digest("base64url")}`;
@@ -29,6 +29,14 @@ test("admin credentials and dashboard role boundaries", async ({page,request,con
     await context.addCookies([{name:"dt_session",value:token,url:origin}]);
     await page.goto("/dashboard");
     await expect(page.getByRole("link",{name:"Vé của tôi",exact:true})).toBeVisible();
+    // The signed cookie has no picture: restore the avatar from the database.
+    await expect(page.getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveAttribute("src","/card.webp");
+    await page.reload();
+    await expect(page.getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveAttribute("src","/card.webp");
+    await page.goto("/dashboard/settings");
+    await expect(page.getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveCount(2);
+    expect((await page.request.post("/api/auth/presence",{headers:{Origin:origin}})).status()).toBe(204);
+    expect((await pool.query("SELECT avatar_url FROM users WHERE id=$1",[id])).rows[0].avatar_url).toBe("/card.webp");
     await expect(page.getByRole("link",{name:"Quản lý người dùng",exact:true})).toHaveCount(0);
     await page.goto("/dashboard/admin/users");
     await expect(page).toHaveURL(/\/dashboard$/);

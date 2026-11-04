@@ -5,8 +5,8 @@ import { isAdmin, type Session } from "./session";
 export async function ensureDatabaseUser(session: Pick<Session,"sub"|"name"|"email"> & {picture?:string}): Promise<string> {
   const result = await getDatabase().query<{ id: string }>(`INSERT INTO users(auth_subject,display_name,email,avatar_url)
     VALUES ($1,$2,$3,$4) ON CONFLICT (auth_subject) DO UPDATE
-    SET display_name=EXCLUDED.display_name, avatar_url=EXCLUDED.avatar_url
-    RETURNING id`, [session.sub,session.name,session.email || null,session.picture ?? null]);
+    SET display_name=EXCLUDED.display_name, avatar_url=COALESCE(EXCLUDED.avatar_url,users.avatar_url)
+    RETURNING id`, [session.sub,session.name,session.email || null,session.picture?.trim() || null]);
   return result.rows[0].id;
 }
 
