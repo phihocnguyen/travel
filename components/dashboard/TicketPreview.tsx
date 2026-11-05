@@ -47,19 +47,22 @@ function PhotoFrame({
   return (
     <div
       onPointerDown={onPointerDown}
-      className={`relative h-full w-full overflow-hidden rounded-[1.3cqw] ${
+      className={`relative h-full w-full rounded-[1.3cqw] ${
         interactive ? "cursor-move touch-none" : ""
       }`}
-      style={{ backgroundColor: "transparent" }}
+      style={{
+        backgroundColor: "transparent",
+        transform: `translate(${image.x}%, ${image.y}%)`,
+      }}
     >
       {image.url ? (
         <div
-          className="absolute inset-0 bg-no-repeat"
+          className="absolute inset-0 rounded-[1.3cqw] bg-no-repeat"
           style={{
             backgroundImage: `url(${image.url})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            transform: `translate(${image.x}%, ${image.y}%) scale(${image.scale})`,
+            transform: `scale(${image.scale})`,
           }}
         />
       ) : null}
@@ -275,7 +278,7 @@ export default function TicketPreview({
       style={rootStyle}
       className={`relative overflow-hidden ${className}`}
     >
-      <div className="absolute inset-y-[19%] left-[37.5%] right-[8.5%]">
+      <div data-ticket-content className="absolute inset-y-[19%] left-[37.5%] right-[8.5%] isolate overflow-hidden">
         {design.layout === "full" ? (
           <FullLayout
             design={design}

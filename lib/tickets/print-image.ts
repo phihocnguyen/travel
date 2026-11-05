@@ -14,6 +14,6 @@ export async function colorPrintPng(source: Buffer): Promise<Buffer> {
     .flatten({ background: "#ffffff" })
     .withMetadata({ density: PRINT_DPI })
     .toColourspace("srgb")
-    .png({ compressionLevel: 9 })
+    .png({ compressionLevel: 3 })
     .toBuffer();
 }

@@ -161,10 +161,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
     ticket?.image.url ?? null,
   );
   const [imageTransform, setImageTransform] = useState({
-      scale: Math.min(
-        ticket?.image.scale ?? DEFAULT_TICKET_IMAGE_SCALE,
-        DEFAULT_TICKET_IMAGE_SCALE,
-      ),
+      scale: ticket?.image.scale ?? DEFAULT_TICKET_IMAGE_SCALE,
     x: ticket?.image.x ?? 0,
     y: ticket?.image.y ?? 0,
   });
@@ -329,8 +326,8 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
 
       setImageTransform((prev) => ({
         ...prev,
-        x: clamp(imageDrag.startX + deltaX, -100, 100),
-        y: clamp(imageDrag.startY + deltaY, -100, 100),
+        x: clamp(imageDrag.startX + deltaX, -250, 250),
+        y: clamp(imageDrag.startY + deltaY, -250, 250),
       }));
       return;
     }
@@ -889,8 +886,8 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                       <Field label="Vị trí ngang">
                         <input
                           type="range"
-                          min="-100"
-                          max="100"
+                          min="-250"
+                          max="250"
                           value={imageTransform.x}
                           onChange={(event) =>
                             setImageTransform((prev) => ({
@@ -904,8 +901,8 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
                       <Field label="Vị trí dọc">
                         <input
                           type="range"
-                          min="-100"
-                          max="100"
+                          min="-250"
+                          max="250"
                           value={imageTransform.y}
                           onChange={(event) =>
                             setImageTransform((prev) => ({

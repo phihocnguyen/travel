@@ -138,8 +138,8 @@ export function normalizeInput(value: unknown): NormalizedTicket {
     } satisfies TicketTextTransform,
     image: {
       scale: number(image.scale, DEFAULT_TICKET_IMAGE_SCALE, 0.2, 2.5),
-      x: number(image.x, 0, -100, 100),
-      y: number(image.y, 0, -100, 100),
+      x: number(image.x, 0, -250, 250),
+      y: number(image.y, 0, -250, 250),
     },
   };
 }

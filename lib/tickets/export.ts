@@ -7,7 +7,8 @@ export async function ticketPng(element: HTMLElement): Promise<string> {
   return toPng(element, {
     // Rasterize the SVG/DOM at a fixed print canvas, including on narrow screens.
     canvasWidth: PRINT_WIDTH, canvasHeight: PRINT_HEIGHT, pixelRatio: 1,
-    backgroundColor: "#ffffff", cacheBust: true,
+    backgroundColor: "#ffffff", cacheBust: false,
+    preferredFontFormat: "woff2",
     filter: (node) => !(node instanceof HTMLElement && node.hasAttribute("data-export-ignore")),
   });
 }
