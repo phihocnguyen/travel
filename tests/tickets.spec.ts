@@ -77,7 +77,7 @@ test("one ticket per user, editable image, protected admin lookup, exact print o
   expect((await request.post(`/api/admin/tickets/${ticket.id}`,{headers:admin,data:{action:"collect"}})).ok()).toBeTruthy();
   expect((await request.post(`/api/admin/tickets/${ticket.id}`,{headers:admin,data:{action:"collect"}})).status()).toBe(409);
   // A cancelled print allows further editing.
-  const printImage="data:image/png;base64,"+(await sharp({create:{width:4120,height:2320,channels:3,background:"white"}}).png().toBuffer()).toString("base64");
+  const printImage="data:image/png;base64,"+(await sharp({create:{width:1417,height:827,channels:3,background:"white"}}).png().toBuffer()).toString("base64");
   expect((await request.post(`/api/admin/tickets/${otherTicket.id}`,{headers:admin,data:{action:"start",image:printImage,expectedUpdatedAt:otherTicket.updatedAt}})).ok()).toBeTruthy();
   expect((await request.post(`/api/admin/tickets/${otherTicket.id}`,{headers:admin,data:{action:"cancel"}})).ok()).toBeTruthy();
   expect((await request.put(`/api/tickets/${otherTicket.id}`,{headers:other,data:{...payload,expectedUpdatedAt:otherTicket.updatedAt}})).ok()).toBeTruthy();

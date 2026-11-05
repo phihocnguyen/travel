@@ -1168,7 +1168,7 @@ export default function TicketEditor({ ticket }: { ticket?: TicketDesign }) {
               <TicketPreview
                 design={previewDesign}
                 rootRef={previewRef}
-                className="aspect-[103/58] w-[min(100cqw,calc(95cqh*103/58))] rounded-md ring-1 ring-black/5"
+                className="aspect-[1417/827] w-[min(100cqw,calc(95cqh*1417/827))] rounded-md ring-1 ring-black/5"
                 selectedStickerId={selectedStickerId}
                 onBackgroundClick={() => setSelectedStickerId(null)}
                 onStickerPointerDown={handleStickerPointerDown}

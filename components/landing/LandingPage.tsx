@@ -1,478 +1,1102 @@
+﻿
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  ArrowUpRight,
+  ArrowDown,
+  MapPin,
+  Compass,
+  Menu,
+  MoveUpRight,
+} from "lucide-react";
 import { EVENT } from "@/components/campaign/campaignData";
-import SiteHeader from "@/components/layout/SiteHeader";
+import HeaderAccount from "@/components/auth/HeaderAccount";
 
-const HERO_ART_IMAGE = "/banner.jpg";
-const INTRO_STORY = "Vị Xoài Dẫn Lối là dự án truyền thông của nhóm sinh viên FPT, giới thiệu du lịch trải nghiệm Cao Lãnh đến người trẻ TP.HCM. Từ xoài Cát, dự án kể về miệt vườn, người trồng và Trạm Hẹn Cao Lãnh.";
-const INTRO_SEEN_KEY = "vxdl:landing-intro:v1";
-
-const projects = [
-  { title: "Một sớm ở Tràm Chim", category: "ĐẤT NGẬP NƯỚC", location: "Tam Nông · Đồng Tháp", detail: "Mùa nước nổi", description: "Đi thuyền giữa đồng cỏ và những lối nước len qua rừng tràm. Sáng sớm là lúc dễ bắt gặp chim bay đi kiếm ăn.", image: "/tram-chim.jpg" },
-  { title: "Tân Quy Đông mùa hoa", category: "LÀNG NGHỀ", location: "Sa Đéc · Đồng Tháp", detail: "Rộn ràng nhất vào dịp Tết", description: "Vườn hoa nối nhau dọc các con kênh. Ghé cận Tết, bạn sẽ thấy người trồng tất bật chăm hoa và chuẩn bị chuyển hàng đi các tỉnh.", image: "/sa-dec-flowers.jpg" },
-  { title: "Qua cổng chùa Vĩnh Tràng", category: "KIẾN TRÚC", location: "Mỹ Tho · Tiền Giang", detail: "Một ngôi chùa thế kỷ 19", description: "Dạo qua cổng tam quan, sân cây cảnh rồi vào chánh điện. Mỗi dãy nhà có cách trang trí riêng, pha trộn nhiều ảnh hưởng kiến trúc.", image: "/vinh-trang.jpg" },
-  { title: "Mái ngói Kiến An Cung", category: "DI SẢN", location: "Sa Đéc · Đồng Tháp", detail: "Xây dựng từ năm 1924", description: "Mái ngói ba lớp, tượng gốm và những mảng chạm nhiều màu làm nên vẻ riêng của ngôi chùa người Hoa giữa phố Sa Đéc.", image: "/kien-an-cung.jpg" },
-  { title: "Chuyện trong vườn xoài", category: "VƯỜN NHÀ", location: "Cao Lãnh · Đồng Tháp", detail: "Theo mùa thu hoạch", description: "Đi một vòng dưới tán cây, xem nhà vườn bao trái và nghe chuyện chăm xoài. Đến mùa, có thể thử hái quả ngay tại vườn.", image: "/cao-lanh-orchard.jpg" },
+const destinations = [
+  {
+    number: "01",
+    title: "Tràm Chim",
+    category: "THIÊN NHIÊN",
+    location: "Tam Nông",
+    image: "/tram-chim.jpg",
+    description: "Đánh thức giác quan giữa miền đất ngập nước.",
+  },
+  {
+    number: "02",
+    title: "Làng hoa Sa Đéc",
+    category: "VĂN HÓA",
+    location: "Sa Đéc",
+    image: "/sa-dec-flowers.jpg",
+    description: "Nơi sắc hoa tô điểm những câu chuyện miền Tây.",
+  },
+  {
+    number: "03",
+    title: "Chùa Vĩnh Tràng",
+    category: "KIẾN TRÚC",
+    location: "Mỹ Tho",
+    image: "/vinh-trang.jpg",
+    description: "Dấu ấn kiến trúc giữa nhịp sống bình yên.",
+  },
+  {
+    number: "04",
+    title: "Kiến An Cung",
+    category: "DI SẢN",
+    location: "Sa Đéc",
+    image: "/kien-an-cung.jpg",
+    description: "Những nét xưa được gìn giữ qua thời gian.",
+  },
 ];
 
+function SplitTitle({
+  lines,
+  className = "",
+}: {
+  lines: { text: string; italic?: boolean }[];
+  className?: string;
+}) {
+  return (
+    <h2 className={className}>
+      {lines.map((line, index) => (
+        <span
+          key={index}
+          className="block overflow-hidden pb-[0.12em] -mb-[0.12em]"
+        >
+          <span
+            data-split-line
+            className={`block w-fit ${
+              line.italic
+                ? "font-serif italic font-normal"
+                : "font-bold"
+            }`}
+          >
+            {line.text}
+          </span>
+        </span>
+      ))}
+    </h2>
+  );
+}
+
+function JourneyCard({
+  destination,
+}: {
+  destination: (typeof destinations)[number];
+}) {
+  return (
+    <article
+      data-destination
+      className="group relative mx-auto w-full max-w-[420px]"
+    >
+      <div className="relative overflow-hidden rounded-[24px] bg-[#d7dfd2] sm:rounded-[32px]">
+        <div
+          className="relative h-[340px] overflow-hidden sm:h-[420px]"
+        >
+          <img
+            data-destination-image
+            src={destination.image}
+            alt={destination.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+
+          <div className="absolute inset-0 bg-gradient-to-t from-[#102820]/75 via-transparent to-transparent" />
+
+          <div className="absolute left-6 top-6 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-4 py-2 text-[11px] font-semibold text-white backdrop-blur-lg">
+            <MapPin size={12} />
+            {destination.location}
+          </div>
+
+          <div className="absolute right-6 top-6 z-10 grid h-12 w-12 place-items-center rounded-full bg-white/90 text-[#173b2f] transition-all duration-500 group-hover:rotate-45 group-hover:bg-[#f2d06a]">
+            <ArrowUpRight size={20} />
+          </div>
+
+          <div className="absolute bottom-7 left-7 right-7 text-white sm:bottom-9 sm:left-9">
+            <p className="mb-3 text-[10px] font-bold tracking-[.22em] text-[#f3d581]">
+              {destination.category} / {destination.number}
+            </p>
+
+            <h3 className="text-[clamp(24px,2.7vw,38px)] font-semibold tracking-[-.055em]">
+              {destination.title}
+            </h3>
+
+            <p className="mt-3 max-w-sm translate-y-3 text-sm leading-6 text-white/80 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+              {destination.description}
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default function LandingPage() {
   const root = useRef<HTMLElement>(null);
-  const [selected, setSelected] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const loaderRef = useRef<HTMLDivElement>(null);
-  const [galleryFullscreen, setGalleryFullscreen] = useState(false);
-  const introStarted = useRef(false);
+  const [introOpen, setIntroOpen] = useState(true);
+
   useLayoutEffect(() => {
-    try {
-      if (window.sessionStorage.getItem(INTRO_SEEN_KEY) === "seen" && !introStarted.current) {
-        if (loaderRef.current) loaderRef.current.style.display = "none";
-        const frame=window.requestAnimationFrame(()=>setLoading(false));
-        return ()=>window.cancelAnimationFrame(frame);
-      }
-      introStarted.current=true;
-      window.sessionStorage.setItem(INTRO_SEEN_KEY,"seen");
-    } catch { /* Storage can be unavailable in private browsing. */ }
-    let active = true;
-    let didFinish = false;
-    const started = Date.now();
-    const hero = new Image();
-    const finish = () => {
-      if (didFinish) return;
-      didFinish = true;
-      void document.fonts.ready.then(() => {
-        const remaining = Math.max(0, 450 - (Date.now() - started));
-        window.setTimeout(() => {
-          if (!active) return;
-          const overlay = loaderRef.current;
-          if (!overlay) { setLoading(false); return; }
-          const introText = overlay.querySelector<HTMLElement>("[data-intro-text]");
-          const storyCharacters = Array.from(INTRO_STORY);
-          const typeState = { count: 0 };
-          const progress = overlay.querySelector<HTMLElement>("[data-intro-progress]");
-          if (introText) introText.textContent = "";
-          if (progress) gsap.set(progress, { scaleX: 0 });
-          const typing = gsap.timeline({
-            onComplete: () => {
-              if (!active) return;
-              const minHold = Math.max(0, 1350 - (Date.now() - started));
-              window.setTimeout(() => {
-                if (!active) return;
-                gsap.timeline({ onComplete: () => {
-                  if (!active) return;
-                  try { window.sessionStorage.setItem(INTRO_SEEN_KEY,"seen"); } catch { /* Keep navigation usable without storage. */ }
-                  setLoading(false);
-                } })
-                  .to(overlay.querySelectorAll("[data-loader-content]"), { y: -24, autoAlpha: 0, duration: .45, stagger: .055, ease: "power3.inOut" })
-                  .to(overlay, { yPercent: -105, duration: .85, ease: "power4.inOut" }, "-=.12");
-              }, minHold);
-            },
-          });
-          typing.to(typeState, {
-            count: storyCharacters.length,
-            duration: storyCharacters.length * .045,
-            ease: "none",
-            onUpdate: () => {
-              if (introText) introText.textContent = storyCharacters.slice(0, Math.floor(typeState.count)).join("");
-            },
-          });
-          if (progress) typing.to(progress, { scaleX: 1, duration: storyCharacters.length * .045, ease: "none" }, 0);
-        }, remaining);
-      });
-    };
-    hero.onload = () => { void hero.decode().then(finish, finish); };
-    hero.onerror = finish;
-    hero.src = HERO_ART_IMAGE;
-    return () => { active = false; };
+    let seen = false;
+    try { seen = sessionStorage.getItem("vxdl:landing-intro:v1") === "seen"; } catch { /* Storage may be unavailable. */ }
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (seen || reduced) {
+      const frame = requestAnimationFrame(() => setIntroOpen(false));
+      return () => cancelAnimationFrame(frame);
+    }
+    const timer = window.setTimeout(() => {
+      try { sessionStorage.setItem("vxdl:landing-intro:v1", "seen"); } catch { /* Continue without storage. */ }
+      setIntroOpen(false);
+    }, 2800);
+    return () => window.clearTimeout(timer);
   }, []);
-  const navigation = useRef<((direction: -1 | 1) => void) | null>(null);
-  const selectedRef = useRef(0);
-  const switchingRef = useRef(false);
+
   useLayoutEffect(() => {
-    if (!root.current) return;
+    if (introOpen) return;
     gsap.registerPlugin(ScrollTrigger);
-    const rootEl = root.current;
-    const stage = rootEl.querySelector<HTMLElement>("[data-stage]");
-    const panelWidth = () => stage?.clientWidth ?? document.documentElement.clientWidth;
-    rootEl.style.setProperty("--landing-panel-width", `${panelWidth()}px`);
-    if (loading) return;
+
+    const el = root.current;
+    if (!el) return;
+
+    const mm = gsap.matchMedia();
+
     const ctx = gsap.context(() => {
-      // Keep the hero art in its resting position after the loader reveals it.
-      gsap.set("[data-hero-float]", { y: 0, rotation: 0 });
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      gsap.set("[data-hero-orbit]", { rotation: 0, scale: 1 });
-      if (!reduce) gsap.to("[data-hero-float]", { y: -13, rotation: 1.5, duration: 4.5, ease: "sine.inOut", repeat: -1, yoyo: true, delay: 2.4 });
-      const track = rootEl.querySelector<HTMLElement>("[data-track]")!;
-      const cards = gsap.utils.toArray<HTMLElement>("[data-arc-card]", rootEl);
-      const overlays = gsap.utils.toArray<HTMLElement>("[data-story-overlay]", rootEl);
-      const galleryHeading = rootEl.querySelector<HTMLElement>("[data-gallery-heading]")!;
-      const galleryScene = rootEl.querySelector<HTMLElement>("[data-gallery-scene]")!;
-      const galleryHint = rootEl.querySelector<HTMLElement>("[data-gallery-hint]")!;
-      const galleryBottomFade = rootEl.querySelector<HTMLElement>("[data-gallery-bottom-fade]")!;
-      const nav = rootEl.querySelector<HTMLElement>("[data-gallery-nav]")!;
-      const mainImage = cards[0].querySelector<HTMLElement>("img")!;
-      const progress = rootEl.querySelector<HTMLElement>("[data-progress]")!;
-      const vw = panelWidth;
-      const vh = () => window.innerHeight;
-      const mobile = () => vw() < 768;
-      // Editorial scattered-gallery composition (Stillform-inspired).
-      // Each card has a distinct, non-overlapping home position.
-      const arc = (i: number) => {
-        // Fixed slots: card 0 is always the center. The content rotates,
-        // not the ScrollTrigger timeline, so navigation never re-pins the page.
-        const positions = mobile()
-          ? [[0, .04, 0], [.32, -.18, 6], [.32, .31, -5], [-.32, .31, 5], [-.32, -.18, -6]]
-          : [[0, .04, 0], [.37, -.20, 6], [.35, .33, -5], [-.35, .33, 5], [-.37, -.20, -6]];
-        const [px, py, rz] = positions[i];
-        return {
-          x: px * vw(), y: py * vh(), z: i === 0 ? 35 : -15,
-          rotationY: i === 1 ? -7 : i === 4 ? 7 : 0,
-          rotationZ: rz, scale: 1, zIndex: i === 0 ? 15 : 10
-        };
-      };
-      // Focus images occupy the viewport at their actual size. Never scale a portrait
-      // thumbnail to fill the screen (that caused huge images and clipping).
-      gsap.set(galleryScene, { transformPerspective: 1450, transformStyle: "preserve-3d", z: 0, rotationY: 0 });
-      gsap.set(cards, { xPercent: -50, yPercent: -50, transformOrigin: "50% 50%", force3D: true, backfaceVisibility: "hidden" });
-      cards.forEach((card, i) => gsap.set(card, arc(i)));
-      gsap.set(cards, { autoAlpha: 0 });
-      gsap.set(overlays, { autoAlpha: 0, y: 34 });
-      gsap.set(galleryHint, { autoAlpha: 1 });
-      gsap.set(nav, { autoAlpha: 0, pointerEvents: "none" });
-      const story = gsap.timeline({
-        defaults: { ease: "none" }, scrollTrigger: {
-          trigger: stage, start: "top top",
-          end: () => `+=${Math.round(vw() * 3 + vh() * 4.6)}`,
-          pin: true, scrub: mobile() ? 0.85 : 1.45, anticipatePin: 1, invalidateOnRefresh: true,
-          onUpdate: self => {
-            gsap.set(progress, { scaleX: self.progress });
-            const t = story.time();
-            const isFullscreen = t >= story.labels["zoom-0"] + 1.75 && t < story.labels["retreat-0"];
-            setGalleryFullscreen(previous => previous === isFullscreen ? previous : isFullscreen);
+      // ============================================
+      // 01 — CINEMATIC HERO INTRO
+      // ============================================
+
+      const intro = gsap.timeline({
+        defaults: { ease: "power3.out" },
+        delay: 0.15,
+      });
+
+      intro
+        .fromTo(
+          "[data-hero-photo]",
+          { scale: 1.22, filter: "blur(8px)" },
+          {
+            scale: 1,
+            filter: "blur(0px)",
+            duration: 2.2,
+            ease: "expo.out",
+          },
+          0
+        )
+        .fromTo(
+          "[data-nav-item]",
+          { opacity: 0, y: -25 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            stagger: 0.07,
+          },
+          0.35
+        )
+        .fromTo(
+          "[data-hero-kicker]",
+          { opacity: 0, y: 25 },
+          { opacity: 1, y: 0, duration: 0.9 },
+          0.45
+        )
+        .fromTo(
+          "[data-hero-title]",
+          {
+            yPercent: 115,
+            rotate: 2,
+            opacity: 0,
+          },
+          {
+            yPercent: 0,
+            rotate: 0,
+            opacity: 1,
+            duration: 1.35,
+            stagger: 0.14,
+            ease: "expo.out",
+          },
+          0.6
+        )
+        .fromTo(
+          "[data-hero-script]",
+          {
+            y: 90,
+            opacity: 0,
+            rotate: -4,
+          },
+          {
+            y: 0,
+            opacity: 1,
+            rotate: 0,
+            duration: 1.6,
+            ease: "expo.out",
+          },
+          0.88
+        )
+        .fromTo(
+          "[data-hero-support]",
+          { opacity: 0, y: 35 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            stagger: 0.1,
+          },
+          1.25
+        )
+        .fromTo(
+          "[data-dashboard]",
+          {
+            opacity: 0,
+            x: 140,
+            y: 55,
+            rotateY: -14,
+            scale: 0.9,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            y: 0,
+            rotateY: 0,
+            scale: 1,
+            duration: 1.5,
+            ease: "expo.out",
+          },
+          1.05
+        )
+        .fromTo(
+          "[data-stat]",
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            stagger: 0.12,
+          },
+          1.65
+        )
+        .fromTo(
+          "[data-hero-bottom]",
+          { opacity: 0, y: 25 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+          },
+          1.6
+        );
+
+      // ============================================
+      // 02 — HERO PARALLAX ON SCROLL
+      // ============================================
+
+      gsap.to("[data-hero-photo]", {
+        yPercent: 5,
+        scale: 1.15,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#hero",
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+
+      gsap.to("[data-hero-headline]", {
+        yPercent: 30,
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#hero",
+          start: "top top",
+          end: "bottom top",
+          scrub: 1,
+        },
+      });
+
+      // ============================================
+      // 03 — TEXT REVEALS
+      // ============================================
+
+      gsap.utils
+        .toArray<HTMLElement>("[data-section-heading]")
+        .forEach((heading) => {
+          const lines = heading.querySelectorAll(
+            "[data-split-line]"
+          );
+
+          gsap.fromTo(
+            lines,
+            { yPercent: 110, opacity: 0 },
+            {
+              yPercent: 0,
+              opacity: 1,
+              duration: 1.15,
+              stagger: 0.14,
+              ease: "expo.out",
+              scrollTrigger: {
+                trigger: heading,
+                start: "top 85%",
+                once: true,
+              },
+            }
+          );
+        });
+
+      gsap.utils
+        .toArray<HTMLElement>("[data-fade-up]")
+        .forEach((item) => {
+          gsap.fromTo(
+            item,
+            { y: 65, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 1.15,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: item,
+                start: "top 90%",
+                once: true,
+              },
+            }
+          );
+        });
+
+      // ============================================
+      // 04 — IMAGE REVEALS
+      // ============================================
+
+      gsap.utils
+        .toArray<HTMLElement>("[data-image-frame]")
+        .forEach((frame) => {
+          const image = frame.querySelector("img");
+
+          gsap.fromTo(
+            frame,
+            {
+              clipPath: "inset(18% 12% 18% 12% round 28px)",
+              opacity: 0.65,
+            },
+            {
+              clipPath: "inset(0% 0% 0% 0% round 28px)",
+              opacity: 1,
+              duration: 1.65,
+              ease: "expo.inOut",
+              scrollTrigger: {
+                trigger: frame,
+                start: "top 90%",
+                once: true,
+              },
+            }
+          );
+
+          if (image) {
+            gsap.fromTo(
+              image,
+              { scale: 1.25 },
+              {
+                scale: 1,
+                duration: 1.9,
+                ease: "expo.out",
+                scrollTrigger: {
+                  trigger: frame,
+                  start: "top 90%",
+                  once: true,
+                },
+              }
+            );
+          }
+        });
+
+      // ============================================
+      // 05 — GALLERY PARALLAX
+      // ============================================
+
+      gsap.utils
+        .toArray<HTMLElement>("[data-destination]")
+        .forEach((card, index) => {
+          const photo = card.querySelector(
+            "[data-destination-image]"
+          );
+
+          gsap.fromTo(
+            card,
+            {
+              opacity: 0,
+              y: index % 2 ? 100 : 65,
+            },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 1.4,
+              ease: "expo.out",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 90%",
+                once: true,
+              },
+            }
+          );
+
+          if (photo) {
+            gsap.fromTo(
+              photo,
+              { yPercent: -3, scale: 1.12 },
+              {
+                yPercent: 3,
+                scale: 1.12,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: card,
+                  start: "top bottom",
+                  end: "bottom top",
+                  scrub: 1.2,
+                },
+              }
+            );
+          }
+        });
+
+      // ============================================
+      // 06 — SECTION IMAGE PARALLAX
+      // ============================================
+
+      gsap.to("[data-story-image]", {
+        yPercent: 5,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#story",
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 1,
+        },
+      });
+
+      // ============================================
+      // 07 — CTA REVEAL
+      // ============================================
+
+      gsap.fromTo(
+        "[data-cta-orb]",
+        { scale: 0.5, opacity: 0, rotate: -35 },
+        {
+          scale: 1,
+          opacity: 1,
+          rotate: 0,
+          ease: "expo.out",
+          duration: 1.8,
+          scrollTrigger: {
+            trigger: "#cta",
+            start: "top 80%",
+            once: true,
           },
         }
-      });
-      story.to(track, { x: () => -vw(), duration: 1.4 });
-      story.to("[data-hero-copy]", { x: -42, autoAlpha: 0, filter: "blur(4px)", duration: .46, ease: "power2.in" }, "<.42");
-      story.to("[data-hero-art]", { x: 34, scale: .96, autoAlpha: .45, duration: .58, ease: "power2.in" }, "<");
-      story.fromTo("[data-story-beat]", { autoAlpha: 0, filter: "blur(6px)", clipPath: "inset(0 0 18% 0)" }, { autoAlpha: 1, filter: "blur(0px)", clipPath: "inset(0 0 0% 0)", duration: .62, stagger: .12, ease: "power2.out" }, "<.42");
-      story.fromTo("[data-story-visual]", { x: 70, rotation: 4, scale: .94, clipPath: "inset(0 0 0 16% round 36px)" }, { x: 0, rotation: 0, scale: 1, clipPath: "inset(0 0 0 0% round 36px)", duration: .9, ease: "power3.out" }, "<.05");
-      story.fromTo("[data-story-caption]", { x: -22, y: 15, autoAlpha: 0 }, { x: 0, y: 0, autoAlpha: 1, duration: .5, ease: "power2.out" }, "<.58");
-      story.to(track, { x: () => -vw() * 2, duration: 1.4 });
-      story.fromTo(cards,
-        { autoAlpha: 0, scale: .78, filter: "blur(9px)" },
-        { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .72, stagger: .08, ease: "back.out(1.25)", immediateRender: false },
-        "<.3",
       );
-      story.fromTo(galleryHeading, { y: 55, autoAlpha: 0, filter: "blur(7px)" }, { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: .5, ease: "power3.out" }, "<.2");
-      story.addLabel("gallery-ready");
-      story.to({}, { duration: 0.55 }); // Brief gallery reveal, then zoom immediately.
-      story.to(galleryHeading, { autoAlpha: 0, y: -30, duration: .24 });
-      story.to(galleryHint, { autoAlpha: 0, duration: .24 }, "<");
-      [0].forEach((i) => {
-        const card = cards[i];
-        const overlay = overlays[i];
-        const start = `zoom-${i}`;
-        story.addLabel(start);
-        // A single DOM image grows from its own actual size to the viewport.
-        // No fullscreen duplicate, clip-path swap, or overlapping image layer.
-        const originalWidth = () => mobile() ? vw() * .55 : vw() * .42;
-        const originalHeight = () => mobile() ? vh() * .27 : vh() * .38;
-        story.to(cards.filter((_, j) => j !== i), {
-          autoAlpha: 0, duration: 0.3
-        }, start);
-        story.to(galleryBottomFade, { autoAlpha: 0, duration: 0.3 }, start);
-        story.to(card, {
-          x: 0, y: 0, z: 0, rotationY: 0, rotationZ: 0,
-          width: () => vw(), height: () => vh(),
-          zIndex: 46, duration: 1.8, ease: "power2.inOut",
-        }, start);
-        story.fromTo(overlay, { autoAlpha: 0, y: 25 }, {
-          autoAlpha: 1, y: 0, duration: .48, ease: "power2.out",
-          immediateRender: false,
-        }, `${start}+=1.35`);
-        story.to(nav, { autoAlpha: 1, duration: .25, onStart: () => { nav.style.pointerEvents = "auto"; }, onReverseComplete: () => { nav.style.pointerEvents = "none"; } }, `${start}+=1.75`);
-        story.to({}, { duration: .75 });
-        const retreat = `retreat-${i}`;
-        story.addLabel(retreat);
-        story.to(nav, { autoAlpha: 0, duration: .25, onStart: () => { nav.style.pointerEvents = "none"; }, onReverseComplete: () => { nav.style.pointerEvents = "auto"; } }, retreat);
-        story.to(overlay, { autoAlpha: 0, y: -12, duration: .35 }, retreat);
-        story.to(card, {
-          width: originalWidth, height: originalHeight,
-          ...arc(i), duration: 1.6, ease: "power2.inOut",
-        }, `${retreat}+=.2`);
-        story.to(cards.filter((_, j) => j !== i), {
-          autoAlpha: 1, duration: .55,
-        }, `${retreat}+=1.2`);
-        story.to(galleryBottomFade, { autoAlpha: 1, duration: .55 }, `${retreat}+=1.2`);
-        story.to({}, { duration: 0.16 });
-      });
-      story.addLabel("gallery-finished");
-      // Reveal the incoming panel during its slide, so reaching it never
-      // leaves a blank screen that needs more scrolling to show the content.
-      story.to(track, { x: () => -vw() * 3, duration: 1.4 }, "gallery-finished");
-      story.to(cards, { autoAlpha: 0, scale: .92, filter: "blur(5px)", duration: .42, stagger: .025 }, "gallery-finished+=.8");
-      const closing = rootEl.querySelectorAll("[data-closing-reveal]");
-      story.fromTo(closing, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .6, stagger: .04, ease: "power2.out", immediateRender: false }, "gallery-finished+=.15");
-      const closingVisual = rootEl.querySelector<HTMLElement>("[data-closing-visual]");
-      if (closingVisual) story.fromTo(closingVisual,
-        { autoAlpha: 0, x: 70, rotation: 4, scale: .94, clipPath: "inset(0 0 0 18% round 32px)" },
-        { autoAlpha: 1, x: 0, rotation: 0, scale: 1, clipPath: "inset(0 0 0 0% round 32px)", duration: .82, ease: "power3.out" },
-        "gallery-finished+=.2",
-      );
-      // Navigation only works when the image is fully expanded. It swaps the
-      // image/content without touching the card's transform or ScrollTrigger.
-      navigation.current = async (direction) => {
-        if (switchingRef.current) return;
-        const t = story.time();
-        const opened = story.labels["zoom-0"] + 1.95;
-        const closing = story.labels["retreat-0"];
-        if (t < opened || t >= closing) return;
-        switchingRef.current = true;
-        const next = (selectedRef.current + direction + projects.length) % projects.length;
-        // Decode before fading, then commit the new content while hidden.
-        const prepared = new window.Image();
-        prepared.src = projects[next].image;
-        try { await prepared.decode(); } catch { switchingRef.current = false; return; }
-        if (!rootEl.isConnected || story.time() < opened || story.time() >= closing) {
-          switchingRef.current = false;
-          return;
+
+      // ============================================
+      // 08 — DESKTOP MOUSE INTERACTION
+      // ============================================
+
+      mm.add(
+        "(min-width: 1024px) and (hover: hover) and (pointer: fine)",
+        () => {
+          const magnets = el.querySelectorAll(
+            "[data-magnetic]"
+          );
+
+          const cleanups: (() => void)[] = [];
+
+          magnets.forEach((node) => {
+            const button = node as HTMLElement;
+
+            const move = (e: MouseEvent) => {
+              const rect = button.getBoundingClientRect();
+
+              const x =
+                e.clientX - (rect.left + rect.width / 2);
+
+              const y =
+                e.clientY - (rect.top + rect.height / 2);
+
+              gsap.to(button, {
+                x: x * 0.18,
+                y: y * 0.18,
+                duration: 0.4,
+                ease: "power3.out",
+                overwrite: true,
+              });
+            };
+
+            const leave = () => {
+              gsap.to(button, {
+                x: 0,
+                y: 0,
+                duration: 0.7,
+                ease: "elastic.out(1, 0.55)",
+                overwrite: true,
+              });
+            };
+
+            button.addEventListener("mousemove", move);
+            button.addEventListener("mouseleave", leave);
+
+            cleanups.push(() => {
+              button.removeEventListener("mousemove", move);
+              button.removeEventListener("mouseleave", leave);
+            });
+          });
+
+          return () => {
+            cleanups.forEach((fn) => fn());
+          };
         }
-        const content = overlays[0].querySelectorAll<HTMLElement>("p, h3, span");
-        gsap.timeline({ onComplete: () => { switchingRef.current = false; } })
-          .to([mainImage, ...Array.from(content)], { opacity: 0, x: -direction * 22, duration: .22, ease: "power2.in" })
-          .call(() => {
-            selectedRef.current = next;
-            flushSync(() => setSelected(next));
-          })
-          .set([mainImage, ...Array.from(content)], { x: direction * 22 })
-          .to([mainImage, ...Array.from(content)], { opacity: 1, x: 0, duration: .38, ease: "power2.out" });
-      };
-      const onResize = () => {
-        rootEl.style.setProperty("--landing-panel-width", `${panelWidth()}px`);
-        ScrollTrigger.refresh();
-      };
-      window.addEventListener("resize", onResize);
-      const removeHoverListeners: Array<() => void> = [];
-      if (window.matchMedia("(any-hover: hover) and (any-pointer: fine)").matches) {
-        const featureCards = Array.from(rootEl.querySelectorAll<HTMLElement>("[data-feature-card]"));
-        featureCards.forEach((card) => {
-          const enter = () => gsap.to(card, {
-            x: 6, borderColor: "#c6932e", backgroundColor: "rgba(255,253,244,.52)",
-            duration: reduce ? 0 : 0.32, ease: "power3.out", overwrite: "auto",
-          });
-          const leave = () => gsap.to(card, {
-            x: 0, borderColor: "rgba(180,201,165,.65)", backgroundColor: "transparent",
-            duration: reduce ? 0 : 0.42, ease: "power3.out", overwrite: "auto",
-          });
-          card.addEventListener("pointerenter", enter);
-          card.addEventListener("pointerleave", leave);
-          removeHoverListeners.push(() => {
-            card.removeEventListener("pointerenter", enter);
-            card.removeEventListener("pointerleave", leave);
-          });
-        });
-        const actionLinks = Array.from(rootEl.querySelectorAll<HTMLElement>("a[data-cursor-magnet]"));
-        actionLinks.forEach((link) => {
-          const enter = () => gsap.to(link, {
-            scale: 1.05, boxShadow: "0 14px 32px rgba(35,70,40,.2)",
-            duration: reduce ? 0 : 0.28, ease: "back.out(1.7)", overwrite: "auto",
-          });
-          const leave = () => gsap.to(link, {
-            scale: 1, boxShadow: "0 0 0 rgba(35,70,40,0)",
-            duration: reduce ? 0 : 0.38, ease: "power3.out", overwrite: "auto",
-          });
-          link.addEventListener("pointerenter", enter);
-          link.addEventListener("pointerleave", leave);
-          removeHoverListeners.push(() => {
-            link.removeEventListener("pointerenter", enter);
-            link.removeEventListener("pointerleave", leave);
-          });
-        });
-      }
-      return () => {
-        window.removeEventListener("resize", onResize);
-        removeHoverListeners.forEach((remove) => remove());
-      };
-    }, rootEl);
-    return () => { navigation.current = null; ctx.revert(); };
-  }, [loading]);
+      );
+    }, el);
 
-  return <main ref={root} className="landing-fonts w-full overflow-x-clip bg-[#faf8e8] text-[#205b37] font-[family-name:var(--font-dm-sans)]">
-    {loading && <div ref={loaderRef} role="status" aria-label="Loading Mango Trails" className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-[#f7f6e5] text-[#235e3b] transition-opacity duration-700">
-      <div className="absolute -left-20 -bottom-28 h-80 w-80 rounded-full bg-[#dcebb6]/60 blur-3xl" />
-      <div className="absolute -right-20 -top-28 h-80 w-80 rounded-full bg-[#f4e2a0]/50 blur-3xl" />
-      <p data-loader-content className="mb-7 font-mono text-[9px] tracking-[.24em] text-[#8a956f] sm:mb-9 sm:text-[10px]">DỰ ÁN TRUYỀN THÔNG FPT / CAO LÃNH</p>
-      <p data-loader-content data-intro-copy aria-label={INTRO_STORY} className="mx-auto max-w-[900px] px-6 text-center font-[family-name:var(--font-editorial)] text-[clamp(20px,2.7vw,36px)] leading-[1.55] tracking-[-.025em] text-[#28573a]">
-        <span data-intro-text aria-hidden="true" />
-        <span aria-hidden="true" className="ml-1 inline-block h-[1.05em] w-px translate-y-[.15em] animate-pulse bg-[#d3a33d]" />
-      </p>
-      <div data-loader-content className="mt-9 h-px w-36 overflow-hidden bg-[#dce6c8] sm:mt-11 sm:w-48"><div data-intro-progress className="h-full w-full origin-left scale-x-0 bg-[#438650]" /></div>
-      <p data-loader-content className="mt-4 font-mono text-[9px] tracking-[.18em] text-[#7a9970]">MANGO TRAILS · VỊ XOÀI DẪN LỐI</p>
-    </div>}
-    <section data-stage className="relative h-[100svh] min-h-[580px] overflow-hidden bg-[#faf8e8]">
-      <SiteHeader overlay dark={galleryFullscreen}/>
+    const scrollToSection = (event: MouseEvent) => {
+      const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"]');
+      if (!link) return;
+      const target = document.getElementById(link.hash.slice(1));
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      history.replaceState(null, "", link.hash);
+    };
+    el.addEventListener("click", scrollToSection);
 
-      <div className="absolute inset-x-0 top-[71px] z-[80] h-[2px] bg-transparent"><div data-progress className="h-full w-full origin-left scale-x-0 bg-[#2d8b52]" /></div>
-      <div data-track className="flex h-full w-max will-change-transform">
-        {/* PANEL 1 — editorial invitation to the mango country */}
-        <section id="top" className="relative h-full w-[var(--landing-panel-width,100vw)] shrink-0 overflow-hidden bg-[#f9f7ec] text-[#204d34]">
-          <div className="pointer-events-none absolute left-[5.5vw] top-[19vh] hidden h-px w-[18vw] bg-[#c4d4af] lg:block" />
-          <div className="relative grid h-full grid-cols-1 items-center px-[6vw] pb-[5vh] pt-[104px] md:grid-cols-[57%_43%] md:pb-0 md:pt-[72px]">
-            <div data-hero-copy className="relative z-20 flex flex-col items-start justify-center md:pr-[1vw]">
-              <div className="mb-6 flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[.23em] text-[#658052] md:mb-8"><span className="h-2 w-2 rounded-full bg-[#d5a137]" /> MỘT DỰ ÁN TRUYỀN THÔNG <span className="h-px w-8 bg-[#b6c59d]" /> CAO LÃNH · ĐỒNG THÁP</div>
-              <h1 className="font-[family-name:var(--font-editorial)] text-[clamp(49px,6.5vw,112px)] leading-[1.02] tracking-[-.063em] text-[#204e35]">
-                <span data-hero-title-line className="block"><span className="inline-block">Theo vị xoài Cát,</span></span>
-                <span data-hero-title-line className="block italic text-[#cf9b2d]"><span className="inline-block">mở lối</span></span>
-                <span data-hero-title-line className="block"><span className="inline-block">chu du<span className="text-[#d4a33e]">.</span></span></span>
-              </h1>
-              <div className="mt-7 flex max-w-[510px] items-start gap-4 md:mt-9">
-                <div className="mt-2 h-[72px] w-[3px] shrink-0 rounded-full bg-[#d8a646]" />
-                <p className="text-[clamp(13px,1.1vw,16px)] leading-[1.9] text-[#657361]">Nhóm kể chuyện Cao Lãnh qua một lát cắt gần gũi: mùa xoài, người chăm vườn và những món ăn làm nên hương vị quê nhà.</p>
-              </div>
-              <div className="mt-5 grid w-full max-w-[620px] grid-cols-3 gap-2 border-t border-[#c4d4af] pt-3 md:mt-7 md:gap-4 md:pt-4">
-                {[
-                  { no: "01", title: "ĐI · Vào vườn", detail: "Theo lối nhỏ dưới tán xoài." },
-                  { no: "02", title: "GẶP · Người trồng", detail: "Nghe chuyện chăm từng trái." },
-                  { no: "03", title: "NẾM · Vị quê", detail: "Thử xoài và món địa phương." },
-                ].map((item) => <div data-feature-card key={item.no} className="border-r border-[#c4d4af] px-2 py-2 transition-colors last:border-r-0 md:px-3">
-                  <span className="font-mono text-[9px] tracking-[.12em] text-[#c6932e]">{item.no} /</span>
-                  <h3 className="mt-1 text-[10px] font-extrabold uppercase tracking-[.08em] text-[#315d40] sm:text-[11px]">{item.title}</h3>
-                  <p className="mt-1 hidden text-[10px] leading-4 text-[#71836c] sm:block">{item.detail}</p>
-                </div>)}
-              </div>
-              <div className="mt-3 hidden w-full max-w-[620px] items-center justify-between border-y border-[#b7c89d] py-3 text-[#315d40] sm:flex md:mt-4">
-                <div><p className="font-mono text-[8px] tracking-[.2em] text-[#a87a24] md:text-[9px]">MANGO TRAILS · CAO LÃNH</p><p className="mt-1 text-[10px] text-[#657361] md:text-xs">Một câu chuyện địa phương, kể bằng hình ảnh và trải nghiệm</p></div>
-                <span aria-hidden="true" className="ml-3 text-xl text-[#e8c66e]">↗</span>
-              </div>
-              <div className="mt-4 flex items-center gap-4 md:mt-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#a3b58f] text-[#315d40]"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="2" width="12" height="20" rx="6" /><path d="M12 6v5" /></svg></div>
-                <div><p className="text-[10px] font-extrabold uppercase tracking-[.23em] text-[#315d40]">Cuộn để khám phá</p><p className="mt-1 text-[11px] text-[#84937b]">Hành trình bắt đầu từ đây</p></div>
-              </div>
+    const refresh = () => ScrollTrigger.refresh();
+
+    document.fonts?.ready.then(refresh);
+
+    window.addEventListener("load", refresh);
+
+    return () => {
+      el.removeEventListener("click", scrollToSection);
+      window.removeEventListener("load", refresh);
+      mm.revert();
+      ctx.revert();
+    };
+  }, [introOpen]);
+
+  return (
+    <main
+      ref={root}
+      className="overflow-x-clip bg-[#f8f9f5] text-[#14342a]"
+    >
+      {introOpen && <div role="status" aria-label="Loading Mango Trails" className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#f7f6e5] px-6 text-center text-[#235e3b]">
+        <span className="mb-8 text-[10px] font-bold uppercase tracking-[.25em] text-[#85936d]">Vị Xoài Dẫn Lối · Cao Lãnh</span>
+        <p className="max-w-3xl font-serif text-[clamp(25px,3.5vw,46px)] leading-[1.5]">Theo vị xoài Cát, <em className="text-[#c5922e]">mở lối chu du.</em></p>
+        <p className="mt-6 max-w-xl text-sm leading-7 text-[#657361]">Từ vùng trồng xoài Cao Lãnh, khám phá miệt vườn, con người và những câu chuyện miền Tây.</p>
+        <span className="mt-9 h-1 w-32 overflow-hidden rounded-full bg-[#dce6c8]"><span className="block h-full w-full origin-left animate-pulse bg-[#d5a137]" /></span>
+      </div>}
+      <style jsx global>{`
+        html {
+          scroll-behavior: smooth;
+        }
+
+        body {
+          margin: 0;
+        }
+
+        .font-display {
+          font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .font-script {
+          font-family:
+            "Palatino Linotype",
+            "Book Antiqua",
+            "Times New Roman",
+            serif;
+        }
+
+        .hero-title {
+          text-shadow: 0 2px 28px rgba(13, 58, 75, 0.1);
+        }
+
+        .glass-panel {
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow:
+            0 30px 85px rgba(17, 61, 69, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+        }
+
+        .hero-grain {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
+
+      {/* ================================================
+          HERO — NUSANTARA INSPIRED
+      ================================================= */}
+      <section
+        id="hero"
+        className="relative flex h-svh w-full flex-col overflow-hidden bg-[#6aafd9] text-white"
+      >
+        {/* BACKGROUND */}
+        <div className="absolute inset-0">
+          <video
+            data-hero-photo
+            src="/FDown.vn_Tai_video_Facebook_720p%20(HD)_0dd2.mp4"
+            poster="/banner.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+
+          <div className="absolute inset-0 bg-gradient-to-r from-[#064d70]/55 via-[#246991]/25 to-[#0c4666]/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#072e34]/45 via-transparent to-[#0c4666]/20" />
+          <div className="hero-grain pointer-events-none absolute inset-0 opacity-[0.13]" />
+        </div>
+
+        {/* NAVIGATION */}
+        <header className="relative z-30 mx-auto flex w-full max-w-[1680px] items-center justify-between gap-8 px-6 py-7 sm:px-10 lg:px-16">
+          <a
+            data-nav-item
+            href="#hero"
+            aria-label="Vị Xoài Dẫn Lối · Trang chủ"
+            className="flex items-center gap-3"
+          >
+            <span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-md bg-[#f8f5df] sm:h-12 sm:w-12" style={{ backgroundImage: "url(/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg)", backgroundSize: "165%", backgroundPosition: "50% 28%" }} />
+            <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className="mt-1 block text-[10px] font-normal text-white/75">Cao Lãnh · Đồng Tháp</span></span>
+          </a>
+
+          <nav className="hidden items-center gap-12 lg:flex xl:gap-16">
+            {[
+              ["Trang chủ", "#hero"],
+              ["Câu chuyện", "#story"],
+              ["Điểm đến", "#destinations"],
+              ["Sự kiện", "#cta"],
+            ].map(([name, href]) => (
+              <a
+                key={name}
+                data-nav-item
+                href={href}
+                className="text-[12px] font-medium text-white/85 transition-colors hover:text-[#ffe294]"
+              >
+                {name}
+              </a>
+            ))}
+          </nav>
+
+          <div data-nav-item className="flex items-center gap-3">
+            <HeaderAccount dark />
+            <a
+              href="/map"
+              data-magnetic
+              className="hidden items-center gap-2 rounded-full border border-white/65 px-5 py-3 text-[11px] font-semibold transition-colors hover:bg-white hover:text-[#155277] sm:inline-flex"
+            >
+              Khám phá bản đồ
+              <ArrowUpRight size={14} />
+            </a>
+
+            <a
+              href="#destinations"
+              aria-label="Khám phá điểm đến"
+              className="grid h-11 w-11 place-items-center rounded-full border border-white/60 lg:hidden"
+            >
+              <Menu size={19} />
+            </a>
+          </div>
+        </header>
+
+        {/* HERO CONTENT */}
+        <div className="relative z-10 mx-auto flex w-full max-w-[1680px] min-h-0 flex-1 flex-col justify-center px-6 pb-12 pt-4 sm:px-10 lg:px-16 lg:pb-14 lg:pt-6">
+          {/* Big headline */}
+          <div
+            data-hero-headline
+            className="relative z-10 mt-4 max-w-[1000px] sm:mt-6"
+          >
+            <div
+              data-hero-kicker
+              className="mb-5 flex items-center gap-3"
+            >
+              <span className="h-2 w-2 rounded-full bg-[#ffdf84]" />
+              <span className="text-[10px] font-bold uppercase tracking-[.25em] text-white/85">
+                KHÁM PHÁ CAO LÃNH · ĐỒNG THÁP
+              </span>
             </div>
-            <div data-hero-art className="relative mx-auto flex h-[25svh] w-full max-w-[620px] items-center justify-center md:h-[78vh]">
-              <div data-hero-orbit className="pointer-events-none absolute inset-[2%] border border-[#96ae7e]/55" />
-              <div data-hero-float className="relative z-10 flex h-[90%] w-[90%] items-center justify-center overflow-hidden border border-[#d5c690] bg-[#e4eacb] shadow-[12px_12px_0_0_rgba(214,222,184,.8)]">
-                <img data-hero-image src={HERO_ART_IMAGE} alt="Minh họa hành trình khám phá xoài Cao Lãnh, Đồng Tháp" className="h-full w-full object-cover object-center [transform-style:preserve-3d]" />
-              </div>
-              <div data-hero-stamp className="pointer-events-none absolute -bottom-[1%] -left-[2%] z-20 hidden border border-[#d5c690] bg-[#fffbed] px-4 py-3 md:block">
-                <p className="font-mono text-[9px] tracking-[.14em] text-[#87957b]">FIELD NOTES / 01</p>
-                <p className="mt-1 font-[family-name:var(--font-editorial)] text-[21px] italic text-[#2e6842]">Cao Lãnh, Đồng Tháp</p>
-              </div>
-              <div data-hero-stamp className="pointer-events-none absolute -right-[1%] top-[13%] z-20 hidden border border-[#d6a344] bg-[#fffbed] px-3 py-2 font-mono text-[9px] leading-4 tracking-[.08em] text-[#315d40] md:block">VỊ XOÀI<br />DẪN LỐI</div>
+
+            <h1 className="hero-title font-display text-[clamp(38px,6vw,90px)] font-black uppercase leading-[.99] tracking-[-.065em]">
+              <span className="block overflow-hidden">
+                <span data-hero-title className="block">
+                  THE TASTE
+                </span>
+              </span>
+              <span className="block overflow-hidden">
+                <span data-hero-title className="block">
+                  OF CAO LANH
+                </span>
+              </span>
+            </h1>
+
+            <div className="mt-[-0.015em] overflow-hidden pb-4">
+              <p
+                data-hero-script
+                className="font-script text-[clamp(38px,6.5vw,96px)] italic leading-[1.05] tracking-[-.075em] text-[#ffe1a0]"
+              >
+                A Mango Journey
+              </p>
             </div>
+
+            <p
+              data-hero-support
+              className="mt-4 max-w-md text-sm leading-7 text-white/80 lg:hidden"
+            >
+              Khám phá miền đất sen hồng qua hương vị
+              xoài Cát, những khu vườn và câu chuyện
+              đậm chất miền Tây.
+            </p>
           </div>
-          <div className="pointer-events-none absolute bottom-[3vh] right-[5vw] hidden items-center gap-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#93a084] md:flex"><span className="h-px w-12 bg-[#b7c3aa]" />01 — THE BEGINNING</div>
-        </section>
-        {/* PANEL 2 — destination story, not a technology pitch */}
-        <section className="relative h-full w-[var(--landing-panel-width,100vw)] shrink-0 overflow-hidden bg-[#eaf0db] text-[#205b37]">
-          <div className="pointer-events-none absolute right-0 top-[14vh] h-px w-[23vw] bg-[#d0d8b6]" />
-          <div className="relative grid h-full grid-cols-1 items-center gap-5 px-[7vw] pb-[6vh] pt-[100px] md:grid-cols-[56%_44%] md:gap-10">
-            <div className="relative z-10 max-w-[780px]">
-              <p data-story-beat className="mb-6 flex items-center gap-3 text-[10px] font-extrabold uppercase tracking-[.25em] text-[#64844e]"><span className="h-px w-8 bg-[#a4b791]" /> 02 / SỢI CHỈ ĐỎ CỦA DỰ ÁN</p>
-              <h2 data-story-beat className="font-[family-name:var(--font-editorial)] text-[clamp(48px,6.2vw,108px)] leading-[1.02] tracking-[-.065em]"><span className="inline-block">Một trái xoài,</span><br /><span className="inline-block italic text-[#ce9a2b]">nhiều câu chuyện.</span></h2>
-              <p data-story-beat className="mt-6 max-w-[500px] font-[family-name:var(--font-editorial)] text-[clamp(19px,2vw,31px)] italic text-[#62894f]"><span className="inline-block">Từ tán cây đến bàn ăn.</span></p>
-              <p data-story-beat className="mt-5 max-w-[520px] text-[clamp(13px,1.05vw,16px)] leading-[1.9] text-[#536a53]">Xoài Cát là điểm khởi đầu để nhóm lần theo nhịp sống Cao Lãnh: trái được chăm trong vườn, người làm vườn giữ mùa, rồi hương vị ấy đi vào những món quen.</p>
-              <div className="mt-6 grid max-w-[590px] grid-cols-3 gap-2 md:mt-8 md:gap-3">
-                {[
-                  { no: "01", title: "VƯỜN", detail: "Nơi câu chuyện bắt đầu." },
-                  { no: "02", title: "NGƯỜI", detail: "Những bàn tay giữ mùa." },
-                  { no: "03", title: "VỊ", detail: "Xoài đi từ vườn ra bàn ăn." },
-                ].map(item => <div data-story-beat data-feature-card key={item.no} className="border-t border-[#92a77d] px-2 py-3 md:px-3 md:py-4">
-                  <span className="font-mono text-[9px] tracking-wider text-[#cb9731]">{item.no} /</span>
-                  <h3 className="mt-2 text-[11px] font-extrabold tracking-[.12em] text-[#285c3b] md:text-[13px]">{item.title}</h3>
-                  <p className="mt-2 hidden text-[9px] leading-4 text-[#71836c] sm:block md:text-[10px] md:leading-5">{item.detail}</p>
-                </div>)}
-              </div>
-              <p data-story-beat className="mt-4 flex items-center gap-2 text-[9px] font-bold uppercase tracking-[.16em] text-[#71836c] md:mt-5 md:text-[10px]"><span className="h-1.5 w-1.5 rounded-full bg-[#d5a137]" /> MANGO TRAILS — THEO VỊ XOÀI CÁT, MỞ LỐI CHU DU</p>
-            </div>
-            <div data-story-visual className="relative mx-auto h-[30vh] w-[85%] md:h-[64vh] md:w-full">
-              <div className="absolute inset-[2%] translate-x-3 translate-y-3 border border-[#aebc91]" />
-              <img src="/cao-lanh-orchard.jpg" alt="Khách tham quan dưới tán xoài ở Cao Lãnh" className="absolute inset-0 h-full w-full border border-[#d5c690] object-cover" />
-              <div data-story-caption className="absolute bottom-[16%] left-[-3%] z-20 flex items-center gap-3 border border-[#d5c690] bg-[#fffbed] p-2.5">
-                <img src="/text-theme.jpg" alt="" className="h-14 w-20 rounded-xl object-cover object-[85%_center]" />
-                <div><p className="text-[8px] font-extrabold uppercase tracking-[.18em] text-[#9b9b70]">TỪ VƯỜN ĐẾN BÀN ĂN</p><p className="mt-1 font-[family-name:var(--font-editorial)] text-sm italic text-[#2b6841]">Vị xoài Cao Lãnh</p></div>
-              </div>
-              <div className="absolute -bottom-4 right-0 border border-[#d5c690] bg-[#fffbed] px-4 py-3"><p className="font-mono text-[9px] tracking-[.15em] text-[#9b9b70]">FRAME 01 / VƯỜN CAO LÃNH</p><p className="mt-1 font-[family-name:var(--font-editorial)] text-lg italic text-[#2b6841]">Trái lớn lên trong vườn</p></div>
-            </div>
-          </div>
-        </section>
-        <section data-gallery className="relative h-full w-[var(--landing-panel-width,100vw)] shrink-0 overflow-hidden bg-[#faf8e8] text-[#205b37]">
-          <div data-gallery-backdrop className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,#fcfbea_0%,#f0f4d8_70%,#e5edc5_100%)]" />
-          <div data-gallery-heading className="pointer-events-none absolute inset-x-4 top-[11vh] z-20 text-center">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[.32em] text-[#658a50]">03 / NHỮNG ĐIỂM DỪNG MIỀN TÂY</p>
-            <h2 className="pointer-events-auto font-[family-name:var(--font-editorial)] text-[clamp(35px,5vw,76px)] leading-[.95] text-[#225e3b]"><span className="inline-block">Mỗi nơi một <i className="text-[#d9a11a]">nhịp sống.</i></span></h2>
-            <p className="mt-4 text-xs tracking-widest text-[#678354]">MỖI KHUNG HÌNH · MỘT CÂU CHUYỆN</p>
-          </div>
-          <div data-gallery-scene className="absolute inset-0 z-30 [perspective:1450px] [transform-style:preserve-3d]">
-            {projects.map((_, i) => {
-              const project = projects[(selected + i) % projects.length]; return <div key={i} data-arc-card className={`absolute left-1/2 top-1/2 overflow-hidden bg-[#253535] shadow-[0_18px_45px_rgba(79,39,0,.22)] will-change-transform [backface-visibility:hidden] ${i === 0
-                ? "h-[27svh] w-[55vw] md:h-[38svh] md:w-[42vw]"
-                : "h-[22svh] w-[37vw] md:h-[29svh] md:w-[26vw]"
-                }`}>
-                <img src={project.image} alt={project.title} className="h-full w-full object-cover" />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <span className="absolute bottom-4 left-4 text-[10px] font-bold tracking-widest text-white">0{(selected + i) % projects.length + 1}</span>
-              </div>;
-            })}
-          </div>
-          <div data-gallery-bottom-fade className="pointer-events-none absolute inset-x-0 bottom-0 z-[34] h-[19vh] bg-gradient-to-t from-[#faf8e8] via-[#faf8e8]/65 to-transparent" />
-          <div data-gallery-nav className="absolute bottom-[5vh] left-1/2 z-[90] flex -translate-x-1/2 items-center gap-3 opacity-0">
-            <button type="button" aria-label="Previous gallery story" onClick={() => navigation.current?.(-1)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/75"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></button>
-            <button type="button" aria-label="Next gallery story" onClick={() => navigation.current?.(1)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-black/55 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/75"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></button>
-          </div>
-          {[projects[selected]].map((project) => <div key="active-story" data-story-overlay className="pointer-events-none absolute inset-0 z-[55] flex flex-col justify-end bg-gradient-to-r from-black/90 via-black/55 via-50% to-transparent px-[7vw] pb-[16vh] text-[#fffdf0] opacity-0">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.25em] text-[#ffdc69]">{project.category} · 0{selected + 1} / 0{projects.length}</p>
-            <h3 className="max-w-[760px] font-[family-name:var(--font-editorial)] text-[clamp(46px,6.8vw,104px)] leading-[1.02] tracking-[-.045em] text-[#fffef0] drop-shadow-[0_4px_20px_rgba(0,0,0,.4)]">{project.title}</h3>
-            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[9px] font-bold uppercase tracking-[.16em] text-white/70"><span>{project.location}</span><span>{project.detail}</span></div>
-            <p className="mt-4 max-w-[520px] border-l-2 border-[#ffd67b] pl-5 text-[clamp(14px,1.1vw,17px)] leading-[1.8] text-[#fffdf1]">{project.description}</p>
-          </div>)}
-          <p data-gallery-hint className="absolute inset-x-0 bottom-[13vh] z-20 text-center text-[10px] uppercase tracking-[.3em] text-[#678354]">Cuộn để xem từng điểm · Dùng mũi tên khi ảnh mở lớn</p>
-        </section>
-        <section className="relative h-full w-[var(--landing-panel-width,100vw)] shrink-0 overflow-hidden bg-[#eaf0d1] px-6 text-[#205b37]">
-          <div className="pointer-events-none absolute -right-[15vw] -top-[35vh] h-[85vh] w-[85vw] rounded-full bg-[#f8f7e6] blur-[75px]" />
-          <div className="relative z-10 mx-auto grid h-full w-full max-w-6xl items-center gap-7 px-3 pb-6 pt-16 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:py-12">
-            <div className="text-center lg:text-left">
-              <p data-closing-reveal className="mb-2 text-[10px] font-extrabold uppercase tracking-[.3em] text-[#6c9454]">06 / 06 · {EVENT.name}</p>
-              <h2 data-closing-reveal className="font-[family-name:var(--font-editorial)] text-[clamp(38px,5.2vw,72px)] leading-[.96] tracking-[-.06em]"><span className="inline-block">Trạm Hẹn</span><br /><span className="inline-block italic text-[#dba11a]">Cao Lãnh.</span></h2>
-              <p data-closing-reveal className="mx-auto mt-3 max-w-3xl text-[12px] leading-5 text-[#536b50] sm:text-sm lg:mx-0">{EVENT.description}</p>
-              <div className="mx-auto mt-4 grid max-w-4xl grid-cols-2 gap-2 text-left lg:mx-0">
-                {EVENT.highlights.map((highlight, index) => (
-                  <div key={highlight} data-closing-reveal className="flex items-start gap-2 rounded-2xl border border-[#b7c9a9]/70 bg-[#fffdf3]/65 px-3 py-2.5">
-                    <span className="font-[family-name:var(--font-editorial)] text-lg italic text-[#c9932e]">0{index + 1}</span>
-                    <span className="text-[10px] leading-4 text-[#536b50] sm:text-xs sm:leading-5">{highlight}</span>
+
+          {/* Bottom content, aligned like reference */}
+          <div className="relative z-20 mt-5 grid items-end gap-5 lg:mt-5 ">
+            <div className="max-w-[450px]">
+              {/* Social proof / visual dots */}
+              <div
+                data-hero-support
+                className="mb-3 hidden items-center gap-4 sm:flex [@media(max-height:700px)]:hidden"
+              >
+                <div className="flex -space-x-3">
+                  {[
+                    "/tram-chim.jpg",
+                    "/cao-lanh-orchard.jpg",
+                    "/sa-dec-flowers.jpg",
+                  ].map((image, i) => (
+                    <div
+                      key={i}
+                      className="h-10 w-10 overflow-hidden rounded-full border-2 border-white"
+                    >
+                      <img
+                        src={image}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ))}
+
+                  <div className="grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-[#4c83e9] text-[10px] font-bold text-white">
+                    04+
                   </div>
-                ))}
+                </div>
+
+                <p className="text-[11px] font-semibold leading-5 text-white">
+                  Những điểm đến
+                  <br />
+                  đang chờ bạn khám phá
+                </p>
               </div>
-              <div className="mt-3 flex flex-wrap justify-center gap-2 lg:justify-start">
-                {EVENT.meta.map((item) => (
-                  <div key={item.label} data-closing-reveal className="rounded-full border border-[#9db48b]/50 bg-[#fffdf3]/70 px-4 py-2 text-left">
-                    <span className="mr-2 text-[9px] font-bold uppercase tracking-wider text-[#829274]">{item.label}</span>
-                    <span className="text-[10px] font-semibold text-[#315d40]">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-              <div data-closing-reveal className="mt-4 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                <a data-cursor-magnet href={EVENT.ticketHref} className="rounded-full bg-[#24643e] px-7 py-3 text-xs font-extrabold tracking-wider text-[#fffbed] shadow-md transition-shadow hover:shadow-lg">Tạo Vé Hẹn Chu Du ↗</a>
-                <a data-cursor-magnet href="/map" className="rounded-full border border-[#24643e]/35 px-5 py-3 text-xs font-extrabold tracking-wider text-[#24643e] transition-colors hover:bg-[#24643e]/10">Xem lại bản đồ</a>
-              </div>
-              <p data-closing-reveal className="mx-auto mt-2 max-w-2xl text-[10px] italic text-[#71836c] lg:mx-0">{EVENT.ticketNote}</p>
+
+              <p
+                data-hero-support
+                className="hidden max-w-sm text-[13px] leading-[1.7] text-white/85 sm:block [@media(max-height:700px)]:hidden"
+              >
+                Từ những vườn xoài xanh mát đến nét
+                văn hóa đặc trưng, mỗi điểm dừng là
+                một câu chuyện khiến bạn muốn ở lại lâu hơn.
+              </p>
+
+              <a
+                data-hero-support
+                data-magnetic
+                href="/map"
+                className="mt-4 inline-flex items-center gap-7 rounded-full bg-[#f0c85e] px-7 py-4 text-xs font-bold text-[#173b2f] shadow-[0_12px_35px_rgba(69,55,18,.2)] transition-colors hover:bg-[#ffdf84]"
+              >
+                Explore Cao Lanh
+                <ArrowUpRight size={17} />
+              </a>
             </div>
-            <figure data-closing-visual className="relative hidden h-[58vh] min-h-[390px] overflow-hidden rounded-[2rem] border border-white/50 opacity-0 shadow-[0_35px_90px_rgba(35,70,40,.2)] lg:block">
-              <img src="/banner.jpg" alt="Minh họa vườn xoài và dòng sông miền Tây" className="h-full w-full object-cover object-[78%_center]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#163b26]/75 via-transparent to-transparent" />
-              <figcaption className="absolute inset-x-6 bottom-6 text-left text-[#fffdf0]">
-                <span className="text-[9px] font-bold uppercase tracking-[.25em] text-[#f5d776]">CAO LÃNH · ĐỒNG THÁP</span>
-                <p className="mt-2 font-[family-name:var(--font-editorial)] text-3xl italic">Một chuyến đi, nhiều điều để nhớ.</p>
-              </figcaption>
-            </figure>
+
+
           </div>
-        </section>
-      </div>
-    </section>
-  </main>;
+
+          {/* Bottom navigation line */}
+          <div
+            data-hero-bottom
+            className="mt-5 hidden items-center justify-between border-t border-white/30 pt-4 text-[10px] font-semibold uppercase tracking-[.2em] text-white/70 sm:flex [@media(max-height:700px)]:hidden"
+          >
+            <span>10°27′ N · 105°38′ E</span>
+            <a
+              href="#story"
+              className="flex items-center gap-3 hover:text-white"
+            >
+              Scroll to discover
+              <ArrowDown size={15} />
+            </a>
+            <span className="hidden sm:block">
+              Dong Thap · Vietnam
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================
+          STORY — LIGHT EDITORIAL
+      ================================================= */}
+      <section
+        id="story"
+        className="relative overflow-hidden bg-[#f8f9f5] px-6 py-28 sm:px-10 lg:px-16 lg:py-44"
+      >
+        <div className="mx-auto grid max-w-[1480px] items-center gap-16 lg:grid-cols-2 lg:gap-24">
+          <div>
+            <div
+              data-fade-up
+              className="mb-8 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.24em] text-[#5577a6]"
+            >
+              <span className="h-2 w-2 rounded-full bg-[#e3b94d]" />
+              01 / Our Story
+            </div>
+
+            <div data-section-heading>
+              <SplitTitle
+                className="font-display text-[clamp(38px,4.8vw,70px)] leading-[.99] tracking-[-.065em]"
+                lines={[
+                  { text: "A little fruit." },
+                  { text: "A thousand", italic: true },
+                  { text: "stories." },
+                ]}
+              />
+            </div>
+
+            <p
+              data-fade-up
+              className="mt-9 max-w-lg text-base leading-9 text-[#75837c]"
+            >
+              Một trái xoài Cát không chỉ mang theo vị ngọt,
+              mà còn kể câu chuyện về con người, đất đai,
+              và nhịp sống hiền hòa của Cao Lãnh.
+              Từ vườn cây đến từng điểm dừng,
+              hãy khám phá miền Tây theo cách của riêng bạn.
+            </p>
+
+            <a
+              data-fade-up
+              data-magnetic
+              href="/map"
+              className="mt-10 inline-flex items-center gap-6 rounded-full bg-[#f0c85e] px-7 py-4 text-xs font-bold text-[#173b2f] transition-colors hover:bg-[#ffdf84]"
+            >
+              Khám phá câu chuyện
+              <ArrowUpRight size={17} />
+            </a>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-[420px]">
+            <div
+              data-image-frame
+              className="relative h-[380px] overflow-hidden rounded-[28px] bg-[#d3dfcc] sm:h-[460px]"
+            >
+              <img
+                data-story-image
+                src="/cao-lanh-orchard.jpg"
+                alt="Vườn xoài Cao Lãnh"
+                className="absolute inset-[-10%_0] h-[120%] w-full object-cover"
+              />
+            </div>
+
+            <div
+              data-fade-up
+              className="absolute -bottom-8 -left-4 rounded-2xl bg-[#f0c85e] px-7 py-6 shadow-xl sm:-left-10"
+            >
+              <p className="font-script text-3xl italic text-[#183e31]">
+                Made of nature
+              </p>
+              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[.16em] text-[#36614b]">
+                CAO LANH · DONG THAP
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================
+          DESTINATIONS
+      ================================================= */}
+      <section
+        id="destinations"
+        className="overflow-hidden bg-[#eaf0ed] px-6 py-28 sm:px-10 lg:px-16 lg:py-40"
+      >
+        <div className="mx-auto max-w-[1480px]">
+          <div className="mb-20 flex flex-wrap items-end justify-between gap-10">
+            <div>
+              <p
+                data-fade-up
+                className="mb-7 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.24em] text-[#56759a]"
+              >
+                <span className="h-2 w-2 rounded-full bg-[#e5b94e]" />
+                02 / Discover the Mekong
+              </p>
+
+              <div data-section-heading>
+                <SplitTitle
+                  className="font-display text-[clamp(38px,5vw,72px)] leading-[.98] tracking-[-.065em]"
+                  lines={[
+                    { text: "Every place," },
+                    { text: "a new feeling.", italic: true },
+                  ]}
+                />
+              </div>
+            </div>
+
+            <p
+              data-fade-up
+              className="max-w-xs text-sm leading-8 text-[#78877f]"
+            >
+              Những điểm đến thân thương, nơi bạn
+              có thể sống chậm lại và cảm nhận
+              những điều bình dị.
+            </p>
+          </div>
+
+          <div className="mx-auto grid max-w-[900px] gap-10 sm:grid-cols-2 lg:gap-12">
+            {destinations.map((destination) => (
+              <JourneyCard
+                key={destination.number}
+                destination={destination}
+              />
+            ))}
+          </div>
+
+          <div
+            data-fade-up
+            className="mt-16 flex justify-center lg:mt-20"
+          >
+            <a
+              href="/map"
+              data-magnetic
+              className="inline-flex items-center gap-5 rounded-full bg-[#f0c85e] px-8 py-5 text-xs font-bold text-[#173b2f] transition-colors hover:bg-[#ffdf84]"
+            >
+              Xem tất cả trên bản đồ
+              <ArrowUpRight size={17} />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================
+          CTA — EXPERIENCE
+      ================================================= */}
+      <section
+        id="cta"
+        className="relative overflow-hidden bg-[#bed8e6] px-6 py-28 sm:px-10 lg:px-16 lg:py-44"
+      >
+        <div
+          data-cta-orb
+          className="pointer-events-none absolute -right-40 -top-56 h-[650px] w-[650px] rounded-full bg-[#f3d574]/70 blur-[100px]"
+        />
+        <div className="pointer-events-none absolute -bottom-64 -left-48 h-[600px] w-[600px] rounded-full bg-[#76aed6]/60 blur-[100px]" />
+
+        <div className="relative mx-auto max-w-[1100px] text-center">
+          <p
+            data-fade-up
+            className="mb-9 text-[11px] font-bold uppercase tracking-[.3em] text-[#376782]"
+          >
+            03 / YOUR NEXT JOURNEY
+          </p>
+
+          <div data-section-heading>
+            <SplitTitle
+              className="font-display text-[clamp(42px,6vw,86px)] leading-[.95] tracking-[-.07em] text-[#163d43] [&_[data-split-line]]:mx-auto"
+              lines={[
+                { text: "See you in" },
+                { text: "Cao Lanh.", italic: true },
+              ]}
+            />
+          </div>
+
+          <p
+            data-fade-up
+            className="mx-auto mt-10 max-w-xl text-base leading-8 text-[#50747b]"
+          >
+            {EVENT.description}
+          </p>
+
+          <div
+            data-fade-up
+            className="mt-9 flex flex-wrap justify-center gap-4"
+          >
+            {EVENT.meta.map((item) => (
+              <span
+                key={item.label}
+                className="rounded-full border border-[#376782]/20 bg-white/35 px-5 py-3 text-[11px] font-semibold text-[#325f6c] backdrop-blur-lg"
+              >
+                {item.label}: {item.value}
+              </span>
+            ))}
+          </div>
+
+          <div
+            data-fade-up
+            className="mt-12 flex flex-wrap justify-center gap-4"
+          >
+            <a
+              href={EVENT.ticketHref}
+              data-magnetic
+              className="inline-flex min-h-16 items-center gap-7 rounded-full bg-[#f0c85e] px-9 text-xs font-bold text-[#173b2f] shadow-[0_15px_40px_rgba(69,55,18,.2)] transition-colors hover:bg-[#ffdf84]"
+            >
+              Tạo vé hẹn chu du
+              <ArrowUpRight size={18} />
+            </a>
+
+            <a
+              href="/map"
+              data-magnetic
+              className="inline-flex min-h-16 items-center gap-7 rounded-full border border-[#235362]/30 bg-white/50 px-9 text-xs font-bold text-[#214c59] transition-colors hover:bg-white"
+            >
+              Khám phá bản đồ
+              <Compass size={18} />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================
+          FOOTER
+      ================================================= */}
+      <footer className="bg-[#112e2b] px-6 pb-9 pt-20 text-white sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-[1480px]">
+          <div className="flex flex-wrap items-end justify-between gap-10 border-b border-white/20 pb-16">
+            <div>
+              <p className="mb-5 text-[10px] font-bold uppercase tracking-[.25em] text-[#a9c5b7]">
+                THE MANGO JOURNEY
+              </p>
+              <h2 className="font-display text-[clamp(38px,5vw,72px)] font-bold tracking-[-.07em]">
+                caolanh<span className="text-[#f1d079]">.</span>
+              </h2>
+            </div>
+
+            <a
+              href="#hero"
+              data-magnetic
+              className="grid h-20 w-20 place-items-center rounded-full border border-white/35 transition-colors hover:bg-[#f1d079] hover:text-[#173e2b]"
+              aria-label="Về đầu trang"
+            >
+              <MoveUpRight size={28} />
+            </a>
+          </div>
+
+          <div className="mt-8 flex flex-wrap justify-between gap-5 text-[10px] font-semibold uppercase tracking-[.16em] text-white/50">
+            <span>© 2026 Cao Lanh Journey</span>
+            <span>Dong Thap, Vietnam</span>
+            <span>Made for the Mekong</span>
+          </div>
+        </div>
+      </footer>
+
+    </main>
+  );
 }

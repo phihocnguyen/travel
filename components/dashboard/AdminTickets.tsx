@@ -28,7 +28,7 @@ export default function AdminTickets({initialTickets}:{initialTickets:AdminTicke
       const image=(value==="start"||value==="render")&&preview.current?await ticketPng(preview.current):undefined;
       const response=await fetch(`/api/admin/tickets/${ticket.id}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:value,image,expectedUpdatedAt:ticket.updatedAt})});
       const data=await response.json();if(!response.ok)throw new Error(data.error);
-      setMessage(value==="start"||value==="render"?"File in màu 4120 × 2320 px, 300 DPI đã sẵn sàng.":value==="collect"?"Đã xác nhận trao vé.":value==="printed"?"Đã xác nhận in thành công.":"Đã hủy lệnh in. User có thể sửa vé.");
+      setMessage(value==="start"||value==="render"?"File in màu 1417 × 827 px, 300 DPI đã sẵn sàng.":value==="collect"?"Đã xác nhận trao vé.":value==="printed"?"Đã xác nhận in thành công.":"Đã hủy lệnh in. User có thể sửa vé.");
       await refresh();
     }catch(error){setMessage(error instanceof Error?error.message:"Không thể xử lý vé.");}finally{setBusy(false);}
   }
@@ -50,8 +50,8 @@ export default function AdminTickets({initialTickets}:{initialTickets:AdminTicke
       </Table></div><TablePagination page={current} pages={pages} total={filtered.length} onChange={setPage}/>
     </section>
     {ticket&&<DetailDialog title={ticket.code!} onClose={()=>{if(!busy)setSelected("");}}>
-      <div><TicketPreview key={ticket.updatedAt} design={ticket} rootRef={preview} className="mx-auto aspect-[103/58] w-full max-w-xl rounded-lg"/></div>
-      <Table><TableBody>{[["Người tạo",ticket.ownerName],["Email",ticket.ownerEmail??"—"],["Mã vé",ticket.code],["Trạng thái",status(ticket)],["Lời nhắn",ticket.message],["File in","In màu · 4120 × 2320 px · 300 DPI"]].map(([label,value])=><TableRow key={label}><TableCell className="w-32 text-xs text-black/50">{label}</TableCell><TableCell className="whitespace-pre-line text-xs">{value}</TableCell></TableRow>)}</TableBody></Table>
+      <div><TicketPreview key={ticket.updatedAt} design={ticket} rootRef={preview} className="mx-auto aspect-[1417/827] w-full max-w-xl rounded-lg"/></div>
+      <Table><TableBody>{[["Người tạo",ticket.ownerName],["Email",ticket.ownerEmail??"—"],["Mã vé",ticket.code],["Trạng thái",status(ticket)],["Lời nhắn",ticket.message],["File in","In màu · 1417 × 827 px · 300 DPI"]].map(([label,value])=><TableRow key={label}><TableCell className="w-32 text-xs text-black/50">{label}</TableCell><TableCell className="whitespace-pre-line text-xs">{value}</TableCell></TableRow>)}</TableBody></Table>
       {message&&<p role="status" className="text-sm">{message}</p>}
       <div className="flex flex-wrap gap-2">
         {!ticket.printed&&ticket.printStatus!=="processing"&&<button type="button" className={button} disabled={busy} onClick={()=>action("start")}>{busy?"Đang xử lý…":"Chuẩn bị file in"}</button>}

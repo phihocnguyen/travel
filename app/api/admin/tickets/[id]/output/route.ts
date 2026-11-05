@@ -16,6 +16,6 @@ export async function GET(_request:Request,context:{params:Promise<{id:string}>}
     const image=await colorPrintPng(row.image_data);
     return new Response(new Uint8Array(image),{headers:{"Content-Type":"image/png","Cache-Control":"private, no-store","Content-Disposition":`inline; filename="${row.ticket_code}.png"`}});
   } catch {
-    return new Response("File in cũ không đủ chất lượng. Hãy hủy lệnh chưa hoàn tất và chuẩn bị lại file 4120 × 2320 px.",{status:409});
+    return new Response("File in cũ không đủ chất lượng. Hãy hủy lệnh chưa hoàn tất và chuẩn bị lại file 1417 × 827 px.",{status:409});
   }
 }

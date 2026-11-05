@@ -24,7 +24,7 @@ export async function operateTicket(id: string, actorId: string, input: {action?
       let png: Buffer = Buffer.from(match[1],"base64");
       if (png.length > 16*1024*1024 || !png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw new TicketValidationError("File in không hợp lệ hoặc vượt 16MB.");
       try { png = await colorPrintPng(png); }
-      catch { throw new TicketValidationError("File in phải là PNG chất lượng cao, tối thiểu 4120 × 2320 px đúng tỷ lệ vé. Hãy chuẩn bị lại file in."); }
+      catch { throw new TicketValidationError("File in phải là PNG chất lượng cao, tối thiểu 1417 × 827 px đúng tỷ lệ vé. Hãy chuẩn bị lại file in."); }
       await client.query(`INSERT INTO ticket_outputs(ticket_id,design_updated_at,image_data) VALUES ($1,$2,$3)
         ON CONFLICT(ticket_id) DO UPDATE SET design_updated_at=EXCLUDED.design_updated_at,image_data=EXCLUDED.image_data,created_at=now()`,[id,ticket.updated_at,png]);
       if (action === "start") {
