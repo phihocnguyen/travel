@@ -1,7 +1,7 @@
 ﻿
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
@@ -134,7 +134,27 @@ function JourneyCard({
 
 export default function LandingPage() {
   const root = useRef<HTMLElement>(null);
+  const navBackground = useRef<HTMLSpanElement>(null);
   const [introOpen, setIntroOpen] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const update = () => setScrolled((previous) => previous ? window.scrollY > 8 : window.scrollY > 48);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  useEffect(() => {
+    if (!navBackground.current) return;
+    const tween = gsap.to(navBackground.current, {
+      opacity: scrolled ? 1 : 0,
+      duration: 0.65,
+      ease: "power1.inOut",
+      overwrite: true,
+    });
+    return () => { tween.kill(); };
+  }, [scrolled]);
 
   useLayoutEffect(() => {
     let seen = false;
@@ -242,37 +262,6 @@ export default function LandingPage() {
             stagger: 0.1,
           },
           1.25
-        )
-        .fromTo(
-          "[data-dashboard]",
-          {
-            opacity: 0,
-            x: 140,
-            y: 55,
-            rotateY: -14,
-            scale: 0.9,
-          },
-          {
-            opacity: 1,
-            x: 0,
-            y: 0,
-            rotateY: 0,
-            scale: 1,
-            duration: 1.5,
-            ease: "expo.out",
-          },
-          1.05
-        )
-        .fromTo(
-          "[data-stat]",
-          { opacity: 0, y: 24 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            stagger: 0.12,
-          },
-          1.65
         )
         .fromTo(
           "[data-hero-bottom]",
@@ -636,6 +625,13 @@ export default function LandingPage() {
             transition-duration: 0.01ms !important;
           }
         }
+
+        .landing-nav,
+        .landing-nav .nav-color,
+        .landing-nav [data-nav-item] a {
+          transition-duration: 650ms !important;
+          transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        }
       `}</style>
 
       {/* ================================================
@@ -665,7 +661,8 @@ export default function LandingPage() {
         </div>
 
         {/* NAVIGATION */}
-        <header className="relative z-30 mx-auto flex w-full max-w-[1680px] items-center justify-between gap-8 px-6 py-7 sm:px-10 lg:px-16">
+        <header className={`landing-nav fixed left-1/2 top-0 z-[100] isolate flex items-center justify-between gap-8 transition-[translate,width,padding,border-radius,color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${scrolled ? "w-[calc(100%_-_1.5rem)] -translate-x-1/2 translate-y-3 rounded-xl px-4 py-3 text-[#14342a] sm:w-[calc(100%_-_3rem)] sm:translate-y-4 sm:px-6" : "w-full -translate-x-1/2 translate-y-0 rounded-none px-6 py-7 text-white sm:px-10 lg:px-16"}`}>
+          <span ref={navBackground} aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-white opacity-0 shadow-[0_4px_14px_rgba(20,52,42,0.08)]" />
           <a
             data-nav-item
             href="#hero"
@@ -673,7 +670,7 @@ export default function LandingPage() {
             className="flex items-center gap-3"
           >
             <span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-md bg-[#f8f5df] sm:h-12 sm:w-12" style={{ backgroundImage: "url(/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg)", backgroundSize: "165%", backgroundPosition: "50% 28%" }} />
-            <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className="mt-1 block text-[10px] font-normal text-white/75">Cao Lãnh · Đồng Tháp</span></span>
+            <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className={`nav-color mt-1 block text-[10px] font-normal transition-colors ${scrolled ? "text-[#657361]" : "text-white/75"}`}>Cao Lãnh · Đồng Tháp</span></span>
           </a>
 
           <nav className="hidden items-center gap-12 lg:flex xl:gap-16">
@@ -687,19 +684,19 @@ export default function LandingPage() {
                 key={name}
                 data-nav-item
                 href={href}
-                className="text-[12px] font-medium text-white/85 transition-colors hover:text-[#ffe294]"
+                className={`nav-color text-[12px] font-bold transition-colors ${scrolled ? "text-[#14342a]/85 hover:text-[#b48325]" : "text-white/85 hover:text-[#ffe294]"}`}
               >
                 {name}
               </a>
             ))}
           </nav>
 
-          <div data-nav-item className="flex items-center gap-3">
-            <HeaderAccount dark />
+          <div data-nav-item className="flex items-center gap-3 [&_a]:transition-colors [&_a]:duration-[650ms]">
+            <HeaderAccount dark={!scrolled} />
             <a
               href="/map"
               data-magnetic
-              className="hidden items-center gap-2 rounded-full border border-white/65 px-5 py-3 text-[11px] font-semibold transition-colors hover:bg-white hover:text-[#155277] sm:inline-flex"
+              className={`nav-color hidden items-center gap-2 rounded-full border px-5 py-3 text-[11px] font-semibold transition-colors sm:inline-flex ${scrolled ? "border-[#14342a]/30 hover:bg-[#14342a] hover:text-white" : "border-white/65 hover:bg-white hover:text-[#155277]"}`}
             >
               Khám phá bản đồ
               <ArrowUpRight size={14} />
@@ -708,12 +705,13 @@ export default function LandingPage() {
             <a
               href="#destinations"
               aria-label="Khám phá điểm đến"
-              className="grid h-11 w-11 place-items-center rounded-full border border-white/60 lg:hidden"
+              className={`nav-color grid h-11 w-11 place-items-center rounded-full border transition-colors lg:hidden ${scrolled ? "border-[#14342a]/30" : "border-white/60"}`}
             >
               <Menu size={19} />
             </a>
           </div>
         </header>
+        <div aria-hidden="true" className="h-[104px] shrink-0" />
 
         {/* HERO CONTENT */}
         <div className="relative z-10 mx-auto flex w-full max-w-[1680px] min-h-0 flex-1 flex-col justify-center px-6 pb-12 pt-4 sm:px-10 lg:px-16 lg:pb-14 lg:pt-6">
