@@ -548,7 +548,7 @@ export default function LandingPage() {
       const target = document.getElementById(link.hash.slice(1));
       if (!target) return;
       event.preventDefault();
-      target.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      target.scrollIntoView({ behavior: "smooth" });
       history.replaceState(null, "", link.hash);
     };
     el.addEventListener("click", scrollToSection);
