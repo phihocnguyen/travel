@@ -168,7 +168,7 @@ export default function LandingPage() {
         { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: .72, stagger: .08, ease: "back.out(1.25)", immediateRender: false },
         "<.3",
       );
-      story.fromTo(galleryHeading, { y: 55, autoAlpha: 0, filter: "blur(7px)" }, { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: .5, ease: "power3.out" }, "<.8");
+      story.fromTo(galleryHeading, { y: 55, autoAlpha: 0, filter: "blur(7px)" }, { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: .5, ease: "power3.out" }, "<.2");
       story.addLabel("gallery-ready");
       story.to({}, { duration: 0.55 }); // Brief gallery reveal, then zoom immediately.
       story.to(galleryHeading, { autoAlpha: 0, y: -30, duration: .24 });
@@ -212,15 +212,17 @@ export default function LandingPage() {
         story.to({}, { duration: 0.16 });
       });
       story.addLabel("gallery-finished");
-      story.to(track, { x: () => -vw() * 3, duration: 1.4 });
-      story.to(cards, { autoAlpha: 0, scale: .92, filter: "blur(5px)", duration: .42, stagger: .025 }, ">-.34");
+      // Reveal the incoming panel during its slide, so reaching it never
+      // leaves a blank screen that needs more scrolling to show the content.
+      story.to(track, { x: () => -vw() * 3, duration: 1.4 }, "gallery-finished");
+      story.to(cards, { autoAlpha: 0, scale: .92, filter: "blur(5px)", duration: .42, stagger: .025 }, "gallery-finished+=.8");
       const closing = rootEl.querySelectorAll("[data-closing-reveal]");
-      story.fromTo(closing, { y: 34, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .65, stagger: .1, ease: "power2.out" }, ">");
+      story.fromTo(closing, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .6, stagger: .04, ease: "power2.out", immediateRender: false }, "gallery-finished+=.15");
       const closingVisual = rootEl.querySelector<HTMLElement>("[data-closing-visual]");
       if (closingVisual) story.fromTo(closingVisual,
         { autoAlpha: 0, x: 70, rotation: 4, scale: .94, clipPath: "inset(0 0 0 18% round 32px)" },
         { autoAlpha: 1, x: 0, rotation: 0, scale: 1, clipPath: "inset(0 0 0 0% round 32px)", duration: .82, ease: "power3.out" },
-        ">",
+        "gallery-finished+=.2",
       );
       // Navigation only works when the image is fully expanded. It swaps the
       // image/content without touching the card's transform or ScrollTrigger.

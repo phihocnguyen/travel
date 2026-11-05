@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderAccount from "@/components/auth/HeaderAccount";
 
 export default function SiteHeader({overlay=false,dark=false,active="home"}:{overlay?:boolean;dark?:boolean;active?:"home"|"blog"}){
   const text=dark?"text-white":"text-[#263f30]";
@@ -12,7 +13,7 @@ export default function SiteHeader({overlay=false,dark=false,active="home"}:{ove
       <nav aria-label="Điều hướng chính" className="flex shrink-0 items-center gap-2 sm:gap-3">
         <Link href="/map" data-cursor-magnet className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline}`}>Explore Map</Link>
         <Link href="/blog" data-cursor-magnet aria-current={active==="blog"?"page":undefined} className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline} ${active==="blog"?(dark?"bg-white/15":"bg-[#263f30]/5 font-semibold"):""}`}>Bài viết</Link>
-        <Link href="/login?next=/dashboard" data-cursor-magnet aria-label="Đăng nhập" className={`inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium transition-colors sm:h-10 sm:px-4 ${dark?"bg-white text-[#263f30] hover:bg-white/90":"bg-[#263f30] text-white hover:bg-[#3b5840]"}`}><span className="hidden sm:inline">Đăng nhập</span><svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4 sm:hidden" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 3h5v18h-5M3 12h12M10 7l5 5-5 5"/></svg></Link>
+        <HeaderAccount dark={dark} />
       </nav>
     </div>
   </header>;
