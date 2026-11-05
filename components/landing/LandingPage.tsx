@@ -136,7 +136,6 @@ function JourneyCard({
 export default function LandingPage() {
   const root = useRef<HTMLElement>(null);
   const navBackground = useRef<HTMLSpanElement>(null);
-  const [introOpen, setIntroOpen] = useState(true);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -158,22 +157,6 @@ export default function LandingPage() {
   }, [scrolled]);
 
   useLayoutEffect(() => {
-    let seen = false;
-    try { seen = sessionStorage.getItem("vxdl:landing-intro:v1") === "seen"; } catch { /* Storage may be unavailable. */ }
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (seen || reduced) {
-      const frame = requestAnimationFrame(() => setIntroOpen(false));
-      return () => cancelAnimationFrame(frame);
-    }
-    const timer = window.setTimeout(() => {
-      try { sessionStorage.setItem("vxdl:landing-intro:v1", "seen"); } catch { /* Continue without storage. */ }
-      setIntroOpen(false);
-    }, 2800);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useLayoutEffect(() => {
-    if (introOpen) return;
     gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
     const el = root.current;
@@ -574,19 +557,13 @@ export default function LandingPage() {
       mm.revert();
       ctx.revert();
     };
-  }, [introOpen]);
+  }, []);
 
   return (
     <main
       ref={root}
       className="overflow-x-clip bg-[#f8f9f5] text-[#14342a]"
     >
-      {introOpen && <div role="status" aria-label="Loading Mango Trails" className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#f7f6e5] px-6 text-center text-[#235e3b]">
-        <span className="mb-8 text-[10px] font-bold uppercase tracking-[.25em] text-[#85936d]">Vị Xoài Dẫn Lối · Cao Lãnh</span>
-        <p className="max-w-3xl font-serif text-[clamp(25px,3.5vw,46px)] leading-[1.5]">Theo vị xoài Cát, <em className="text-[#c5922e]">mở lối chu du.</em></p>
-        <p className="mt-6 max-w-xl text-sm leading-7 text-[#657361]">Từ vùng trồng xoài Cao Lãnh, khám phá miệt vườn, con người và những câu chuyện miền Tây.</p>
-        <span className="mt-9 h-1 w-32 overflow-hidden rounded-full bg-[#dce6c8]"><span className="block h-full w-full origin-left animate-pulse bg-[#d5a137]" /></span>
-      </div>}
       <style jsx global>{`
         html {
           scroll-behavior: smooth;
