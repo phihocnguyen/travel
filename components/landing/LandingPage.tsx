@@ -4,6 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import {
   ArrowUpRight,
   ArrowDown,
@@ -173,7 +174,7 @@ export default function LandingPage() {
 
   useLayoutEffect(() => {
     if (introOpen) return;
-    gsap.registerPlugin(ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
     const el = root.current;
     if (!el) return;
@@ -542,14 +543,21 @@ export default function LandingPage() {
       );
     }, el);
 
+    let scrollTween: gsap.core.Tween | undefined;
     const scrollToSection = (event: MouseEvent) => {
       const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"]');
-      if (!link) return;
+      if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = document.getElementById(link.hash.slice(1));
       if (!target) return;
       event.preventDefault();
-      target.scrollIntoView({ behavior: "smooth" });
       history.replaceState(null, "", link.hash);
+      scrollTween?.kill();
+      scrollTween = gsap.to(window, {
+        scrollTo: { y: target, autoKill: true },
+        duration: 1.1,
+        ease: "power2.inOut",
+        overwrite: true,
+      });
     };
     el.addEventListener("click", scrollToSection);
 
@@ -561,6 +569,7 @@ export default function LandingPage() {
 
     return () => {
       el.removeEventListener("click", scrollToSection);
+      scrollTween?.kill();
       window.removeEventListener("load", refresh);
       mm.revert();
       ctx.revert();
