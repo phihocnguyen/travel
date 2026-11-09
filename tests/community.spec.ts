@@ -48,3 +48,11 @@ test('video APIs require authentication and development bypass is removed',async
  expect((await request.post(`/api/videos/${id}/review`,{data:{status:'approved'}})).status()).toBe(401);
  expect((await request.get(`/api/videos/${id}/stream`)).status()).toBe(401);
 });
+
+test('streamed dashboard routes still redirect unauthenticated visitors',async({page})=>{
+ for(const path of ['/dashboard/posts','/dashboard/videos','/dashboard/admin/videos']){
+  await page.goto(path);
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await expect(page.locator('[data-dashboard-shell]')).toHaveCount(0);
+ }
+});

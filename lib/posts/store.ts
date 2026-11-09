@@ -21,6 +21,10 @@ export async function listAllPosts(){return list();}
 export async function listPostsByAuthor(sub:string){return list("WHERE u.auth_subject=$1",[sub]);}
 export async function listApprovedPosts(){return list("WHERE p.status='approved'");}
 export async function listPendingPosts(){return list("WHERE p.status='pending'");}
+export async function countPendingPosts(): Promise<number> {
+  const result = await getDatabase().query("SELECT count(*)::int AS count FROM blog_posts WHERE status='pending'");
+  return result.rows[0].count;
+}
 export async function getPost(id:string):Promise<BlogPost|null>{if(!UUID.test(id))return null;const rows=await list("WHERE p.id=$1",[id]);return rows[0]??null;}
 function normalize(value:unknown){
   if(!value||typeof value!=="object")throw new PostValidationError("Dữ liệu bài viết không hợp lệ.");

@@ -2,6 +2,7 @@ import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { getDatabase } from "@/lib/db";
+import { cache } from "react";
 
 export const SESSION_COOKIE = "dt_session";
 
@@ -95,7 +96,8 @@ export function verifySession(token: string | undefined): Session | null {
   }
 }
 
-export async function getSession(): Promise<Session | null> {
+// Share verification only within this server render, never across users or requests.
+export const getSession = cache(async function getSession(): Promise<Session | null> {
   await connection();
   const store = await cookies();
   const token=store.get(SESSION_COOKIE)?.value;
@@ -106,7 +108,7 @@ export async function getSession(): Promise<Session | null> {
     [session.sub,createHash("sha256").update(token!).digest("hex")]);
   if(!result.rows[0]||result.rows[0].status!=='active'||result.rows[0].revoked)return null;
   return {...session,picture:result.rows[0].avatar_url || session.picture,role:result.rows[0]?.admin?"admin":"user"};
-}
+});
 
 export function sessionCookieOptions() {
   const isProduction = process.env.NODE_ENV === "production";
