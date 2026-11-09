@@ -1,7 +1,7 @@
 import "server-only";
 import { getDatabase } from "@/lib/db";
 import { ensureDatabaseUser } from "@/lib/auth/user";
-import { POST_CATEGORIES,type BlogPost,type PostAuthor,type PostInput,type PostStatus } from "./types";
+import { POST_CATEGORIES,type BlogPost,type PostAuthor,type PostInput,type PostStatus,type PostSummary } from "./types";
 import { sanitizePostHtml,plainToHtml,postPlainText } from "./content";
 import type { PoolClient } from "pg";
 import sharp from "sharp";
@@ -19,6 +19,12 @@ function post(row:Record<string,unknown>):BlogPost{
 async function list(where="",values:unknown[]=[]):Promise<BlogPost[]>{return(await getDatabase().query(`${SELECT} ${where} ORDER BY p.created_at DESC`,values)).rows.map(post);}
 export async function listAllPosts(){return list();}
 export async function listPostsByAuthor(sub:string){return list("WHERE u.auth_subject=$1",[sub]);}
+export async function listPostSummariesByAuthor(sub: string): Promise<PostSummary[]> {
+  const result = await getDatabase().query<{id: string; title: string; status: PostStatus; updated_at: Date}>(
+    "SELECT p.id,p.title,p.status,p.updated_at FROM blog_posts p JOIN users u ON u.id=p.author_id WHERE u.auth_subject=$1 ORDER BY p.created_at DESC", [sub],
+  );
+  return result.rows.map(row => ({id: row.id, title: row.title, status: row.status, updatedAt: new Date(row.updated_at).toISOString()}));
+}
 export async function listApprovedPosts(){return list("WHERE p.status='approved'");}
 export async function listPendingPosts(){return list("WHERE p.status='pending'");}
 export async function countPendingPosts(): Promise<number> {

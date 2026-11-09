@@ -43,6 +43,8 @@ export type PostInput = {
   removeCover?: boolean;
 };
 
+export type PostSummary = Pick<BlogPost, "id" | "title" | "status" | "updatedAt">;
+
 export const POST_STATUS_LABELS: Record<PostStatus, string> = {
   pending: "Chờ duyệt",
   approved: "Đã duyệt",

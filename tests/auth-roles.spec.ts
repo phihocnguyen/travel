@@ -30,11 +30,11 @@ test("admin credentials and dashboard role boundaries", async ({page,request,con
     await page.goto("/dashboard");
     await expect(page.getByRole("link",{name:"Vé của tôi",exact:true})).toBeVisible();
     // The signed cookie has no picture: restore the avatar from the database.
-    await expect(page.getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveAttribute("src","/card.webp");
+    await expect(page.locator("aside").getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveAttribute("src","/card.webp");
     await page.reload();
-    await expect(page.getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveAttribute("src","/card.webp");
+    await expect(page.locator("aside").getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveAttribute("src","/card.webp");
     await page.goto("/dashboard/settings");
-    await expect(page.getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveCount(2);
+    await expect(page.locator("[data-dashboard-content]").getByRole("img",{name:"Ảnh đại diện của Role test"})).toHaveCount(1);
     expect((await page.request.post("/api/auth/presence",{headers:{Origin:origin}})).status()).toBe(204);
     expect((await pool.query("SELECT avatar_url FROM users WHERE id=$1",[id])).rows[0].avatar_url).toBe("/card.webp");
     await expect(page.getByRole("link",{name:"Quản lý người dùng",exact:true})).toHaveCount(0);

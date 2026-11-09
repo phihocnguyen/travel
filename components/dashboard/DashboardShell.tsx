@@ -4,13 +4,18 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { UserAvatar } from "@/components/auth/UserAvatar";
 import { LogoutButton } from "./LogoutButton";
+import UserDashboardShell from "./UserDashboardShell";
 
 type User={name:string;email:string;picture?:string;provider:string};
 const paths={users:"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",overview:"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",ticket:"M3 7h18v4a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4V7Zm5 0v11",post:"M5 3h10l4 4v14H5V3Zm9 0v5h5M8 12h8M8 16h6",settings:"M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4",panel:"M3 4h18v16H3V4Zm6 0v16",arrow:"M5 12h14m-6-6 6 6-6 6"};
 function Icon({name}:{name:keyof typeof paths}){return <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]}/></svg>;}
 function LinkProgress(){const {pending}=useLinkStatus();return <span aria-hidden="true" data-navigation-pending={pending||undefined} className={`pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#63864e] transition-opacity ${pending?"motion-safe:animate-pulse opacity-100":"opacity-0"}`}/>;}
 function title(path:string){if(path==="/dashboard/admin/users")return "Quản lý người dùng";if(path==="/dashboard/admin/overview")return "Tổng quan quản trị";if(path.startsWith("/dashboard/admin/tickets"))return "Quản lý vé";if(path==="/dashboard/admin")return "Duyệt bài viết";if(path==="/dashboard/settings")return "Tài khoản";if(path==="/dashboard/tickets")return "Vé của tôi";if(path.startsWith("/dashboard/tickets/"))return "Thiết kế vé";if(path==="/dashboard/posts")return "Bảng tin cộng đồng";if(path==="/dashboard/videos")return "Video cộng đồng";if(path==="/dashboard/admin/videos")return "Duyệt video";if(path.startsWith("/dashboard/posts/"))return "Soạn bài viết";return "Tổng quan";}
-export function DashboardShell({user,isAdmin=false,pendingBadge,children}:{user:User;isAdmin?:boolean;pendingBadge?:ReactNode;children:ReactNode}){
+type ShellProps={user:User;isAdmin?:boolean;pendingBadge?:ReactNode;children:ReactNode};
+export function DashboardShell(props:ShellProps){
+  return props.isAdmin ? <AdminDashboardShell {...props}/> : <UserDashboardShell user={props.user}>{props.children}</UserDashboardShell>;
+}
+function AdminDashboardShell({user,isAdmin=false,pendingBadge,children}:ShellProps){
   const pathname=usePathname(),[collapsed,setCollapsed]=useState(false),[open,setOpen]=useState(false);
   const sidebar=useRef<HTMLElement>(null);
   useEffect(()=>{if(!open)return;const previous=document.activeElement;sidebar.current?.querySelector<HTMLElement>("a,button")?.focus();const key=(event:KeyboardEvent)=>{if(event.key==="Escape")setOpen(false);if(event.key==="Tab"){const links=sidebar.current?.querySelectorAll<HTMLElement>("a,button");if(!links?.length)return;const first=links[0],last=links[links.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}};window.addEventListener("keydown",key);return()=>{window.removeEventListener("keydown",key);if(previous instanceof HTMLElement)previous.focus();};},[open]);
