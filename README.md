@@ -73,6 +73,10 @@ và kích thước bundle; thay bằng polygon GeoJSON thật bằng cách cập
 ### Dashboard cộng đồng
 
 - Bảng tin: `/dashboard/posts`; video và bình chọn: `/dashboard/videos`.
-- Admin duyệt video tại `/dashboard/admin/videos`. Video MP4/WebM tối đa 50 MB; mỗi tài khoản có một vote/video và có thể bỏ vote.
+- Admin duyệt video tại `/dashboard/admin/videos`. Video MP4/WebM tối đa 4 MB; mỗi tài khoản có một vote/video và có thể bỏ vote.
 - Chạy `npm run db:migrate` với `DATABASE_URL` đã cấu hình để áp dụng `007_community_videos.sql`.
 - Dashboard yêu cầu đăng nhập qua Google hoặc tài khoản admin hiện có.
+
+Vercel dùng `vercel.json` để chạy `npm run vercel-build`: áp dụng các migration chưa chạy, sau đó build Next.js. Cần đặt `DATABASE_URL` trong môi trường build và runtime của Vercel. Nếu migration lỗi, deployment dừng trước khi đưa mã mới lên.
+
+Bảng tin có ô đăng status tối đa 500 ký tự ngay trong dashboard; status dùng chung luồng admin duyệt bài viết.

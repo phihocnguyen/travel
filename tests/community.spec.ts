@@ -2,6 +2,23 @@ import {test,expect} from '@playwright/test';
 import {normalizeInput,TicketValidationError} from '../lib/tickets/validation';
 import {FIXED_TICKET,TICKET_MESSAGES} from '../lib/tickets/template';
 import {videoRange} from '../lib/videos/range';
+import {statusInput, decodeStatusText, STATUS_MAX_LENGTH} from '../lib/posts/status';
+
+test('short statuses derive their title and keep multiline content for moderation',()=>{
+ const input=statusInput('  Một buổi sáng ở Cao Lãnh\nĐi cùng bạn bè!  ');
+ expect(input.title).toBe('Một buổi sáng ở Cao Lãnh');
+ expect(input.content).toBe('Một buổi sáng ở Cao Lãnh\nĐi cùng bạn bè!');
+ expect(input.contentFormat).toBe('plain');
+ expect(()=>statusInput(' ')).toThrow();
+ expect(()=>statusInput('x'.repeat(STATUS_MAX_LENGTH+1))).toThrow();
+ expect(statusInput('x'.repeat(STATUS_MAX_LENGTH)).content).toHaveLength(STATUS_MAX_LENGTH);
+});
+
+test('feed text decodes entities without interpreting user content as markup',()=>{
+ expect(decodeStatusText('Cao Lãnh &amp; bạn bè &#x1F96D;')).toBe('Cao Lãnh & bạn bè 🥭');
+ expect(decodeStatusText('&lt;script&gt;alert(1)&lt;/script&gt;')).toBe('<script>alert(1)</script>');
+ expect(decodeStatusText('&#999999999;')).toBe('&#999999999;');
+});
 
 test('ticket keeps the official template when submitted styling is modified',()=>{
  const result=normalizeInput({to:'  Bùi Huỳnh Minh Châu  ',message:TICKET_MESSAGES[1].text,title:'Changed',from:'Changed',layout:'full',theme:{ink:'#ff0000'},stickers:[{emoji:'x'}],image:{scale:2},titleTransform:{x:20}});
@@ -25,6 +42,7 @@ test('video APIs require authentication and development bypass is removed',async
  expect((await request.get('/api/auth/dev')).status()).toBe(404);
  expect((await request.get('/api/videos')).status()).toBe(401);
  expect((await request.post('/api/videos',{data:{}})).status()).toBe(401);
+ expect((await request.post('/api/statuses',{data:{content:'A short status'}})).status()).toBe(401);
  const id='00000000-0000-4000-8000-000000000001';
  expect((await request.put(`/api/videos/${id}/vote`,{data:{voted:true}})).status()).toBe(401);
  expect((await request.post(`/api/videos/${id}/review`,{data:{status:'approved'}})).status()).toBe(401);

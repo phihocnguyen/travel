@@ -6,6 +6,7 @@ import {MAX_VIDEO_BYTES,type CommunityVideo} from './types';
 export class VideoValidationError extends Error {}
 export const validVideoId=(id:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 export async function listVideos(subject:string,scope='approved',admin=false):Promise<CommunityVideo[]> {
+ try {
  const result=await getDatabase().query(`SELECT v.id,v.title,v.description,v.status,v.review_note,v.created_at,u.display_name,u.auth_subject,
  (SELECT count(*)::int FROM community_video_votes x WHERE x.video_id=v.id) votes,
  EXISTS(SELECT 1 FROM community_video_votes x JOIN users voter ON voter.id=x.user_id WHERE x.video_id=v.id AND voter.auth_subject=$1) voted
@@ -13,11 +14,16 @@ export async function listVideos(subject:string,scope='approved',admin=false):Pr
  ($2='approved' AND v.status='approved') OR ($2='mine' AND u.auth_subject=$1) OR ($2='moderation' AND $3::boolean)
  ORDER BY v.created_at DESC LIMIT 100`,[subject,scope,admin]);
  return result.rows.map(r=>({id:r.id,title:r.title,description:r.description,status:r.status,reviewNote:r.review_note,createdAt:new Date(r.created_at).toISOString(),authorName:r.display_name,authorSub:r.auth_subject,votes:r.votes,voted:r.voted}));
+ } catch (error) {
+  const code = (error as {code?: string}).code;
+  console.error(`Video listing failed (${typeof code === 'string' && /^[A-Z0-9]{5}$/.test(code) ? code : 'UNKNOWN'}).`);
+  throw error;
+ }
 }
 export async function uploadVideo(author:PostAuthor,form:FormData){
  const title=String(form.get('title')??'').trim(),description=String(form.get('description')??'').trim(),file=form.get('video');
  if(!title||title.length>120||description.length>2000)throw new VideoValidationError('Nhập tiêu đề tối đa 120 ký tự và mô tả tối đa 2.000 ký tự.');
- if(!(file instanceof File)||!file.size||file.size>MAX_VIDEO_BYTES||!['video/mp4','video/webm'].includes(file.type))throw new VideoValidationError('Chọn video MP4 hoặc WebM, tối đa 50 MB.');
+ if(!(file instanceof File)||!file.size||file.size>MAX_VIDEO_BYTES||!['video/mp4','video/webm'].includes(file.type))throw new VideoValidationError('Chọn video MP4 hoặc WebM, tối đa 4 MB.');
  const buffer=Buffer.from(await file.arrayBuffer());
  const mp4=buffer.length>=12&&buffer.toString('ascii',4,8)==='ftyp';
  const webm=buffer.length>=4&&buffer.subarray(0,4).equals(Buffer.from([0x1a,0x45,0xdf,0xa3]));
