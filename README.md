@@ -80,3 +80,13 @@ và kích thước bundle; thay bằng polygon GeoJSON thật bằng cách cập
 Vercel dùng `vercel.json` để chạy `npm run vercel-build`: áp dụng các migration chưa chạy, sau đó build Next.js. Cần đặt `DATABASE_URL` trong môi trường build và runtime của Vercel. Nếu migration lỗi, deployment dừng trước khi đưa mã mới lên.
 
 Bảng tin có ô đăng status tối đa 500 ký tự ngay trong dashboard; status dùng chung luồng admin duyệt bài viết.
+
+### Video mẫu và duyệt video
+
+Migration `008_video_samples.sql` tạo 5 bài video mẫu: 2 đã duyệt, 2 chờ duyệt và 1 bị từ chối, kèm một số vote mẫu. Dữ liệu mẫu được đánh dấu `Video mẫu`; không tạo tài khoản đăng nhập hay quyền admin.
+
+Các bài mẫu dùng chung `/7686711-uhd_3840_2160_24fps.mp4` và ảnh poster trích từ video. File được phục vụ tĩnh; video upload thông thường vẫn dùng dữ liệu riêng trong database và giới hạn 4 MB. Migration không ghi đè quyết định duyệt đã có nếu chạy lại phần seed.
+
+Admin mở `/dashboard/admin/videos`, chọn `Xem & duyệt` để phát video, thêm ghi chú và chọn `Phê duyệt` hoặc `Từ chối`. User chỉ thấy video đã duyệt trong bảng tin một cột tại `/dashboard/videos`; mục `Video của tôi` giữ cả trạng thái chờ duyệt và phản hồi.
+
+Để nạp mẫu vào database thật, chạy `npm run db:migrate` với `DATABASE_URL` đã cấu hình. Vercel chạy bước này tự động qua `npm run vercel-build`.

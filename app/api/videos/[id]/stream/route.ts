@@ -5,8 +5,9 @@ import {videoRange} from '@/lib/videos/range';
 export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){
  const session=await getSession();if(!session)return new Response(null,{status:401});const {id}=await params;if(!validVideoId(id))return new Response(null,{status:404});
  const db=getDatabase();
- const row=(await db.query(`SELECT v.content_type,octet_length(v.video_data) size FROM community_videos v JOIN users u ON u.id=v.author_id WHERE v.id=$1 AND (v.status='approved' OR u.auth_subject=$2 OR $3::boolean)`,[id,session.sub,isAdmin(session)])).rows[0];
+ const row=(await db.query(`SELECT v.content_type,v.video_url,octet_length(v.video_data) size FROM community_videos v JOIN users u ON u.id=v.author_id WHERE v.id=$1 AND (v.status='approved' OR u.auth_subject=$2 OR $3::boolean)`,[id,session.sub,isAdmin(session)])).rows[0];
  if(!row)return new Response(null,{status:404});
+ if(row.video_url)return new Response(null,{status:307,headers:{Location:row.video_url,'Cache-Control':'private, no-store'}});
  const range=videoRange(request.headers.get('range'),row.size);
  if(range==='invalid')return new Response(null,{status:416,headers:{'Content-Range':`bytes */${row.size}`}});
  const start=range?.start??0,end=range?.end??row.size-1;

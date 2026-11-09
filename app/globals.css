@@ -244,11 +244,11 @@ html[data-site-page="blog"], html[data-site-page="blog"] body { background: #f7f
   border-radius: 9999px;
 }
 [data-user-dashboard] :is(input, textarea, select):focus-visible {
-  outline-color: #9b92c4;
+  outline-color: #9cab7c;
 }
 [data-user-dashboard] ::selection {
   background: #e3e9b2;
-  color: #292542;
+  color: #345444;
 }
 [data-user-dashboard] :is(section, div).rounded-lg {
   border-radius: 24px;
@@ -260,5 +260,5 @@ html[data-site-page="blog"], html[data-site-page="blog"] body { background: #f7f
   border-radius: 14px;
 }
 [data-user-dashboard] .bg-zinc-900 {
-  background-color: #292542;
+  background-color: #345444;
 }
