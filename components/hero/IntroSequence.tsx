@@ -58,7 +58,7 @@ export default function IntroSequence() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(127,175,45,0.16),transparent_60%)]"
       />
 
-      <header className="relative z-10 flex items-center justify-between gap-4 text-[10px] font-semibold uppercase tracking-[0.24em]">
+      <header className="relative z-10 flex items-center justify-between gap-4 pr-20 text-[10px] font-semibold uppercase tracking-[0.24em]">
         <span className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-mango shadow-[0_0_0_4px_rgba(254,178,18,0.2)]" />
           Vị Xoài Dẫn Lối

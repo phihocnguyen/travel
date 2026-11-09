@@ -1,5 +1,6 @@
 "use client";
 
+import HeaderAccount from "@/components/auth/HeaderAccount";
 import MapCanvas from "./MapCanvas";
 import AttractionModal from "@/components/hero/AttractionModal";
 import JourneyOverlay from "@/components/journey/JourneyOverlay";
@@ -30,6 +31,7 @@ function ExperienceStage() {
         <CheckpointFocus />
         <IntroSequence />
         <JourneyOverlay />
+        <div className="absolute right-4 top-4 z-[110] sm:right-6 sm:top-6"><HeaderAccount navigation /></div>
         {explored && (
           <div className="absolute left-4 top-4 z-40 rounded-full border border-cream/30 bg-forest/80 px-5 py-3 text-[9px] font-bold uppercase tracking-[0.22em] text-cream backdrop-blur-md sm:left-6 sm:top-6 sm:text-[10px]">
             Kéo để khám phá bản đồ

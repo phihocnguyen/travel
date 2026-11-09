@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import AccountMenu from "./AccountMenu";
 import { UserAvatar } from "./UserAvatar";
 
 type HeaderUser = { name: string; picture?: string };
 
-export default function HeaderAccount({ dark = false }: { dark?: boolean }) {
+export default function HeaderAccount({ dark = false, navigation = false }: { dark?: boolean; navigation?: boolean }) {
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,6 +49,8 @@ export default function HeaderAccount({ dark = false }: { dark?: boolean }) {
   const className = `inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium transition-colors sm:h-10 sm:px-4 ${dark ? "bg-white text-[#263f30] hover:bg-white/90" : "bg-[#263f30] text-white hover:bg-[#3b5840]"}`;
 
   if (loading) return <span aria-label="Đang kiểm tra đăng nhập" aria-busy="true" className={`${className} w-10 animate-pulse sm:w-28`} />;
+
+  if (navigation) return <AccountMenu user={user}/>;
 
   return user ? (
     <Link href="/dashboard" data-cursor-magnet aria-label={`Tài khoản ${user.name}`} className={className}>

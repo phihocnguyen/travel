@@ -3,9 +3,9 @@
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ArrowUpRight, ChevronDown, Clapperboard, Compass, House, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, Search, Settings2, Sparkles, Ticket, X } from 'lucide-react';
+import { ArrowUpRight, Clapperboard, Compass, House, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, Search, Settings2, Sparkles, Ticket, X } from 'lucide-react';
 import { UserAvatar } from '@/components/auth/UserAvatar';
-import { LogoutButton } from './LogoutButton';
+import AccountMenu from '@/components/auth/AccountMenu';
 
 export type DashboardUser = { name: string; email: string; picture?: string; provider: string };
 const destinations = [
@@ -28,7 +28,6 @@ export default function UserDashboardShell({ user, children }: { user: Dashboard
   const [mobile, setMobile] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const matches = searchable.filter(item => fold(item.label).includes(fold(query)));
-  const section = pathname.startsWith('/dashboard/settings') ? 'Tài khoản' : destinations.find(item => item.href !== '/dashboard' && pathname.startsWith(item.href))?.label ?? 'Tổng quan';
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 1023px)');
@@ -81,7 +80,7 @@ export default function UserDashboardShell({ user, children }: { user: Dashboard
           <label className="flex items-center gap-2.5 border-b border-[#e9eee3] py-3 text-[#8f9e86]"><Search size={15} className="shrink-0" /><input aria-label="Tìm trang trong dashboard" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') setQuery(''); }} placeholder="Tìm trong không gian của bạn…" className="min-w-0 w-full bg-transparent text-[11px] text-[#2f483b] outline-none placeholder:text-[#8f9e86]" /></label>
           {query.trim() && <div className="absolute inset-x-0 top-full mt-2 overflow-hidden rounded-2xl border border-[#e4ebdb] bg-white p-2 shadow-xl shadow-[#294438]/10">{matches.map(item => <Link key={item.href} href={item.href} onClick={close} className="flex items-center gap-3 rounded-xl px-3 py-3 text-xs hover:bg-[#f2f5ed]"><item.icon size={15} />{item.label}</Link>)}{!matches.length && <p className="px-3 py-4 text-xs text-[#92a18a]">Không tìm thấy trang phù hợp.</p>}</div>}
         </form>
-        <div className="ml-auto hidden items-center gap-3 sm:flex"><span className="mr-3 rounded-full bg-[#f0f4e8] px-3 py-1.5 text-[10px] text-[#788a6f]">{section}</span><LogoutButton className="rounded-full px-3 py-2 text-[10px] text-[#78876d] transition hover:bg-[#f2f5ed] disabled:opacity-40" /><Link href="/dashboard/settings" aria-label="Mở tài khoản" className="flex items-center gap-2"><UserAvatar name={user.name} picture={user.picture} className="h-8 w-8 !rounded-full !border-0 !bg-[#e7edd9] !text-[#6c825d]" /><ChevronDown size={12} className="text-[#92a18a]" /></Link></div>
+        <div className="ml-auto"><AccountMenu user={user}/></div>
       </header>
       <main data-dashboard-content className="min-h-0 flex-1 overflow-hidden px-5 pb-5 sm:px-8 sm:pb-8 xl:px-10 xl:pb-9">{children}</main>
     </div>

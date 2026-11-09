@@ -91,7 +91,7 @@ export default function JourneyOverlay() {
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(8,36,23,0.42),transparent_20%,transparent_74%,rgba(8,36,23,0.5))]"
       />
 
-      <header className="absolute left-4 right-4 top-4 z-20 flex items-center justify-between gap-3 sm:left-6 sm:right-6 sm:top-6">
+      <header className="absolute left-4 right-4 top-4 z-20 flex items-center justify-between gap-3 pr-20 sm:left-6 sm:right-6 sm:top-6">
         <span className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.2em] text-cream drop-shadow-[0_1px_8px_rgba(4,20,14,0.7)] sm:text-[10px]">
           <span className="h-1.5 w-1.5 rounded-full bg-mango" />
           Vị Xoài Dẫn Lối
