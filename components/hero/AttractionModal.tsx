@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ATTRACTIONS, CATEGORY_LABELS } from "@/lib/map/attractions";
 import { useMapUI } from "@/components/map/MapUIContext";
+import { lockPageScroll } from "@/lib/ui/scroll-lock";
 
 export default function AttractionModal() {
   const { selectedAttractionId, setSelectedAttractionId } = useMapUI();
@@ -13,8 +14,7 @@ export default function AttractionModal() {
   useEffect(() => {
     if (!attraction) return;
     const previous = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockPageScroll();
     closeButton.current?.focus();
     scrollBody.current?.scrollTo(0, 0);
     const onKey = (event: KeyboardEvent) => {
@@ -29,7 +29,7 @@ export default function AttractionModal() {
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       window.removeEventListener("keydown", onKey);
       if (previous instanceof HTMLElement) previous.focus();
     };

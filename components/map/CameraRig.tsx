@@ -25,6 +25,8 @@ const scratchTarget = new Vector3();
 
 export function CameraRig({ ready, explored, focusPoint, overview, assets }: Props) {
   const invalidate = useThree((state) => state.invalidate);
+  const canvas = useThree((state) => state.gl.domElement);
+  const eventTarget = useThree((state) => state.events.connected);
   const { journeyProgress } = useMapUI();
   const controls = useRef<OrbitControlsImpl>(null);
   const lookTarget = useRef(new Vector3());
@@ -33,6 +35,17 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
   const focusing = useRef(false);
   const lastFocus = useRef<FocusPoint>(null);
   const modeRef = useRef(false);
+
+  useEffect(() => {
+    // OrbitControls installs touch-action:none even when controls are disabled.
+    // Narrative mode must let touch gestures scroll the document normally.
+    const targets = new Set<HTMLElement>([canvas]);
+    if (eventTarget instanceof HTMLElement) targets.add(eventTarget);
+    if (controls.current?.domElement) targets.add(controls.current.domElement);
+    const previous = Array.from(targets, element => ({ element, value: element.style.touchAction }));
+    for (const element of targets) element.style.touchAction = explored ? "none" : "pan-y";
+    return () => { for (const { element, value } of previous) element.style.touchAction = value; };
+  }, [canvas, eventTarget, explored]);
 
   const route = useMemo(() => {
     const poses: Pose[] = [{

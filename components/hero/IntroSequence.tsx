@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect } from "react";
 import { useMapUI } from "@/components/map/MapUIContext";
+import { lockPageScroll } from "@/lib/ui/scroll-lock";
 
 export default function IntroSequence() {
   const { introOpen, ready, loadProgress, dismissIntro } = useMapUI();
@@ -11,30 +12,25 @@ export default function IntroSequence() {
 
   // Hold the page at the first chapter until the atlas is actually usable.
   useEffect(() => {
-    if (!introOpen) return;
-    const bodyOverflow = document.body.style.overflow;
-    const htmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = bodyOverflow;
-      document.documentElement.style.overflow = htmlOverflow;
-    };
-  }, [introOpen]);
+    if (!introOpen || ready) return;
+    return lockPageScroll();
+  }, [introOpen, ready]);
 
   // Enter automatically as soon as the atlas is ready — no "begin" button.
   useEffect(() => {
-    if (!leaving) return;
+    if (!introOpen || !leaving) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!reduced) return;
-    const frame = window.requestAnimationFrame(dismissIntro);
-    return () => window.cancelAnimationFrame(frame);
-  }, [leaving, dismissIntro]);
+    // Browsers may cancel transitions or never emit transitionend (disabled
+    // animations, background tabs, low-power devices). Never depend on it.
+    const timer = window.setTimeout(dismissIntro, reduced ? 0 : 1200);
+    return () => window.clearTimeout(timer);
+  }, [introOpen, leaving, dismissIntro]);
 
   if (!introOpen) return null;
 
   return (
     <section
+      data-map-intro
       className={`fixed inset-0 z-[100] grid grid-rows-[auto_1fr_auto] overflow-hidden bg-cream px-5 py-5 text-forest transition-[opacity,filter,transform] duration-1000 ease-out sm:px-8 sm:py-7 lg:px-14 ${
         leaving
           ? "pointer-events-none scale-[1.03] opacity-0 blur-md"

@@ -21,6 +21,7 @@ import { AttractionMarkers } from "./AttractionMarkers";
 import { CameraRig } from "./CameraRig";
 import { MangoGroves } from "@/components/landscape/MangoGroves";
 import { PerfOverlay } from "./PerfOverlay";
+import MapUnavailable from "./MapUnavailable";
 import {
   ProvinceOutline,
   Rivers,
@@ -257,6 +258,7 @@ export default function MapScene() {
 
   return (
     <Canvas
+      fallback={<MapUnavailable />}
       dpr={dpr}
       frameloop={software ? "demand" : "always"}
       camera={{ position: [0, 186, 212], fov: 41, near: 0.1, far: 900 }}
