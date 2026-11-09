@@ -16,11 +16,11 @@ export type FeedPost = BlogPost & { statusText: string };
 function StatusCard({ post }: { post: FeedPost }) {
   const [expanded, setExpanded] = useState(false);
   const long = post.statusText.length > 280;
-  return <article className="overflow-hidden rounded-[22px] border border-[#e5ebdd] bg-white shadow-[0_4px_18px_-12px_#62754b25]">
-    <header className="flex items-center gap-3 px-5 pt-4"><UserAvatar name={post.author.name} /><div className="min-w-0"><p className="truncate text-sm font-semibold">{post.author.name}</p><p className="mt-1 flex items-center gap-1.5 text-[10px] text-[#849077]">{new Date(post.createdAt).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · <Globe size={11} />Cộng đồng</p></div><span className="ml-auto rounded-full bg-[#f2f5e9] px-2.5 py-1 text-[9px] text-[#849368]">{post.category}</span></header>
-    <div className="px-5 py-3 text-sm leading-relaxed"><p className="whitespace-pre-line break-words">{long && !expanded ? `${post.statusText.slice(0, 280).trimEnd()}…` : post.statusText}</p>{long && <button type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className="mt-1 font-semibold text-[#71845d] hover:underline">{expanded ? 'Thu gọn' : 'Xem thêm'}</button>}</div>
-    {post.coverImageUrl && <img src={post.coverImageUrl} alt="Ảnh trong status" loading="lazy" className="max-h-80 w-full object-cover" />}
-    <footer className="flex items-center gap-1.5 border-t border-[#edf1e6] px-5 py-2.5 text-[10px] text-[#8c977f]"><Check size={11} />Đã được duyệt</footer>
+  return <article className="mx-auto w-full max-w-[680px] overflow-hidden rounded-[20px] border border-[#e5ebdd] bg-white shadow-[0_4px_18px_-12px_#62754b25]">
+    <header className="flex items-center gap-3 px-4 pt-3"><UserAvatar name={post.author.name} /><div className="min-w-0"><p className="truncate text-sm font-semibold">{post.author.name}</p><p className="mt-1 flex items-center gap-1.5 text-[10px] text-[#849077]">{new Date(post.createdAt).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · <Globe size={11} />Cộng đồng</p></div><span className="ml-auto rounded-full bg-[#f2f5e9] px-2.5 py-1 text-[9px] text-[#849368]">{post.category}</span></header>
+    <div className="px-4 py-2.5 text-sm leading-relaxed"><p className="whitespace-pre-line break-words">{long && !expanded ? `${post.statusText.slice(0, 280).trimEnd()}…` : post.statusText}</p>{long && <button type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className="mt-1 font-semibold text-[#71845d] hover:underline">{expanded ? 'Thu gọn' : 'Xem thêm'}</button>}</div>
+    {post.coverImageUrl && <img src={post.coverImageUrl} alt="Ảnh trong status" loading="lazy" className="max-h-64 w-full object-cover" />}
+    <footer className="flex items-center gap-1.5 border-t border-[#edf1e6] px-4 py-2 text-[10px] text-[#8c977f]"><Check size={11} />Đã được duyệt</footer>
   </article>;
 }
 

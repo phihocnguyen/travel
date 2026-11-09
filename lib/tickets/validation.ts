@@ -1,5 +1,6 @@
 import { type TicketInput, type TicketTitleTransform, type TicketTextTransform } from "./types";
 import { FIXED_TICKET, TICKET_MESSAGES } from "./template";
+import { TICKET_NAME_FONTS } from "./name-style";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 export class TicketValidationError extends Error {}
 
@@ -54,5 +55,8 @@ export function normalizeInput(value: unknown): NormalizedTicket {
   if (!recipient) throw new TicketValidationError("Vui lòng nhập tên trên vé.");
   const selectedMessage = TICKET_MESSAGES.find(item => item.text === raw.message);
   if (!selectedMessage) throw new TicketValidationError("Vui lòng chọn một mẫu lời nhắn.");
-  return { ...FIXED_TICKET, to: recipient, message: selectedMessage.text };
+  const theme = raw.theme && typeof raw.theme === "object" ? raw.theme as Record<string, unknown> : {};
+  const ink = typeof theme.ink === "string" && /^#[0-9a-f]{6}$/i.test(theme.ink) ? theme.ink : FIXED_TICKET.theme.ink;
+  const nameFont = TICKET_NAME_FONTS.find(font => font.id === theme.nameFont)?.id ?? "serif";
+  return { ...FIXED_TICKET, theme: { ...FIXED_TICKET.theme, ink, nameFont }, to: recipient, message: selectedMessage.text };
 }

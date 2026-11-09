@@ -3,6 +3,7 @@ export const TICKET_LAYOUTS = ["left", "right", "full"] as const;
 export type TicketLayout = (typeof TICKET_LAYOUTS)[number];
 
 export type TicketTheme = {
+  nameFont?: string;
   background: string;
   ink: string;
   accent: string;
