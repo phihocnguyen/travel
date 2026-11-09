@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createHmac, randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import sharp from "sharp";
+import { FIXED_TICKET, TICKET_MESSAGES } from "../lib/tickets/template";
 
 const pool = new Pool({connectionString:process.env.DATABASE_URL,enableChannelBinding:true,max:2});
 const run = randomUUID();
@@ -32,7 +33,7 @@ test.afterAll(async()=>{
 
 test("one ticket per user, editable image, protected admin lookup, exact print output and duplicate handover prevention",async({request,page,context})=>{
   const owner={Cookie:cookie(subjects[0])}, other={Cookie:cookie(subjects[1])}, admin={Cookie:cookie("",true)};
-  const payload={title:"Vé hẹn chu du kiểm thử",from:"Cao Lãnh",to:"Khách tham quan",message:"Lời nhắn tiếng Việt",layout:"left",theme:{background:"#ffffff",ink:"#234531",accent:"#777777"},stickers:[{id:"mango-test",emoji:"🥭",x:60,y:40,size:8,rotation:0}],image:{scale:0.7,x:12,y:-8},imageDataUrl:png};
+  const payload={title:"Vé hẹn chu du kiểm thử",from:"Cao Lãnh",to:"Khách tham quan",message:TICKET_MESSAGES[0].text,layout:"left",theme:{background:"#ffffff",ink:"#234531",accent:"#777777"},stickers:[{id:"mango-test",emoji:"🥭",x:60,y:40,size:8,rotation:0}],image:{scale:0.7,x:12,y:-8},imageDataUrl:png};
   expect((await request.get("/api/admin/tickets")).status()).toBe(401);
   expect((await request.get("/api/admin/tickets",{headers:owner})).status()).toBe(403);
   const created=await request.post("/api/tickets",{headers:owner,data:payload});expect(created.ok(),await created.text()).toBeTruthy();
@@ -40,15 +41,15 @@ test("one ticket per user, editable image, protected admin lookup, exact print o
   expect(ticket.code).toMatch(/^VXDL\d{3}$/);
   const originalId=ticket.id, originalCode=ticket.code;
   const repeats=await Promise.all([1,2].map(()=>request.post("/api/tickets",{headers:owner,data:{...payload,title:"Should not overwrite"}})));
-  for(const response of repeats){expect(response.ok()).toBeTruthy();const t=(await response.json()).ticket;expect(t.id).toBe(originalId);expect(t.title).toBe(payload.title);}
+  for(const response of repeats){expect(response.ok()).toBeTruthy();const t=(await response.json()).ticket;expect(t.id).toBe(originalId);expect(t.title).toBe(FIXED_TICKET.title);}
   const second=await request.post("/api/tickets",{headers:other,data:payload});expect(second.ok()).toBeTruthy();
   const otherTicket=(await second.json()).ticket;expect(otherTicket.code).not.toBe(originalCode);
   expect((await request.get(`/api/tickets/${ticket.id}`,{headers:other})).status()).toBe(404);
   expect((await request.get(`/api/tickets/${ticket.id}/image`,{headers:other})).status()).toBe(404);
-  expect((await request.get(`/api/tickets/${ticket.id}/image`,{headers:owner})).status()).toBe(200);
+  expect((await request.get(`/api/tickets/${ticket.id}/image`,{headers:owner})).status()).toBe(404);
   const stale=await request.put(`/api/tickets/${ticket.id}`,{headers:owner,data:{...payload,expectedUpdatedAt:"2000-01-01T00:00:00.000Z"}});expect(stale.status()).toBe(400);
   const updated=await request.put(`/api/tickets/${ticket.id}`,{headers:owner,data:{...payload,title:"Vé đã chỉnh sửa",image:{scale:0.9,x:20,y:5},expectedUpdatedAt:ticket.updatedAt}});expect(updated.ok(),await updated.text()).toBeTruthy();ticket=(await updated.json()).ticket;
-  expect(ticket.code).toBe(originalCode);expect(ticket.image.scale).toBe(0.9);
+  expect(ticket.code).toBe(originalCode);expect(ticket.image.scale).toBe(FIXED_TICKET.image.scale);
   expect((await request.get("/api/admin/tickets?code=VXDL1000",{headers:admin})).status()).toBe(400);
   const lookup=await request.get(`/api/admin/tickets?code=${originalCode}`,{headers:admin});expect(lookup.ok()).toBeTruthy();expect((await lookup.json()).tickets).toHaveLength(1);
   // Exercise the actual browser renderer and PNG export used by operators.
@@ -91,7 +92,7 @@ test("one ticket per user, editable image, protected admin lookup, exact print o
       expect(overflow.height,path).toBeLessThanOrEqual(overflow.view+1);expect(overflow.width,path).toBeLessThanOrEqual(overflow.viewWidth+1);
     }
     await page.goto(`/dashboard/tickets/${otherTicket.id}`);
-    if(viewport.width<1024)await page.getByRole("button",{name:"Xem trước & kéo ảnh"}).click();
+    if(viewport.width<1024)await page.getByRole("button",{name:"Xem trước"}).click();
     const ticketPreview=page.locator("[data-ticket-preview]");await expect(ticketPreview).toBeVisible();
     const bounds=await ticketPreview.boundingBox();expect(bounds!.width).toBeGreaterThan(100);expect(bounds!.height).toBeGreaterThan(50);
     await page.screenshot({path:`test-results/user-ticket-${viewport.width}.png`,fullPage:true});

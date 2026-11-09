@@ -69,3 +69,10 @@ Overlay xã/phường được dựng từ tâm các đơn vị hành chính tro
 `public/geo/communes.json` (chia theo Voronoi trong ranh tỉnh) để giữ hiệu năng
 và kích thước bundle; thay bằng polygon GeoJSON thật bằng cách cập nhật
 `lib/map/assets.ts`.
+
+### Dashboard cộng đồng
+
+- Bảng tin: `/dashboard/posts`; video và bình chọn: `/dashboard/videos`.
+- Admin duyệt video tại `/dashboard/admin/videos`. Video MP4/WebM tối đa 50 MB; mỗi tài khoản có một vote/video và có thể bỏ vote.
+- Chạy `npm run db:migrate` với `DATABASE_URL` đã cấu hình để áp dụng `007_community_videos.sql`.
+- Dashboard yêu cầu đăng nhập qua Google hoặc tài khoản admin hiện có.

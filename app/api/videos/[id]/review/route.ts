@@ -1,0 +1,4 @@
+import {getSession,isAdmin} from '@/lib/auth/session';
+import {ensureDatabaseUser} from '@/lib/auth/user';
+import {moderateVideo} from '@/lib/videos/store';
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){const session=await getSession();if(!session)return Response.json({error:'Unauthorized'},{status:401});if(!isAdmin(session))return Response.json({error:'Forbidden'},{status:403});const body=await request.json().catch(()=>null);if(!['approved','rejected'].includes(body?.status))return Response.json({error:'Trạng thái không hợp lệ.'},{status:400});await ensureDatabaseUser(session);const found=await moderateVideo(session.sub,(await params).id,body.status,typeof body.note==='string'?body.note:'');return found?Response.json({ok:true}):Response.json({error:'Không tìm thấy video.'},{status:404});}

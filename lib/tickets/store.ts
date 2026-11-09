@@ -73,7 +73,7 @@ async function persist(subject: string, id: string | null, value: unknown): Prom
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`, [...fields,user.rows[0].id,campaign.rows[0].id]);
       ticketId = result.rows[0].id;
     }
-    await saveImage(client, ticketId!, input);
+    await saveImage(client, ticketId!, { ...normalized, removeImage: true });
     const result = await client.query(`${SELECT} WHERE t.id=$1`, [ticketId]);
     await client.query("COMMIT");
     return design(result.rows[0]);
