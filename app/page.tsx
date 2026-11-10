@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import TravelChatbot from "@/components/chat/TravelChatbot";
 import LandingPage from "@/components/landing/LandingPage";
 
 export const metadata: Metadata = {
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <LandingPage />;
+  return <><LandingPage /><TravelChatbot /></>;
 }

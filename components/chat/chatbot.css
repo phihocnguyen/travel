@@ -1,0 +1,37 @@
+.travel-chat { position:fixed; z-index:120; right:20px; bottom:20px; right:max(20px,env(safe-area-inset-right,0px)); bottom:calc(20px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; align-items:flex-end; gap:12px; font-family:Arial,Helvetica,sans-serif; color:#29483a; }
+.travel-chat-launcher { display:flex; align-items:center; justify-content:center; gap:10px; min-height:56px; min-width:56px; border:2px solid #fff9dc; border-radius:999px; padding:10px 17px; background:#365b40; color:#fff9dc; box-shadow:0 6px 26px #203e3255; font-size:13px; font-weight:700; transition:transform .2s,background .2s; }
+.travel-chat-launcher:hover { transform:translateY(-2px); background:#29483a; }
+.travel-chat-panel { display:flex; flex-direction:column; overflow:hidden; width:380px; max-width:calc(100vw - 24px); height:560px; max-height:calc(100dvh - 112px - env(safe-area-inset-bottom)); border:1px solid #dce5d6; border-radius:22px; background:#fcfdf8; box-shadow:0 16px 64px #18382b33; animation:travel-chat-enter .2s ease-out; }
+.travel-chat-header { display:flex; align-items:center; gap:11px; flex-shrink:0; padding:17px 16px; background:#2e513e; color:#fffce8; }
+.travel-chat-mascot { display:grid; width:42px; height:42px; place-items:center; border:1px solid #fff2; border-radius:14px; background:#ffffff10; font-size:26px; }
+.travel-chat-header h2 { margin:0; font-size:15px; font-weight:700; }
+.travel-chat-header p { display:flex; align-items:center; gap:5px; margin-top:5px; color:#d3dfbf; font-size:10px; }
+.travel-chat-header p>span { width:5px; height:5px; border-radius:50%; background:#cedd92; }
+.travel-chat-controls { display:flex; gap:3px; margin-left:auto; }
+.travel-chat-controls button { display:grid; width:32px; height:32px; place-items:center; border-radius:9px; }
+.travel-chat-controls button:hover { background:#ffffff18; }
+.travel-chat-demo { display:flex; flex-shrink:0; justify-content:center; align-items:center; gap:5px; padding:8px 12px; background:#f4f0d9; color:#8b8050; font-size:10px; }
+.travel-chat-history { display:flex; min-height:0; flex:1; flex-direction:column; gap:14px; overflow-y:auto; overscroll-behavior:contain; padding:18px 15px; scrollbar-width:thin; }
+.travel-chat-message { max-width:92%; flex-shrink:0; border:1px solid #e7ecdf; border-radius:4px 16px 16px; padding:12px 14px; background:white; font-size:12px; line-height:1.8; overflow-wrap:anywhere; }
+.travel-chat-message p { margin:0; white-space:pre-wrap; }
+.travel-chat-message-user { align-self:flex-end; border-color:#dfe8cc; border-radius:16px 4px 16px 16px; background:#eaf0dd; }
+.travel-chat-links { display:flex; flex-direction:column; gap:7px; margin-top:12px; }
+.travel-chat-links a { display:flex; align-items:center; justify-content:space-between; gap:7px; border:1px solid #dee7d2; border-radius:9px; padding:7px 10px; background:#f5f8ee; color:#416237; font-size:11px; font-weight:700; }
+.travel-chat-links a:hover { background:#eaf1de; }
+.travel-chat-topics { display:flex; flex-shrink:0; flex-wrap:wrap; gap:6px; border-top:1px solid #edf0e5; padding:11px 13px; }
+.travel-chat-topics button { border:1px solid #dfe7d5; border-radius:999px; padding:6px 9px; background:white; font-size:10px; color:#60764d; text-align:left; }
+.travel-chat-topics button:hover { background:#eef4e5; }
+.travel-chat-form { display:flex; flex-shrink:0; align-items:center; gap:7px; border-top:1px solid #e6ecdf; padding:12px 13px; background:white; }
+.travel-chat-form input { min-width:0; flex:1; border:1px solid #e1e8d9; border-radius:12px; padding:11px 12px; background:#f7f9f1; font-size:12px; outline:none; }
+.travel-chat-form input:focus { border-color:#85a46d; }
+.travel-chat-form button { display:grid; width:40px; height:40px; place-items:center; border-radius:12px; background:#365b40; color:white; }
+.travel-chat button:disabled { opacity:.45; cursor:not-allowed; }
+.travel-chat :focus-visible { outline:2px solid #90ab68; outline-offset:3px; }
+.travel-chat-typing { display:flex; align-self:flex-start; gap:4px; border:1px solid #e7ecdf; border-radius:12px; padding:12px; background:white; }
+.travel-chat-typing>span:not(.sr-only) { height:5px; width:5px; border-radius:50%; background:#9cab89; animation:travel-chat-pulse 1s infinite alternate; }
+.travel-chat-typing>span:nth-child(2) { animation-delay:.2s; }
+.travel-chat-typing>span:nth-child(3) { animation-delay:.4s; }
+@keyframes travel-chat-enter { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes travel-chat-pulse { to { opacity:.35; transform:translateY(-3px); } }
+@media(max-width:640px) { .travel-chat { right:max(12px,env(safe-area-inset-right,0px)); bottom:calc(12px + env(safe-area-inset-bottom,0px)); gap:8px; } .travel-chat-panel { max-height:calc(100dvh - 90px - env(safe-area-inset-bottom)); } .travel-chat-launcher { width:54px; min-width:54px; min-height:54px; padding:0; } .travel-chat-launcher>span { display:none; } }
+@media(prefers-reduced-motion:reduce) { .travel-chat *, .travel-chat { animation:none!important; transition:none!important; } }

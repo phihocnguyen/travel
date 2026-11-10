@@ -1,3 +1,4 @@
+import TravelChatbot from '@/components/chat/TravelChatbot';
 import { redirect } from 'next/navigation';
 import { Suspense, type ReactNode } from 'react';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
@@ -14,11 +15,14 @@ async function AuthenticatedDashboard({ children }: { children: ReactNode }) {
   const session = await getSession();
   if (!session) redirect('/login?next=/dashboard');
   const admin = isAdmin(session);
-  return <DashboardShell
-    user={{ name: session.name, email: session.email, picture: session.picture, provider: session.provider }}
-    isAdmin={admin}
-    pendingBadge={admin ? <Suspense fallback={null}><PendingPostBadge /></Suspense> : null}
-  >{children}</DashboardShell>;
+  return <>
+    <DashboardShell
+      user={{ name: session.name, email: session.email, picture: session.picture, provider: session.provider }}
+      isAdmin={admin}
+      pendingBadge={admin ? <Suspense fallback={null}><PendingPostBadge /></Suspense> : null}
+    >{children}</DashboardShell>
+    <TravelChatbot />
+  </>;
 }
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
