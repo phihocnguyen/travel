@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "photos:prepare": "node scripts/prepare-photos.mjs",
     "db:import-posts": "node scripts/import-legacy-posts.mjs",
     "test:blog": "playwright test tests/blog.spec.ts",
     "test:print": "node scripts/test-print.mjs",
