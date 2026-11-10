@@ -15,6 +15,7 @@ import type { MapAssets } from "@/lib/map/assets";
 import { ATTRACTIONS } from "@/lib/map/attractions";
 import { useMapUI } from "./MapUIContext";
 import { JOURNEY_CHECKPOINTS } from "@/components/journey/journeyData";
+import { NeighborLabels } from "./NeighborLabels";
 import { AdminOverlay } from "./AdminOverlay";
 import { Atmosphere } from "./Atmosphere";
 import { AttractionMarkers } from "./AttractionMarkers";
@@ -223,13 +224,14 @@ function SceneContent() {
 
   return (
     <>
-      <fog attach="fog" args={["#102019", 95, 360]} />
+      <fog attach="fog" args={["#354d45", 180, 540]} />
 
       {assets && layers ? (
         <>
-          <Terrain assets={assets} segments={288} onHoverId={setHoveredId} />
+          <Terrain assets={assets} segments={384} onHoverId={setHoveredId} />
           <Rivers assets={assets} y={layers.rivers} />
           <AdminOverlay assets={assets} y={layers.admin} />
+          {explored && <NeighborLabels projector={assets.projector} neighbors={assets.meta.neighbors} y={layers.outline + 0.4} />}
           <ProvinceOutline assets={assets} y={layers.outline} />
           <MangoGroves assets={assets} />
           <Atmosphere assets={assets} base={layers.base} />

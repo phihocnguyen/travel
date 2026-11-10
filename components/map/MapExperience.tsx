@@ -1,6 +1,7 @@
 "use client";
 
 import HeaderAccount from "@/components/auth/HeaderAccount";
+import MapExplorer from "./MapExplorer";
 import MapCanvas from "./MapCanvas";
 import AttractionModal from "@/components/hero/AttractionModal";
 import JourneyOverlay from "@/components/journey/JourneyOverlay";
@@ -26,7 +27,7 @@ function ExperienceStage() {
         </div>
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-[5] bg-[linear-gradient(180deg,rgba(8,36,23,0.34),transparent_22%,transparent_72%,rgba(8,36,23,0.55))]"
+          className="pointer-events-none absolute inset-0 z-[5] bg-[linear-gradient(180deg,rgba(8,36,23,0.18),transparent_22%,transparent_72%,rgba(8,36,23,0.3))]"
         />
         <CheckpointFocus />
         <IntroSequence />
@@ -37,6 +38,7 @@ function ExperienceStage() {
             Kéo để khám phá bản đồ
           </div>
         )}
+        <MapExplorer />
         <AttractionModal />
       </div>
     </main>

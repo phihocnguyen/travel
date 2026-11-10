@@ -39,7 +39,7 @@ const TERRAIN_VERTEX = /* glsl */ `
   varying float vHeight;
   void main() {
     vUv = uv;
-    vNormal = normalize(normalMatrix * normal);
+    vNormal = normalize(mat3(modelMatrix) * normal);
     vec4 world = modelMatrix * vec4(position, 1.0);
     vWorldPos = world.xyz;
     vHeight = position.y;
@@ -115,7 +115,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     if (mask.g < 0.45) discard;
 
     vec2 imageryUv = vUv * uImageryRepeat + uImageryOffset;
-    vec2 texel = max(uImageryTexel, vec2(0.0002));
+    vec2 texel = uImageryTexel;
 
     vec3 color = sampleImagery(imageryUv);
     vec3 north = sampleImagery(imageryUv + vec2(0.0, texel.y));
@@ -124,7 +124,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     vec3 west = sampleImagery(imageryUv - vec2(texel.x, 0.0));
     vec3 blur = (north + south + east + west) * 0.25;
     vec3 detail = color - blur;
-    color += detail * 0.72;
+    color += detail * 0.4;
 
     vec3 n = normalize(vNormal);
     float slope = 1.0 - clamp(n.y, 0.0, 1.0);
@@ -139,7 +139,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     color += vec3(0.07, 0.08, 0.06) * rim * 0.08;
 
     float luma = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(vec3(luma), color, 0.62);
+    color = mix(vec3(luma), color, 0.9);
     color = clamp((color - 0.5) * 1.08 + 0.5, 0.0, 1.0);
 
     float elevTint = smoothstep(0.6, 5.5, vHeight);
@@ -221,7 +221,7 @@ const RIVER_FRAGMENT = /* glsl */ `
     float sparkle = pow(clamp(sweep * 0.72 + ripples * 0.28, 0.0, 1.0), 6.0) * 0.18;
     vec3 base = mix(vec3(0.06, 0.19, 0.23), vec3(0.2, 0.48, 0.54), 0.5 + sweep * 0.2);
     vec3 color = base + vec3(sparkle);
-    gl_FragColor = vec4(color, 0.84);
+    gl_FragColor = vec4(color, 0.55);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
@@ -324,7 +324,7 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
         uImageryOffset: { value: new Vector2() },
         uImageryRepeat: { value: new Vector2(1, 1) },
         uImageryTexel: { value: new Vector2(1 / width, 1 / height) },
-        uAdminOpacity: { value: 0.22 },
+        uAdminOpacity: { value: 0.09 },
         uHoverId: { value: 0 },
         uHoverFade: { value: 0 },
         uFocusStrength: { value: 0 },

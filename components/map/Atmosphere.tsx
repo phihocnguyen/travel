@@ -289,7 +289,7 @@ export function Atmosphere({ assets, base }: Props) {
           y={bank.y}
           size={[bank.sx, bank.sz]}
           rotation={bank.r}
-          opacity={bank.o}
+          opacity={bank.o * 0.4}
           speed={bank.speed}
           phase={bank.phase}
           tint="#cbd8cb"
@@ -309,7 +309,7 @@ export function Atmosphere({ assets, base }: Props) {
           size={0.72}
           sizeAttenuation
           transparent
-          opacity={0.24}
+          opacity={0.08}
           depthWrite={false}
           blending={AdditiveBlending}
           toneMapped={false}
