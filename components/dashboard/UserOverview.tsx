@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { PHOTO_FEATURES } from '@/lib/photos';
 import { useState } from 'react';
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, Check, ChevronLeft, ChevronRight, Clapperboard, Clock3, Compass, Feather, MessageSquare, Plus, Sparkles, Ticket } from 'lucide-react';
 import TicketPreview from './TicketPreview';
@@ -46,7 +47,7 @@ export default function UserOverview({ name, ticket, posts, today }: { name: str
         <aside className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
           <Calendar today={today} />
           <section className="overflow-hidden rounded-[24px] bg-[#345444] p-5 text-white"><div className="flex items-center justify-between"><p className="text-[10px] font-medium text-[#b2c1a3]">Dấu ấn của bạn</p><Sparkles size={15} className="text-[#dadf9c]" /></div><div className="mt-4 flex items-end justify-between"><p className="text-[32px] font-semibold tracking-tight">{posts.length}<span className="ml-2 text-[10px] font-normal tracking-normal text-[#a6b897]">chia sẻ</span></p><span className="pb-2 text-[10px] text-[#bacb83]">{percent}% đã duyệt</span></div><div className="my-4 flex h-1.5 overflow-hidden rounded-full bg-white/10"><span style={{ width: `${percent}%` }} className="rounded-full bg-[#d4dfa8]" /></div><dl className="grid grid-cols-3 gap-2 text-[9px] text-[#a6b897]">{[['Đã duyệt', approved], ['Chờ duyệt', pending], ['Chưa duyệt', rejected]].map(([label, value]) => <div key={label}><dd className="mb-1 text-sm font-semibold text-white">{value}</dd><dt>{label}</dt></div>)}</dl></section>
-          <Link href="/dashboard/videos" className="group overflow-hidden rounded-[24px] border border-[#e6ecdf] bg-white sm:col-span-2 xl:col-span-1"><div className="relative h-32 overflow-hidden"><img src="/cao-lanh-orchard.jpg" alt="Vườn xoài Cao Lãnh" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><span className="absolute bottom-3 left-4 rounded-full bg-white/90 p-2 text-[#345444]"><Clapperboard size={15} /></span></div><div className="p-4"><h2 className="text-xs font-bold">Cao Lãnh qua ống kính</h2><p className="mt-1.5 text-[10px] leading-relaxed text-[#7c8d73]">Xem và bình chọn thước phim bạn yêu thích.</p><span className="mt-3 flex items-center gap-1 text-[10px] font-semibold text-[#75886a]">Khám phá video <ArrowUpRight size={12} /></span></div></Link>
+          <Link href="/dashboard/videos" className="group overflow-hidden rounded-[24px] border border-[#e6ecdf] bg-white sm:col-span-2 xl:col-span-1"><div className="relative h-32 overflow-hidden"><img src={PHOTO_FEATURES.farmer.src} alt={PHOTO_FEATURES.farmer.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><span className="absolute bottom-3 left-4 rounded-full bg-white/90 p-2 text-[#345444]"><Clapperboard size={15} /></span></div><div className="p-4"><h2 className="text-xs font-bold">Cao Lãnh qua ống kính</h2><p className="mt-1.5 text-[10px] leading-relaxed text-[#7c8d73]">Xem và bình chọn thước phim bạn yêu thích.</p><span className="mt-3 flex items-center gap-1 text-[10px] font-semibold text-[#75886a]">Khám phá video <ArrowUpRight size={12} /></span></div></Link>
         </aside>
       </div>
     </div>

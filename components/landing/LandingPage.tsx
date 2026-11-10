@@ -1,6 +1,9 @@
 ﻿
 "use client";
 
+import Image from "next/image";
+import PhotoLibrary from "@/components/photos/PhotoLibrary";
+import { PHOTO_FEATURES } from "@/lib/photos";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -17,38 +20,10 @@ import { EVENT } from "@/components/campaign/campaignData";
 import HeaderAccount from "@/components/auth/HeaderAccount";
 
 const destinations = [
-  {
-    number: "01",
-    title: "Tràm Chim",
-    category: "THIÊN NHIÊN",
-    location: "Tam Nông",
-    image: "/tram-chim.jpg",
-    description: "Đánh thức giác quan giữa miền đất ngập nước.",
-  },
-  {
-    number: "02",
-    title: "Làng hoa Sa Đéc",
-    category: "VĂN HÓA",
-    location: "Sa Đéc",
-    image: "/sa-dec-flowers.jpg",
-    description: "Nơi sắc hoa tô điểm những câu chuyện miền Tây.",
-  },
-  {
-    number: "03",
-    title: "Chùa Vĩnh Tràng",
-    category: "KIẾN TRÚC",
-    location: "Mỹ Tho",
-    image: "/vinh-trang.jpg",
-    description: "Dấu ấn kiến trúc giữa nhịp sống bình yên.",
-  },
-  {
-    number: "04",
-    title: "Kiến An Cung",
-    category: "DI SẢN",
-    location: "Sa Đéc",
-    image: "/kien-an-cung.jpg",
-    description: "Những nét xưa được gìn giữ qua thời gian.",
-  },
+ {number:"01",title:"Khu di tích Xẻo Quýt",category:"THIÊN NHIÊN & LỊCH SỬ",location:"Cao Lãnh",image:PHOTO_FEATURES.xeoQuyt.src,description:"Theo lạch nước xanh, nghe rừng tràm kể chuyện."},
+ {number:"02",title:"Sinh thái Gáo Giồng",category:"THIÊN NHIÊN",location:"Cao Lãnh",image:PHOTO_FEATURES.gaoGiong.src,description:"Một chuyến xuồng giữa những tán tràm xanh."},
+ {number:"03",title:"Mỹ Phước Thành",category:"TRẢI NGHIỆM ĐỒNG QUÊ",location:"Cao Lãnh",image:PHOTO_FEATURES.myPhuocThanh.src,description:"Ghé miền đồng xanh, tìm một khoảng bình yên."},
+ {number:"04",title:"Chợ quê Tân Thuận Đông",category:"VĂN HÓA & CỘNG ĐỒNG",location:"Cù lao Tân Thuận Đông",image:PHOTO_FEATURES.market.src,description:"Gặp những con người thân thương bên mái lá."},
 ];
 
 function SplitTitle({
@@ -93,9 +68,12 @@ function JourneyCard({
     >
       <div className="relative overflow-hidden rounded-[24px] bg-[#d7dfd2] sm:rounded-[32px]">
         <div
-          className="relative h-[340px] overflow-hidden sm:h-[420px]"
+          className="relative aspect-video overflow-hidden"
         >
-          <img
+          <Image
+            fill
+            quality={85}
+            sizes="(max-width: 640px) 90vw, 420px"
             data-destination-image
             src={destination.image}
             alt={destination.title}
@@ -105,25 +83,25 @@ function JourneyCard({
 
           <div className="absolute inset-0 bg-gradient-to-t from-[#102820]/75 via-transparent to-transparent" />
 
-          <div className="absolute left-6 top-6 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-4 py-2 text-[11px] font-semibold text-white backdrop-blur-lg">
+          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-4 py-2 text-[11px] font-semibold text-white backdrop-blur-lg">
             <MapPin size={12} />
             {destination.location}
           </div>
 
-          <div className="absolute right-6 top-6 z-10 grid h-12 w-12 place-items-center rounded-full bg-white/90 text-[#173b2f] transition-all duration-500 group-hover:rotate-45 group-hover:bg-[#f2d06a]">
+          <div className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[#173b2f] transition-all duration-500 group-hover:rotate-45 group-hover:bg-[#f2d06a]">
             <ArrowUpRight size={20} />
           </div>
 
-          <div className="absolute bottom-7 left-7 right-7 text-white sm:bottom-9 sm:left-9">
-            <p className="mb-3 text-[10px] font-bold tracking-[.22em] text-[#f3d581]">
+          <div className="absolute bottom-5 left-5 right-5 text-white">
+            <p className="mb-2 text-[9px] font-bold tracking-[.15em] text-[#f3d581]">
               {destination.category} / {destination.number}
             </p>
 
-            <h3 className="text-[clamp(24px,2.7vw,38px)] font-semibold tracking-[-.055em]">
+            <h3 className="text-[clamp(20px,2.2vw,28px)] font-semibold tracking-[-.055em]">
               {destination.title}
             </h3>
 
-            <p className="mt-3 max-w-sm translate-y-3 text-sm leading-6 text-white/80 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+            <p className="mt-2 max-w-sm text-xs leading-5 text-white/85">
               {destination.description}
             </p>
           </div>
@@ -632,7 +610,7 @@ export default function LandingPage() {
           <video
             data-hero-photo
             src="/FDown.vn_Tai_video_Facebook_720p%20(HD)_0dd2.mp4"
-            poster="/banner.jpg"
+            poster={PHOTO_FEATURES.harvest.src}
             autoPlay
             muted
             loop
@@ -647,7 +625,7 @@ export default function LandingPage() {
         </div>
 
         {/* NAVIGATION */}
-        <header className={`landing-nav fixed left-1/2 top-0 z-[100] isolate flex items-center justify-between gap-8 transition-[translate,width,padding,border-radius,color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${scrolled ? "w-[calc(100%_-_1.5rem)] -translate-x-1/2 translate-y-3 rounded-xl px-4 py-3 text-[#14342a] sm:w-[calc(100%_-_3rem)] sm:translate-y-4 sm:px-6" : "w-full -translate-x-1/2 translate-y-0 rounded-none px-6 py-7 text-white sm:px-10 lg:px-16"}`}>
+        <header data-site-header className={`landing-nav fixed left-1/2 top-0 z-[100] isolate flex items-center justify-between gap-8 transition-[translate,width,padding,border-radius,color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${scrolled ? "w-[calc(100%_-_1.5rem)] -translate-x-1/2 translate-y-3 rounded-xl px-4 py-3 text-[#14342a] sm:w-[calc(100%_-_3rem)] sm:translate-y-4 sm:px-6" : "w-full -translate-x-1/2 translate-y-0 rounded-none px-6 py-7 text-white sm:px-10 lg:px-16"}`}>
           <span ref={navBackground} aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-white opacity-0 shadow-[0_4px_14px_rgba(20,52,42,0.08)]" />
           <a
             data-nav-item
@@ -659,11 +637,12 @@ export default function LandingPage() {
             <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className={`nav-color mt-1 block text-[10px] font-normal transition-colors ${scrolled ? "text-[#657361]" : "text-white/75"}`}>Cao Lãnh · Đồng Tháp</span></span>
           </a>
 
-          <nav className="hidden items-center gap-12 lg:flex xl:gap-16">
+          <nav className="hidden items-center gap-7 lg:flex xl:gap-10">
             {[
               ["Trang chủ", "#hero"],
               ["Câu chuyện", "#story"],
               ["Điểm đến", "#destinations"],
+              ["Ảnh thật", "#photos"],
               ["Sự kiện", "#cta"],
             ].map(([name, href]) => (
               <a
@@ -758,15 +737,17 @@ export default function LandingPage() {
               >
                 <div className="flex -space-x-3">
                   {[
-                    "/tram-chim.jpg",
-                    "/cao-lanh-orchard.jpg",
-                    "/sa-dec-flowers.jpg",
+                    PHOTO_FEATURES.xeoQuyt.thumbnail,
+                    PHOTO_FEATURES.farmer.thumbnail,
+                    PHOTO_FEATURES.market.thumbnail,
                   ].map((image, i) => (
                     <div
                       key={i}
-                      className="h-10 w-10 overflow-hidden rounded-full border-2 border-white"
+                      className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-white"
                     >
-                      <img
+                      <Image
+                        fill
+                        sizes="40px"
                         src={image}
                         alt=""
                         className="h-full w-full object-cover"
@@ -879,16 +860,19 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[420px]">
+          <div className="relative mx-auto w-full max-w-[600px]">
             <div
               data-image-frame
-              className="relative h-[380px] overflow-hidden rounded-[28px] bg-[#d3dfcc] sm:h-[460px]"
+              className="relative aspect-video overflow-hidden rounded-[24px] bg-[#d3dfcc]"
             >
-              <img
+              <Image
+                fill
+                quality={85}
+                sizes="(max-width: 1024px) 90vw, 600px"
                 data-story-image
-                src="/cao-lanh-orchard.jpg"
-                alt="Vườn xoài Cao Lãnh"
-                className="absolute inset-[-10%_0] h-[120%] w-full object-cover"
+                src={PHOTO_FEATURES.farmer.src}
+                alt={PHOTO_FEATURES.farmer.alt}
+                className="object-cover"
               />
             </div>
 
@@ -970,6 +954,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <PhotoLibrary />
 
       {/* ================================================
           CTA — EXPERIENCE

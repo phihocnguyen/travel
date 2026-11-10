@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import DestinationPhotos from '@/components/photos/DestinationPhotos';
 import { ATTRACTIONS, CATEGORY_LABELS } from "@/lib/map/attractions";
 import { useMapUI } from "@/components/map/MapUIContext";
 import { lockPageScroll } from "@/lib/ui/scroll-lock";
@@ -8,7 +9,6 @@ import { lockPageScroll } from "@/lib/ui/scroll-lock";
 export default function AttractionModal() {
   const { selectedAttractionId, setSelectedAttractionId } = useMapUI();
   const attraction = selectedAttractionId == null ? null : ATTRACTIONS[selectedAttractionId];
-  const [failedImage, setFailedImage] = useState<string | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const scrollBody = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -18,6 +18,7 @@ export default function AttractionModal() {
     closeButton.current?.focus();
     scrollBody.current?.scrollTo(0, 0);
     const onKey = (event: KeyboardEvent) => {
+      if (document.querySelector('dialog[open][data-photo-lightbox]')) return;
       if (event.key === "Escape") setSelectedAttractionId(null);
       if (event.key === "Tab") {
         const elements = closeButton.current?.closest("article")?.querySelectorAll<HTMLElement>("button, a[href], [tabindex='0']");
@@ -35,9 +36,6 @@ export default function AttractionModal() {
     };
   }, [attraction, setSelectedAttractionId]);
   if (!attraction) return null;
-  const failed = failedImage === attraction.image;
-  const image = failed ? "/cao-lanh-orchard.jpg" : attraction.image;
-  const caption = failed ? "Ảnh minh họa miệt vườn Cao Lãnh" : attraction.imageCaption;
   return <div className="checkpoint-fonts fixed inset-0 z-[80] flex items-end justify-end p-3 sm:items-center sm:p-6">
     <button type="button" className="absolute inset-0 cursor-default bg-black/30 backdrop-blur-[3px]" onClick={() => setSelectedAttractionId(null)} aria-label="Đóng thông tin điểm đến" />
     <article role="dialog" aria-modal="true" aria-labelledby="checkpoint-title" className="relative flex max-h-[90dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-[#f8f7f3] text-[#292c28] shadow-2xl">
@@ -50,6 +48,7 @@ export default function AttractionModal() {
         <button ref={closeButton} type="button" onClick={() => setSelectedAttractionId(null)} aria-label="Đóng thông tin điểm đến" className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-black/15 text-xl hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2">×</button>
       </header>
       <div ref={scrollBody} tabIndex={0} aria-label="Nội dung chi tiết điểm đến" className="min-h-0 space-y-5 overflow-y-auto overscroll-contain p-5 text-[13px] leading-relaxed sm:p-6">
+        <DestinationPhotos key={attraction.id} photos={attraction.photos} caption={attraction.id === 9 || attraction.id === 10 ? attraction.imageCaption : undefined} />
         <p className="font-medium">{attraction.summary}</p>
         <dl className="space-y-3 border-y border-black/10 py-4">
           <div><dt className="text-[10px] font-semibold uppercase tracking-widest text-black/40">Loại hình</dt><dd className="mt-1">{attraction.type}</dd></div>
@@ -60,11 +59,6 @@ export default function AttractionModal() {
         <section><h3 className="mb-2 font-semibold">Trải nghiệm</h3><p className="text-black/70">{attraction.experience}</p></section>
         {attraction.inside && <section className="border-y border-black/10 py-4"><p className="mb-1 text-[9px] uppercase tracking-widest text-black/40">Trong cùng quần thể</p><h3 className="font-semibold">{attraction.inside.name}</h3><p className="mt-2 text-black/70">{attraction.inside.description}</p></section>}
         <section><h3 className="mb-2 font-semibold">Thông tin tham quan</h3><p className="text-black/70">{attraction.bestTime}</p></section>
-        <figure className="overflow-hidden rounded-xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img key={image} src={image} alt={caption} onError={() => setFailedImage(attraction.image)} className="h-36 w-full object-cover sm:h-40" />
-          <figcaption className="pt-2 text-[10px] text-black/45">{attraction.imageSource && !failed ? <a href={attraction.imageSource} target="_blank" rel="noreferrer" className="underline">{caption}</a> : caption}</figcaption>
-        </figure>
       </div>
       <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-black/10 px-5 py-3 sm:px-6">
         <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(attraction.name + " " + attraction.address)}`} target="_blank" rel="noreferrer" className="inline-flex rounded-full border border-black/20 px-4 py-2 text-xs hover:bg-black/5">Mở trên Google Maps ↗</a>

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { PHOTO_FEATURES } from "@/lib/photos";
 import { useState } from "react";
 import { CATEGORY_LABELS, type Attraction } from "@/lib/map/attractions";
 
@@ -7,10 +9,9 @@ export default function JourneyStopCard({ attraction, station, total, onDetails,
   attraction: Attraction; station: number; total: number; onDetails: () => void; onExplore?: () => void;
 }) {
   const [failed, setFailed] = useState(false);
-  const image = failed ? "/cao-lanh-orchard.jpg" : attraction.image;
+  const image = failed ? PHOTO_FEATURES.farmer.src : attraction.image;
   return <div className="checkpoint-fonts pointer-events-auto relative isolate h-[380px] w-[min(340px,calc(100vw-64px))] overflow-hidden rounded-[26px] text-left text-white shadow-2xl sm:h-[440px]">
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img src={image} alt={failed ? "Ảnh minh họa miệt vườn Cao Lãnh" : attraction.imageCaption} onError={() => setFailed(true)} className="absolute inset-0 -z-20 h-full w-full object-cover" />
+    <Image fill sizes="340px" quality={85} src={image} alt={failed ? "Ảnh minh họa miệt vườn Cao Lãnh" : attraction.imageCaption} onError={() => setFailed(true)} className="absolute inset-0 -z-20 h-full w-full object-cover" />
     <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-b from-black/20 via-transparent to-black/30" />
     <div aria-hidden className="absolute inset-x-0 bottom-0 h-[58%] overflow-hidden [mask-image:linear-gradient(transparent,black_25%)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
