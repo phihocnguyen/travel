@@ -8,6 +8,7 @@ import type { BlogPost } from '@/lib/posts/types';
 import { STATUS_MAX_LENGTH } from '@/lib/posts/status';
 import { UserAvatar } from '@/components/auth/UserAvatar';
 import CommunityInteractions from './CommunityInteractions';
+import CommunityComposerModal from './CommunityComposerModal';
 import { CommunityHeading, CommunityPostHeader, CommunityText } from './CommunityPost';
 import MyPosts from './MyPosts';
 import CommunityLayout from './CommunityLayout';
@@ -31,11 +32,12 @@ function StatusCard({ post, name, index }: { post: FeedPost; name: string; index
 export default function CommunityFeed({ posts, mine, name }: { posts: FeedPost[]; mine: BlogPost[]; name: string }) {
   const router = useRouter(), composer = useRef<HTMLTextAreaElement>(null);
   const [tab, setTab] = useState('feed'), [query, setQuery] = useState(''), [category, setCategory] = useState('all'), [sort, setSort] = useState('new');
+  const [compose, setCompose] = useState(false);
   const [content, setContent] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const categories = [...new Set(posts.map(post => post.category))];
   const members = [...new Map(posts.map(post => [post.author.sub, { id: post.author.sub, name: post.author.name }])).values()];
   const filtered = posts.filter(post => (category === 'all' || post.category === category) && `${post.statusText} ${post.author.name}`.toLocaleLowerCase('vi').includes(query.toLocaleLowerCase('vi'))).sort((a, b) => sort === 'new' ? Date.parse(b.createdAt) - Date.parse(a.createdAt) : Date.parse(a.createdAt) - Date.parse(b.createdAt));
-  function focusComposer() { composer.current?.scrollIntoView({ block: 'center' }); composer.current?.focus(); }
+  function focusComposer() { setError(''); setCompose(true); }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy || !content.trim()) return;
     setBusy(true); setError(''); setNotice('');
@@ -43,7 +45,7 @@ export default function CommunityFeed({ posts, mine, name }: { posts: FeedPost[]
       const response = await fetch('/api/statuses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content }) });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error ?? 'Chưa thể đăng bài. Bạn hãy thử lại.');
-      setContent(''); setNotice('Đã gửi câu chuyện! Bài đăng sẽ xuất hiện sau khi được duyệt.'); router.refresh();
+      setContent(''); setCompose(false); setNotice('Đã gửi câu chuyện! Bài đăng sẽ xuất hiện sau khi được duyệt.'); router.refresh();
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Chưa thể kết nối. Bạn hãy thử lại.'); }
     finally { setBusy(false); }
   }
@@ -55,11 +57,19 @@ export default function CommunityFeed({ posts, mine, name }: { posts: FeedPost[]
   return <div className="social-page">
     <CommunityHeading current="posts" />
     {tab === 'mine' ? <><div className="social-tabs"><button type="button" onClick={() => setTab('feed')}>Cộng đồng</button><button type="button" aria-pressed onClick={() => setTab('mine')}>Bài của tôi <span>{mine.length}</span></button></div><div className="min-h-0 flex-1"><MyPosts posts={mine} /></div></> : <CommunityLayout sidebar={sidebar}>
-      <form onSubmit={submit} className="social-card social-composer">
-        <div className="social-composer-top !items-start"><UserAvatar name={name} className="social-avatar" /><label className="min-w-0 flex-1"><span className="sr-only">Nội dung status</span><textarea ref={composer} value={content} disabled={busy} onChange={event => setContent(event.target.value)} maxLength={STATUS_MAX_LENGTH} rows={content ? 4 : 2} placeholder={`${name.trim().split(' ').at(-1)} ơi, bạn muốn chia sẻ điều gì?`} className="social-input !mt-0 !resize-none !border-transparent !bg-[#f3f5ef] !px-4 !py-3 focus:!border-[#a4bb92]" /></label></div>
-        <div className="social-composer-bottom"><Link href="/dashboard/videos?compose=1" className="social-composer-action"><Clapperboard size={18} />Chia sẻ video<span className="sr-only"> — đăng video</span></Link><div className="flex items-center gap-3">{content ? <span className="social-helper">{content.length}/{STATUS_MAX_LENGTH}</span> : <span className="social-helper hidden sm:flex"><Globe2 size={11} />Cộng đồng</span>}<button type="submit" disabled={busy || !content.trim()} className="social-primary !px-3 !py-2">{busy ? <LoaderCircle size={13} className="motion-safe:animate-spin" /> : <Send size={13} />}{busy ? 'Đang gửi…' : 'Đăng bài'}</button></div></div>
-      </form>
-      {error && <p role="alert" className="social-notice" data-error="true">{error}</p>}
+      <section aria-label="Chia sẻ khoảnh khắc" className="social-card social-composer">
+        <div className="social-composer-top"><UserAvatar name={name} className="social-avatar" /><button type="button" aria-haspopup="dialog" onClick={focusComposer} className="social-composer-prompt">{name.trim()} ơi, bạn muốn chia sẻ điều gì?</button></div>
+        <div className="social-composer-bottom"><Link href="/dashboard/videos?compose=1" className="social-composer-action"><Clapperboard size={18} />Chia sẻ video<span className="sr-only"> — đăng video</span></Link><button type="button" onClick={focusComposer} className="social-composer-action"><MessageSquare size={18} />Chia sẻ khoảnh khắc</button></div>
+      </section>
+      {compose && <CommunityComposerModal title="Tạo bài viết" busy={busy} onClose={() => setCompose(false)}>
+        <form onSubmit={submit} className="social-form !border-0 !p-0">
+          <div className="social-composer-top"><UserAvatar name={name} className="social-avatar" /><div><strong className="social-author-name">{name}</strong><p className="social-meta"><Globe2 size={12} />Chia sẻ cùng cộng đồng</p></div></div>
+          <label className="social-field"><span className="sr-only">Nội dung status</span><textarea ref={composer} autoFocus value={content} disabled={busy} onChange={event => setContent(event.target.value)} maxLength={STATUS_MAX_LENGTH} rows={6} placeholder={`${name.trim()} ơi, bạn muốn chia sẻ điều gì?`} className="social-input !mt-0" /></label>
+          <div className="flex justify-between gap-3"><span className="social-helper">Bài đăng sẽ được duyệt trước khi hiển thị. · {content.length}/{STATUS_MAX_LENGTH}</span><button type="submit" disabled={busy || !content.trim()} className="social-primary">{busy ? <LoaderCircle size={14} className="motion-safe:animate-spin" /> : <Send size={14} />}{busy ? 'Đang gửi…' : 'Đăng bài'}</button></div>
+          {error && <p role="alert" className="social-notice" data-error="true">{error}</p>}
+        </form>
+      </CommunityComposerModal>}
+      {error && !compose && <p role="alert" className="social-notice" data-error="true">{error}</p>}
       {notice && <p role="status" className="social-notice"><CheckCircle2 size={17} className="mt-0.5 shrink-0" />{notice}</p>}
       <div className="social-toolbar"><div className="social-tabs"><button type="button" aria-pressed={tab === 'feed'} onClick={() => setTab('feed')}>Dành cho bạn <span>{posts.length}</span></button><button type="button" onClick={() => setTab('mine')}>Bài của tôi</button></div><select aria-label="Sắp xếp status" value={sort} onChange={event => setSort(event.target.value)} className="social-select"><option value="new">Mới nhất</option><option value="old">Cũ nhất</option></select></div>
       <label className="social-search"><Search size={15} className="shrink-0" /><input aria-label="Tìm trên bảng tin" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tìm câu chuyện, người chia sẻ…" />{query && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => setQuery('')}><X size={13} /></button>}</label>

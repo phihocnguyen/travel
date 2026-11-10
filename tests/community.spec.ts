@@ -1,3 +1,4 @@
+import { relativeTime } from '../lib/community/time';
 import {test,expect} from '@playwright/test';
 import {normalizeInput,TicketValidationError} from '../lib/tickets/validation';
 import {FIXED_TICKET,TICKET_MESSAGES} from '../lib/tickets/template';
@@ -65,4 +66,19 @@ test('streamed dashboard routes still redirect unauthenticated visitors',async({
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
   await expect(page.locator('[data-dashboard-shell]')).toHaveCount(0);
  }
+});
+
+test('community timestamps use Vietnamese relative units and handle clock skew', () => {
+ const now = Date.parse('2026-11-11T12:00:00Z');
+ const ago = (seconds: number) => new Date(now - seconds * 1000).toISOString();
+ expect(relativeTime(ago(10), now)).toBe('Vài giây trước');
+ expect(relativeTime(ago(60), now)).toBe('1 phút trước');
+ expect(relativeTime(ago(300), now)).toBe('5 phút trước');
+ expect(relativeTime(ago(3600), now)).toBe('1 giờ trước');
+ expect(relativeTime(ago(86400), now)).toBe('1 ngày trước');
+ expect(relativeTime(ago(604800), now)).toBe('1 tuần trước');
+ expect(relativeTime(ago(2592000), now)).toBe('1 tháng trước');
+ expect(relativeTime(ago(31536000), now)).toBe('1 năm trước');
+ expect(relativeTime(ago(-30), now)).toBe('Vài giây trước');
+ expect(relativeTime('invalid', now)).toBe('Không rõ thời gian');
 });
