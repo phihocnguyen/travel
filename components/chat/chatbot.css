@@ -35,3 +35,11 @@
 @keyframes travel-chat-pulse { to { opacity:.35; transform:translateY(-3px); } }
 @media(max-width:640px) { .travel-chat { right:max(12px,env(safe-area-inset-right,0px)); bottom:calc(12px + env(safe-area-inset-bottom,0px)); gap:8px; } .travel-chat-panel { max-height:calc(100dvh - 90px - env(safe-area-inset-bottom)); } .travel-chat-launcher { width:54px; min-width:54px; min-height:54px; padding:0; } .travel-chat-launcher>span { display:none; } }
 @media(prefers-reduced-motion:reduce) { .travel-chat *, .travel-chat { animation:none!important; transition:none!important; } }
+
+.travel-chat-panel-expanded { position:fixed; inset:16px; width:auto; max-width:none; height:auto; max-height:none; border-radius:24px; }
+.travel-chat-panel-expanded .travel-chat-history { padding:24px clamp(20px,8vw,120px); }
+.travel-chat-panel-expanded .travel-chat-message { max-width:min(760px,88%); font-size:14px; padding:15px 18px; }
+.travel-chat-panel-expanded .travel-chat-topics,.travel-chat-panel-expanded .travel-chat-form { padding-left:clamp(18px,8vw,120px); padding-right:clamp(18px,8vw,120px); }
+.travel-chat-panel-expanded .travel-chat-form input { font-size:15px; padding:15px; }
+.travel-chat-panel-expanded .travel-chat-topics button { padding:9px 13px; font-size:12px; }
+@media(max-width:640px) { .travel-chat-panel-expanded { inset:0; width:100vw; max-width:none; height:100dvh; max-height:100dvh; border:0; border-radius:0; padding-bottom:env(safe-area-inset-bottom,0px); } .travel-chat-panel-expanded .travel-chat-history { padding:20px 16px; } .travel-chat-panel-expanded .travel-chat-message { max-width:94%; font-size:13px; } .travel-chat-panel-expanded .travel-chat-topics,.travel-chat-panel-expanded .travel-chat-form { padding-left:14px; padding-right:14px; } }
