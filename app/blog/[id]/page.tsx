@@ -9,6 +9,7 @@ import BlogFooter from "@/components/blog/BlogFooter";
 import BlogCover from "@/components/blog/BlogCover";
 import BlogBody from "@/components/blog/BlogBody";
 import BlogShare from "@/components/blog/BlogShare";
+import CommunityInteractions from "@/components/dashboard/CommunityInteractions";
 import BlogCard from "@/components/blog/BlogCard";
 export const instant=false;
 type PageProps={params:Promise<{id:string}>};
@@ -39,6 +40,7 @@ export default async function BlogPostPage({params}:PageProps){
           <div className="min-w-0">
             {headings.length>0&&<details className="mb-7 border-y border-[#263b2d]/15 py-4 lg:hidden"><summary className="cursor-pointer text-xs font-medium">Mục lục bài viết</summary><div className="pt-4">{contents}</div></details>}
             <div id="blog-article-body" className="blog-article"><BlogBody content={html} format="html"/></div>
+            <div className="mt-10 overflow-hidden rounded-2xl border border-[#e5ebdd] bg-white"><CommunityInteractions kind="posts" id={post.id}/></div>
             <footer className="mt-12 border-t border-[#263b2d]/15 pt-6"><div className="flex flex-wrap items-center justify-between gap-4"><Link href={`/blog?category=${encodeURIComponent(post.category)}`} className="border-b border-[#263b2d]/20 pb-1 text-xs text-[#78856b]">Đọc thêm về {post.category.toLocaleLowerCase("vi")}</Link><BlogShare title={post.title}/></div><div className="mt-8 flex items-center gap-4 bg-[#f0f1e9] p-5"><span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#263b2d]/15 font-display text-lg">{post.author.name.charAt(0).toUpperCase()}</span><div><p className="text-[9px] uppercase tracking-[.15em] text-[#99a08e]">Tác giả</p><p className="mt-1 text-sm font-medium">{post.author.name}</p><p className="mt-1 text-xs leading-relaxed text-[#89907f]">Chia sẻ những điều đáng nhớ qua mỗi hành trình.</p></div></div></footer>
           </div>
           <div aria-hidden className="hidden lg:block"/>
