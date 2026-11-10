@@ -4,6 +4,16 @@ import {FIXED_TICKET,TICKET_MESSAGES} from '../lib/tickets/template';
 import {videoRange} from '../lib/videos/range';
 import {statusInput, decodeStatusText, STATUS_MAX_LENGTH} from '../lib/posts/status';
 
+test('community interactions reject invalid targets and require login for writes', async ({request}) => {
+ const id='00000000-0000-4000-8000-000000000001';
+ expect((await request.get('/api/community/unknown/'+id)).status()).toBe(404);
+ expect((await request.get('/api/community/posts/invalid')).status()).toBe(404);
+ for (const kind of ['posts','videos']) {
+  expect((await request.post(`/api/community/${kind}/${id}`,{data:{content:'Hello'}})).status()).toBe(401);
+  expect((await request.put(`/api/community/${kind}/${id}`,{data:{liked:true}})).status()).toBe(401);
+ }
+});
+
 test('short statuses derive their title and keep multiline content for moderation',()=>{
  const input=statusInput('  Một buổi sáng ở Cao Lãnh\nĐi cùng bạn bè!  ');
  expect(input.title).toBe('Một buổi sáng ở Cao Lãnh');
