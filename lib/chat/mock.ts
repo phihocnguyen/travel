@@ -1,6 +1,7 @@
 import { EVENT } from '@/components/campaign/campaignData';
 
-export type ChatAnswer = { text: string; links?: { label: string; href: string }[] };
+export type TourStop = { time: string; title: string; detail: string; image: string; alt: string };
+export type ChatAnswer = { text: string; links?: { label: string; href: string }[]; tour?: { title: string; duration: string; intro: string; hotel: string; hotelDetail: string; hotelImage: string; meals: string; budget: string; notes: string; stops: TourStop[] } };
 export const CHAT_TOPICS = [
   'Khám phá Cao Lãnh',
   'Gợi ý lịch trình du lịch',
@@ -26,9 +27,41 @@ export function mockChatAnswer(question: string): ChatAnswer {
     const twoDays = /2|hai|cuoi tuan/.test(query);
     return {
       text: twoDays
-        ? 'Lịch trình mẫu 2 ngày 1 đêm ở Cao Lãnh 🌿\n\nNGÀY 1\n• Sáng: đến Cao Lãnh, ăn sáng và nghỉ ngơi.\n• Trưa: thưởng thức món ăn địa phương.\n• Chiều: trải nghiệm vườn xoài, chụp ảnh và nghe chuyện nhà vườn.\n• Tối: ăn tối, dạo phố rồi nghỉ đêm.\n\nNGÀY 2\n• Sáng: chọn một điểm văn hóa hoặc sinh thái trên bản đồ.\n• Trưa: dùng bữa, chọn đặc sản làm quà.\n• Chiều: trở về, chia sẻ khoảnh khắc cùng cộng đồng.\n\nĐây là lịch trình tham khảo; hãy kiểm tra giờ mở cửa, thời tiết và đặt dịch vụ trước chuyến đi.'
-        : 'Một ngày khám phá Cao Lãnh theo nhịp chậm 🥭\n\n• 08:00 — Ăn sáng, bắt đầu hành trình.\n• 09:00 — Khám phá miệt vườn và câu chuyện xoài Cát.\n• 11:30 — Dùng bữa với món ăn địa phương.\n• 14:00 — Chọn một điểm văn hóa hoặc sinh thái trên bản đồ.\n• 16:00 — Chụp ảnh, mua đặc sản và khép lại chuyến đi.\n\nĐây là lịch trình mẫu, chưa bao gồm thời gian di chuyển từ nơi bạn xuất phát. Bạn cũng có thể hỏi mình “lịch trình 2 ngày 1 đêm”.',
-      links: [{ label: 'Mở bản đồ khám phá', href: '/map' }],
+        ? 'Mình lên tour mẫu 2 ngày 1 đêm theo nhịp thư thả, kết hợp di tích, vườn xoài và ẩm thực địa phương. Có thể đổi thứ tự theo giờ đến của bạn.'
+        : 'Mình lên tour mẫu 1 ngày, bắt đầu ở trung tâm Cao Lãnh rồi ghé di tích và không gian miệt vườn. Lịch có thời gian nghỉ, không xếp điểm quá sát nhau.',
+      tour: twoDays ? {
+        title: 'Cao Lãnh · Vườn xoài và chuyện đất sen', duration: '2 ngày 1 đêm · tự túc',
+        intro: 'Phù hợp nhóm bạn hoặc gia đình đi xe riêng. Chặng giữa các điểm cần tự kiểm tra trên bản đồ trước ngày khởi hành.',
+        hotel: 'Gợi ý lưu trú · The Mango Trail Farmstay', hotelDetail: 'Trải nghiệm nghỉ giữa vườn xoài tại khu vực Cao Lãnh. Cần liên hệ nơi lưu trú để xác nhận phòng, giá, bữa ăn và lịch trải nghiệm theo ngày.', hotelImage: '/cao-lanh-orchard.jpg',
+        meals: 'Bữa ăn · Ưu tiên dùng bữa tại farmstay hoặc chọn quán địa phương ở trung tâm Cao Lãnh. Gợi ý món theo mùa gồm cá đồng, lẩu mắm, bánh xèo và món từ xoài. Hỏi quán về giờ mở cửa, chỗ ngồi và thực đơn trước khi đi.',
+        budget: 'Ngân sách tham khảo · Chưa gồm di chuyển đến Đồng Tháp. Tiền phòng, bữa ăn và trải nghiệm vườn thay đổi theo ngày, số khách và dịch vụ thực tế. Hãy hỏi giá trực tiếp trước khi đặt.',
+        notes: 'Gọi trước để xác nhận phòng và hoạt động vườn. Mùa thu hoạch, thời tiết và giờ mở cửa có thể làm thay đổi lịch.',
+        stops: [
+          {time:'NGÀY 1 · 08:00',title:'Đến trung tâm Cao Lãnh, ăn sáng',detail:'Chọn quán ăn sáng tại trung tâm, gửi hành lý nếu chỗ nghỉ hỗ trợ nhận sớm. Dành khoảng 60–90 phút.',image:'/photos/vuon-xoai-d3b2b95d.webp',alt:'Những giỏ xoài trong ngày thu hoạch'},
+          {time:'10:00',title:'Khu di tích Nguyễn Sinh Sắc',detail:'Tham quan khu mộ, không gian tưởng niệm và trưng bày. Đi nhẹ nhàng, dành khoảng 1,5–2 giờ.',image:'/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg',alt:'Không gian di tích tại Cao Lãnh'},
+          {time:'12:00',title:'Ăn trưa món miền Tây',detail:'Chọn nhà hàng địa phương ở trung tâm. Hỏi món theo mùa và đặt bàn nếu đi nhóm đông.',image:'/cao-lanh-orchard.jpg',alt:'Cảnh quan xanh vùng Cao Lãnh'},
+          {time:'14:00',title:'Nhận phòng và trải nghiệm nhà vườn',detail:'Di chuyển đến The Mango Trail Farmstay. Đạp xe, đi xuồng hoặc tham quan vườn nếu cơ sở xác nhận có hoạt động trong ngày.',image:'/cao-lanh-orchard.jpg',alt:'Vườn cây xanh ở Cao Lãnh'},
+          {time:'18:30',title:'Bữa tối và nghỉ tại farmstay',detail:'Đặt trước bữa tối với cơ sở lưu trú hoặc ăn tại trung tâm rồi quay lại nghỉ.',image:'/photos/vuon-xoai-f553586a.webp',alt:'Người làm vườn chăm sóc những trái xoài'},
+          {time:'NGÀY 2 · 07:30',title:'Ăn sáng, trả phòng',detail:'Xác nhận giờ ăn và giờ trả phòng với nơi lưu trú. Mang nước uống, nón và giày đi bộ.',image:'/photos/vuon-xoai-b0e31e81.webp',alt:'Xoài Cao Lãnh'},
+          {time:'09:00',title:'Chợ quê cù lao Tân Thuận Đông',detail:'Dạo chợ, tìm trái cây và bánh dân gian. Chợ và hoạt động có thể theo phiên, nên xác nhận lịch trước khi đi.',image:'/photos/vuon-xoai-d3b2b95d.webp',alt:'Chợ quê cù lao Tân Thuận Đông'},
+          {time:'12:00 · 14:00',title:'Ăn trưa, mua đặc sản rồi khởi hành',detail:'Dùng bữa gần trung tâm, mua xoài đúng mùa và chừa thời gian di chuyển về điểm xuất phát.',image:'/photos/vuon-xoai-f5d7675e.webp',alt:'Xoài địa phương'}
+        ]
+      } : {
+        title:'Một ngày ở Cao Lãnh · Di tích và miệt vườn',duration:'1 ngày · tự túc',
+        intro:'Lịch phù hợp người đã có mặt tại Cao Lãnh từ buổi sáng. Nếu đi từ TP. Hồ Chí Minh, hãy tính riêng thời gian và phương tiện liên tỉnh.',
+        hotel:'Lưu trú · Không cần đặt phòng cho tour trong ngày',hotelDetail:'Nếu muốn ở lại, có thể tham khảo Khách sạn Lan Thái Ngọc ở trung tâm hoặc The Mango Trail Farmstay để trải nghiệm không gian vườn. Gọi trực tiếp xác nhận phòng và giá.',hotelImage:'/cao-lanh-orchard.jpg',
+        meals:'Bữa ăn · Ăn sáng và trưa tại quán địa phương ở trung tâm. Buổi chiều thử nước uống hoặc món từ xoài nếu có. Hỏi giờ mở cửa và thực đơn trước khi ghé.',
+        budget:'Ngân sách tham khảo · Chưa gồm xe đến Cao Lãnh. Chi phí phụ thuộc phương tiện nội tỉnh, bữa ăn và dịch vụ tại điểm. Xác nhận phí vào cửa và hoạt động với từng nơi.',
+        notes:'Thứ tự có thể đổi theo giờ mở cửa, thời tiết và tình trạng vườn. Mang nước, nón và tiền mặt dự phòng.',
+        stops:[
+          {time:'08:00',title:'Ăn sáng tại trung tâm',detail:'Chọn món địa phương, chuẩn bị nước uống và kiểm tra đường đi trong ngày.',image:'/photos/vuon-xoai-d3b2b95d.webp',alt:'Những giỏ xoài trong ngày thu hoạch'},
+          {time:'09:00',title:'Khu di tích Nguyễn Sinh Sắc',detail:'Tham quan khu mộ và không gian trưng bày. Dự kiến 1,5–2 giờ.',image:'/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg',alt:'Không gian di tích ở Cao Lãnh'},
+          {time:'11:30',title:'Ăn trưa món địa phương',detail:'Dùng bữa ở trung tâm Cao Lãnh. Hỏi nhà hàng món theo mùa, giờ phục vụ và đặt bàn nếu đi nhóm.',image:'/cao-lanh-orchard.jpg',alt:'Cảnh quan xanh Cao Lãnh'},
+          {time:'13:30',title:'Tham quan vườn xoài',detail:'Liên hệ trước một nhà vườn hoặc farmstay để hỏi lịch khách tham quan, mùa trái và chi phí trải nghiệm.',image:'/photos/vuon-xoai-f553586a.webp',alt:'Người làm vườn chăm sóc xoài'},
+          {time:'16:00',title:'Mua đặc sản và kết thúc tour',detail:'Chọn xoài theo mùa tại điểm bán uy tín. Kiểm tra thời gian quay về và chặng đường tiếp theo.',image:'/photos/vuon-xoai-f5d7675e.webp',alt:'Xoài địa phương'}
+        ]
+      },
+      links:[{label:'Mở bản đồ các điểm đến',href:'/map'}]
     };
   }
   if (/cao lanh|kham pha|di dau|an gi|xoai|vuon|du lich|tham quan|dac san/.test(query)) return {
