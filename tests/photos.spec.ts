@@ -81,7 +81,7 @@ test('map photo albums preserve the destination dialog and scroll lock when clos
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (type: string, ...args: unknown[]) {
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...args: unknown[]) {
       return type.includes('webgl') ? null : original.apply(this, [type, ...args] as Parameters<typeof original>);
     } as typeof original;
   });
