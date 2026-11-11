@@ -20,6 +20,7 @@ import { AdminOverlay } from "./AdminOverlay";
 import { Atmosphere } from "./Atmosphere";
 import { AttractionMarkers } from "./AttractionMarkers";
 import { CameraRig } from "./CameraRig";
+import { Outskirts } from "./Outskirts";
 import { MangoGroves } from "@/components/landscape/MangoGroves";
 import { PerfOverlay } from "./PerfOverlay";
 import MapUnavailable from "./MapUnavailable";
@@ -228,6 +229,7 @@ function SceneContent() {
 
       {assets && layers ? (
         <>
+          <Outskirts assets={assets} />
           <Terrain assets={assets} segments={384} onHoverId={setHoveredId} />
           <Rivers assets={assets} y={layers.rivers} />
           <AdminOverlay assets={assets} y={layers.admin} />

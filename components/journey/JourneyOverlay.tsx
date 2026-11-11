@@ -103,7 +103,7 @@ export default function JourneyOverlay() {
       </header>
 
       <nav
-        className="pointer-events-auto absolute right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col items-end gap-3 sm:right-5"
+        className="pointer-events-auto absolute right-3 top-1/2 z-0 flex -translate-y-1/2 flex-col items-end gap-3 sm:right-5"
         aria-label="Chọn một trạm dừng"
       >
         {JOURNEY_CHAPTERS.map((chapter, i) => (

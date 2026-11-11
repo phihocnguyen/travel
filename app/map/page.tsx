@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MapExperience from "@/components/map/MapExperience";
+import MapAvailability from "@/components/map/MapAvailability";
 
 export const metadata: Metadata = {
   title: "Bản đồ tương tác · Vị Xoài Dẫn Lối",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function MapPage() {
   return (
     <main className="relative min-h-dvh w-full bg-cream">
-      <MapExperience />
+      <MapAvailability />
     </main>
   );
 }
