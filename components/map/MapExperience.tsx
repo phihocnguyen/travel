@@ -10,7 +10,7 @@ import IntroSequence from "@/components/hero/IntroSequence";
 import { MapUIProvider, useMapUI } from "./MapUIContext";
 
 function ExperienceStage() {
-  const { explored } = useMapUI();
+  const { explored, ready, introOpen, explore } = useMapUI();
   return (
     <main
       data-journey-scroll-space
@@ -38,6 +38,7 @@ function ExperienceStage() {
             Kéo để khám phá bản đồ
           </div>
         )}
+        {!explored && ready && !introOpen && <button type="button" onClick={() => { explore(false); window.scrollTo({top: 0, behavior: 'instant'}); }} className="absolute bottom-6 right-4 z-[70] rounded-full border border-cream/30 bg-forest/90 px-5 py-3 text-xs font-semibold text-cream backdrop-blur-md hover:bg-forest focus-visible:outline-2 focus-visible:outline-cream sm:right-6">Khám phá tự do ↗</button>}
         <MapExplorer />
         <AttractionModal />
       </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useReducedMotion } from "./useReducedMotion";
 
 import { useEffect, useMemo, useRef } from "react";
 import { OrbitControls } from "@react-three/drei";
@@ -24,10 +25,13 @@ const scratchPos = new Vector3();
 const scratchTarget = new Vector3();
 
 export function CameraRig({ ready, explored, focusPoint, overview, assets }: Props) {
+  const reducedMotion = useReducedMotion();
   const invalidate = useThree((state) => state.invalidate);
   const canvas = useThree((state) => state.gl.domElement);
   const eventTarget = useThree((state) => state.events.connected);
-  const { journeyProgress } = useMapUI();
+  const camera = useThree(state => state.camera);
+  const returnPose = useRef<{position: Vector3; target: Vector3} | null>(null);
+  const { journeyProgress, overviewRequest } = useMapUI();
   const controls = useRef<OrbitControlsImpl>(null);
   const lookTarget = useRef(new Vector3());
   const focusPosition = useRef(new Vector3());
@@ -76,12 +80,36 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
   }, [assets, overview]);
 
   useEffect(() => {
-    if (!focusPoint || focusPoint === lastFocus.current) return;
+    if (!explored) return;
+    if (!focusPoint) {
+      lastFocus.current = null;
+      if (returnPose.current) {
+        focusPosition.current.copy(returnPose.current.position);
+        focusTarget.current.copy(returnPose.current.target);
+        returnPose.current = null;
+        focusing.current = true;
+      }
+      return;
+    }
+    if (focusPoint === lastFocus.current) return;
+    if (!returnPose.current) returnPose.current = {
+      position: camera.position.clone(),
+      target: controls.current?.target.clone() ?? lookTarget.current.clone(),
+    };
     lastFocus.current = focusPoint;
-    focusPosition.current.set(focusPoint.x + 8, 36, focusPoint.z + 31);
-    focusTarget.current.set(focusPoint.x, 0, focusPoint.z);
+    const ground = assets ? elevationToScene(assets.maxHeightMeters) : 0;
+    focusPosition.current.set(focusPoint.x + 8, ground + 36, focusPoint.z + 31);
+    focusTarget.current.set(focusPoint.x, ground, focusPoint.z);
     focusing.current = true;
-  }, [focusPoint]);
+  }, [focusPoint, explored, camera, assets]);
+
+  useEffect(() => {
+    if (!overviewRequest) return;
+    returnPose.current = null;
+    focusPosition.current.set(...overview);
+    focusTarget.current.set(0, 0, 0);
+    focusing.current = true;
+  }, [overviewRequest, overview]);
 
   useFrame(({ camera }, rawDt) => {
     if (!ready) return;
@@ -99,7 +127,7 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
 
       // A critically damped-like exponential response eliminates wheel-frame jitter.
       // Camera is never independently tweened by GSAP, preventing multiple writers.
-      const k = 1 - Math.exp(-dt * 5.8);
+      const k = reducedMotion ? 1 : 1 - Math.exp(-dt * 5.8);
       camera.position.lerp(scratchPos, k);
       lookTarget.current.lerp(scratchTarget, k);
       camera.lookAt(lookTarget.current);
@@ -125,7 +153,7 @@ export function CameraRig({ ready, explored, focusPoint, overview, assets }: Pro
       }
     }
     if (focusing.current) {
-      const k = 1 - Math.exp(-dt * 5.6);
+      const k = reducedMotion ? 1 : 1 - Math.exp(-dt * 5.6);
       camera.position.lerp(focusPosition.current, k);
       if (orbit) {
         orbit.enabled = false;

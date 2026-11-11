@@ -82,7 +82,7 @@ export function AttractionMarkers({ assets, y }: { assets: MapAssets; y: number 
           <button type="button" aria-label={attraction.name} aria-pressed={selectedAttractionId === attraction.id}
             onMouseEnter={() => { setHovered(attraction.id); setHoveredId(null); }} onMouseLeave={() => setHovered(null)} onFocus={() => setHovered(attraction.id)} onBlur={() => setHovered(null)}
             onClick={(event) => { event.stopPropagation(); setHoveredId(null); setSelectedAttractionId(selectedAttractionId === attraction.id ? null : attraction.id); }}
-            className="relative grid h-10 w-10 place-items-center rounded-full border-2 border-[#eeeade] text-xs font-semibold shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className="relative grid h-10 w-10 place-items-center rounded-full border-2 border-[#eeeade] text-xs font-semibold shadow-lg transition-[background-color,color,scale] duration-200 motion-reduce:transition-none hover:scale-110 focus-visible:scale-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             style={{ pointerEvents: "auto", background: active ? "#eeeade" : "#36594b", color: active ? "#36594b" : "#eeeade" }}>
             <span className="tabular-nums">{String(attraction.id + 1).padStart(2, "0")}</span>
             {active && <span className="absolute bottom-full left-1/2 mb-2 w-max max-w-[220px] -translate-x-1/2 rounded-lg bg-[#f5f2e9] px-3 py-2 text-left text-[#294638] shadow-lg">

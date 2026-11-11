@@ -1,4 +1,5 @@
 "use client";
+import { useReducedMotion } from "./useReducedMotion";
 
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
@@ -149,6 +150,7 @@ function MistBank({
   driftX,
   driftZ,
 }: MistBankProps) {
+  const reducedMotion = useReducedMotion();
   const mesh = useRef<Mesh>(null);
   const material = useMemo(
     () =>
@@ -168,11 +170,10 @@ function MistBank({
   useFrame((state) => {
     const current = mesh.current;
     if (!current) return;
-    const t = state.clock.elapsedTime;
+    const t = reducedMotion ? 0 : state.clock.elapsedTime;
     current.position.x = x + Math.sin(t * speed + phase) * driftX;
     current.position.z = z + Math.cos(t * speed * 0.83 + phase) * driftZ;
     current.rotation.z = baseRotation + Math.sin(t * speed * 0.5 + phase) * 0.055;
-    material.opacity = opacity * (0.7 + 0.3 * Math.sin(t * 0.22 + phase * 1.7));
   });
 
   return (
@@ -194,6 +195,7 @@ type Props = {
 };
 
 export function Atmosphere({ assets, base }: Props) {
+  const reducedMotion = useReducedMotion();
   const width = assets.projector.widthKm;
   const depth = assets.projector.depthKm;
   const gl = useThree((state) => state.gl);
@@ -235,20 +237,25 @@ export function Atmosphere({ assets, base }: Props) {
 
 
   const motes = useMemo(() => {
-    const count = 72;
+    const count = 28;
+    let seed = 719;
+    const random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
     const seeds = new Float32Array(count * 4);
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const x = (Math.random() - 0.5) * width * 0.88;
-      const z = (Math.random() - 0.5) * depth * 0.88;
-      const phase = Math.random() * Math.PI * 2;
-      const speed = 0.18 + Math.random() * 0.32;
+      const x = (random() - 0.5) * width * 0.88;
+      const z = (random() - 0.5) * depth * 0.88;
+      const phase = random() * Math.PI * 2;
+      const speed = 0.18 + random() * 0.32;
       seeds[i * 4] = x;
       seeds[i * 4 + 1] = z;
       seeds[i * 4 + 2] = phase;
       seeds[i * 4 + 3] = speed;
       positions[i * 3] = x;
-      positions[i * 3 + 1] = base + 8 + Math.random() * 20;
+      positions[i * 3 + 1] = base + 8 + random() * 20;
       positions[i * 3 + 2] = z;
     }
     const geometry = new BufferGeometry();
@@ -262,7 +269,7 @@ export function Atmosphere({ assets, base }: Props) {
   useFrame((state) => {
     const attribute = moteRef.current;
     if (!attribute) return;
-    const t = state.clock.elapsedTime;
+    const t = reducedMotion ? 0 : state.clock.elapsedTime;
     const array = attribute.array as Float32Array;
     for (let i = 0; i < motes.count; i++) {
       const x = motes.seeds[i * 4];
@@ -278,9 +285,9 @@ export function Atmosphere({ assets, base }: Props) {
 
   return (
     <group>
-      <VolumetricClouds base={base} width={width} depth={depth} />
+      {supportsMist && <VolumetricClouds base={base} width={width} depth={depth} />}
 
-      {supportsMist && mistBanks.map((bank, index) => (
+      {mistBanks.map((bank, index) => (
         <MistBank
           key={`mist-${index}`}
           map={cloudMap}
@@ -289,7 +296,7 @@ export function Atmosphere({ assets, base }: Props) {
           y={bank.y}
           size={[bank.sx, bank.sz]}
           rotation={bank.r}
-          opacity={bank.o * 0.4}
+          opacity={bank.o * 0.18}
           speed={bank.speed}
           phase={bank.phase}
           tint="#cbd8cb"
@@ -306,7 +313,7 @@ export function Atmosphere({ assets, base }: Props) {
         />
         <pointsMaterial
           map={dotTexture}
-          size={0.72}
+          size={0.35}
           sizeAttenuation
           transparent
           opacity={0.08}

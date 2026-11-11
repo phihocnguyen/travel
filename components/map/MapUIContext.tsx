@@ -14,6 +14,8 @@ import {
 export type MapSeason = "mango" | "dry" | "flood";
 
 type MapUI = {
+  overviewRequest: number;
+  resetOverview: () => void;
   explored: boolean;
   audioEnabled: boolean;
   inquireOpen: boolean;
@@ -43,6 +45,8 @@ type MapUI = {
 const Ctx = createContext<MapUI | null>(null);
 
 export function MapUIProvider({ children }: { children: ReactNode }) {
+  const [overviewRequest, setOverviewRequest] = useState(0);
+  const resetOverview = useCallback(() => setOverviewRequest(value => value + 1), []);
   const [explored, setExplored] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [inquireOpen, setInquireOpen] = useState(false);
@@ -70,6 +74,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      overviewRequest, resetOverview,
       explored,
       audioEnabled,
       inquireOpen,
@@ -93,6 +98,7 @@ export function MapUIProvider({ children }: { children: ReactNode }) {
       setReady,
     }),
     [
+      overviewRequest, resetOverview,
       explored,
       audioEnabled,
       inquireOpen,

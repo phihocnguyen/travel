@@ -1,5 +1,7 @@
 "use client";
+import { useReducedMotion } from "./useReducedMotion";
 
+import { CLOUD_FIELD_GLSL } from "@/lib/map/cloudField";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import {
@@ -76,6 +78,8 @@ const TERRAIN_FRAGMENT = /* glsl */ `
   varying vec3 vWorldPos;
   varying float vHeight;
 
+  ${CLOUD_FIELD_GLSL}
+
   float communeId(vec2 uv) {
     return floor(texture2D(uAdminId, uv).r * 255.0 + 0.5);
   }
@@ -124,7 +128,11 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     vec3 west = sampleImagery(imageryUv - vec2(texel.x, 0.0));
     vec3 blur = (north + south + east + west) * 0.25;
     vec3 detail = color - blur;
-    color += detail * 0.4;
+    color += detail * 0.28;
+    // Restrained detail tied to imagery luminance: preserve fields and roads.
+    float vegetation = smoothstep(0.015, 0.12, color.g - color.r);
+    float grain = noise(vWorldPos.xz * 28.0) - 0.5;
+    color *= 1.0 + grain * 0.045 * vegetation;
 
     vec3 n = normalize(vNormal);
     float slope = 1.0 - clamp(n.y, 0.0, 1.0);
@@ -145,8 +153,9 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     float elevTint = smoothstep(0.6, 5.5, vHeight);
     color = mix(color, color * vec3(0.92, 0.99, 0.94), elevTint * 0.16);
 
-    float cloudShadow = fbm(vUv * 7.5 + vec2(uTime * 0.018, -uTime * 0.011));
-    color *= mix(0.92, 1.01, smoothstep(0.28, 0.82, cloudShadow));
+    vec2 cloudUv = (vec2(vUv.x, 1.0 - vUv.y) - 0.5) / 2.1 + 0.5;
+    float cloudShadow = cloudBanks(cloudUv, uTime);
+    color *= 1.0 - cloudShadow * 0.12;
 
     // Geographic seasonal transition: a wave travels outward from its origin.
     // The imagery stays intact. Only colour grading changes inside the wave.
@@ -193,7 +202,7 @@ const TERRAIN_FRAGMENT = /* glsl */ `
     if (uFocusStrength > 0.001) {
       float focusDistance = distance(vUv, uFocusCenter);
       float dim = smoothstep(0.055, 0.19, focusDistance);
-      color = mix(color, color * vec3(0.34, 0.4, 0.37) + vec3(0.012, 0.022, 0.017), dim * uFocusStrength * 0.78);
+      color = mix(color, color * vec3(0.34, 0.4, 0.37) + vec3(0.012, 0.022, 0.017), dim * uFocusStrength * 0.40);
     }
 
     gl_FragColor = vec4(color, 1.0);
@@ -216,12 +225,18 @@ const RIVER_FRAGMENT = /* glsl */ `
   uniform float uTime;
   varying vec3 vWorldPos;
   void main() {
-    float sweep = sin(vWorldPos.x * 0.55 + vWorldPos.z * 0.36 - uTime * 1.1) * 0.5 + 0.5;
-    float ripples = sin(vWorldPos.x * 2.1 - uTime * 1.9) * sin(vWorldPos.z * 1.6 - uTime * 1.5);
-    float sparkle = pow(clamp(sweep * 0.72 + ripples * 0.28, 0.0, 1.0), 6.0) * 0.18;
-    vec3 base = mix(vec3(0.06, 0.19, 0.23), vec3(0.2, 0.48, 0.54), 0.5 + sweep * 0.2);
-    vec3 color = base + vec3(sparkle);
-    gl_FragColor = vec4(color, 0.55);
+    vec3 viewDir = normalize(cameraPosition - vWorldPos);
+    float flow = vWorldPos.x * 0.55 + vWorldPos.z * 0.36;
+    float a = flow * 4.0 - uTime * 0.55;
+    float b = vWorldPos.x * 1.3 - vWorldPos.z * 2.2 - uTime * 0.31;
+    vec3 n = normalize(vec3(cos(a) * 0.045 + cos(b) * 0.025, 1.0, sin(a) * 0.055));
+    vec3 sun = normalize(vec3(-0.48, 0.84, 0.24));
+    float fresnel = 0.025 + 0.65 * pow(1.0 - max(dot(n, viewDir), 0.0), 5.0);
+    vec3 water = vec3(0.115, 0.205, 0.17);
+    vec3 sky = vec3(0.58, 0.68, 0.64);
+    float glint = pow(max(dot(n, normalize(sun + viewDir)), 0.0), 180.0);
+    vec3 color = mix(water, sky, fresnel) + vec3(1.0, 0.82, 0.53) * glint * 0.65;
+    gl_FragColor = vec4(color, 0.72);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
@@ -302,6 +317,7 @@ function buildTerrainGeometry(assets: MapAssets, segments: number) {
 }
 
 export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
+  const reducedMotion = useReducedMotion();
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
   const geometry = useMemo(
@@ -403,7 +419,7 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
     const current = materialRef.current;
     if (current) {
       elapsedRef.current = state.clock.elapsedTime;
-      current.uniforms.uTime.value = elapsedRef.current;
+      current.uniforms.uTime.value = reducedMotion ? 0 : elapsedRef.current;
       const transition = wave.current;
       const elapsed = Math.max(0, elapsedRef.current - transition.start);
       const fraction = transition.running
@@ -576,6 +592,7 @@ function buildRiverGeometry(assets: MapAssets, y: number) {
 }
 
 export function Rivers({ assets, y }: RiversProps) {
+  const reducedMotion = useReducedMotion();
   const meshRef = useRef<import("three").Mesh>(null);
   const geometry = useMemo(() => buildRiverGeometry(assets, y), [assets, y]);
   const material = useMemo(
@@ -594,7 +611,7 @@ export function Rivers({ assets, y }: RiversProps) {
 
   useFrame((state) => {
     const current = meshRef.current?.material;
-    if (current instanceof ShaderMaterial) current.uniforms.uTime.value = state.clock.elapsedTime;
+    if (current instanceof ShaderMaterial) current.uniforms.uTime.value = reducedMotion ? 0 : state.clock.elapsedTime;
   });
 
   useEffect(() => {

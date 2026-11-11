@@ -1,8 +1,11 @@
 "use client";
+import { useReducedMotion } from "./useReducedMotion";
 
+import { CLOUD_FIELD_GLSL } from "@/lib/map/cloudField";
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
+  BackSide,
   Data3DTexture,
   GLSL3,
   LinearFilter,
@@ -179,6 +182,8 @@ const CLOUD_FRAGMENT = /* glsl */ `
     return fract((p3.x + p3.y) * p3.z);
   }
 
+  ${CLOUD_FIELD_GLSL}
+
   float cloudDensity(vec3 p) {
     vec3 size = uMax - uMin;
     vec3 uvw = (p - uMin) / size;
@@ -188,7 +193,7 @@ const CLOUD_FRAGMENT = /* glsl */ `
 
     // Two overlapping noise fields: broad masses plus cellular billows. The
     // slower second field drifts at a different rate so the edges churn.
-    vec3 wind = vec3(uTime * 0.014, 0.0, uTime * 0.009);
+    vec3 wind = vec3(uTime * 0.0007, 0.0, uTime * 0.00035);
     vec3 q = uvw * vec3(1.55, 1.9, 1.55) + wind;
 
     float shape = texture(uNoise, q).r;
@@ -196,15 +201,22 @@ const CLOUD_FRAGMENT = /* glsl */ `
 
     float base = shape * 0.7 + billow * 0.5;
     float body = smoothstep(uCoverage, uCoverage + 0.16, base);
-    float erosion = mix(0.58, 1.0, smoothstep(0.12, 0.9, shape));
-
-    return body * erosion * height * uDensity;
+    float detail = texture(uNoise, q * 3.7 + wind * 0.3).g;
+    body = max(0.0, body - (1.0 - detail) * 0.24 * (1.0 - body));
+    // Sculpt separate banks around a clear central view corridor.
+    float edge = smoothstep(0.0, 0.12, uvw.x) * smoothstep(0.0, 0.12, 1.0-uvw.x)
+               * smoothstep(0.0, 0.12, uvw.z) * smoothstep(0.0, 0.12, 1.0-uvw.z);
+    return body * cloudBanks(uvw.xz, uTime) * height * edge * uDensity;
   }
 
   float lightTransmittance(vec3 p) {
     // One shadow tap toward the sun gives soft self-shadowing without the
     // cost of a full light march.
-    return exp(-cloudDensity(p + uSun * 2.1) * 1.5);
+    float opticalDepth = 0.0;
+    for (int j = 1; j <= 3; j++) {
+      opticalDepth += cloudDensity(p + uSun * float(j) * 2.4) * 2.4;
+    }
+    return exp(-opticalDepth * 0.35);
   }
 
   void main() {
@@ -230,7 +242,7 @@ const CLOUD_FRAGMENT = /* glsl */ `
     float transmittance = 1.0;
     float phase = 0.68 + 0.32 * pow(max(dot(rayDir, uSun), 0.0), 2.5);
 
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 40; i++) {
       if (i >= uSteps || t > tFar || transmittance < 0.012) break;
       vec3 p = rayOrigin + rayDir * t;
       float density = cloudDensity(p);
@@ -266,6 +278,7 @@ function lowPowerDevice() {
 }
 
 export function VolumetricClouds({ base, width, depth }: Props) {
+  const reducedMotion = useReducedMotion();
   const mesh = useRef<Mesh>(null);
   const lowPower = useMemo(() => lowPowerDevice(), []);
   const noise = useMemo(() => makeCloudNoise(lowPower ? 40 : 48), [lowPower]);
@@ -274,8 +287,8 @@ export function VolumetricClouds({ base, width, depth }: Props) {
   const bounds = useMemo(() => {
     const halfWidth = width * 1.05;
     const halfDepth = depth * 1.05;
-    const bottom = base + 7;
-    const top = base + 26;
+    const bottom = base + 12;
+    const top = base + 25;
     return {
       size: [halfWidth * 2, top - bottom, halfDepth * 2] as [number, number, number],
       center: [0, (top + bottom) / 2, 0] as [number, number, number],
@@ -288,19 +301,20 @@ export function VolumetricClouds({ base, width, depth }: Props) {
     () =>
       new ShaderMaterial({
         glslVersion: GLSL3,
+        side: BackSide,
         uniforms: {
           uNoise: { value: noise },
           uMin: { value: bounds.min },
           uMax: { value: bounds.max },
-          uSun: { value: new Vector3(-0.46, 0.76, 0.46).normalize() },
+          uSun: { value: new Vector3(-0.48, 0.84, 0.24).normalize() },
           uShadowTint: { value: new Vector3(0.58, 0.65, 0.67) },
           uSunTint: { value: new Vector3(0.98, 0.96, 0.89) },
           uTime: { value: 0 },
-          uCoverage: { value: 0.56 },
+          uCoverage: { value: 0.48 },
           uDensity: { value: 1.8 },
           uSigma: { value: 0.5 },
-          uOpacity: { value: lowPower ? 0.42 : 0.54 },
-          uSteps: { value: lowPower ? 12 : 22 },
+          uOpacity: { value: 0.88 },
+          uSteps: { value: lowPower ? 14 : 32 },
         },
         vertexShader: CLOUD_VERTEX,
         fragmentShader: CLOUD_FRAGMENT,
@@ -316,7 +330,7 @@ export function VolumetricClouds({ base, width, depth }: Props) {
   useFrame((state) => {
     const cloudMaterial = mesh.current?.material;
     if (cloudMaterial instanceof ShaderMaterial) {
-      cloudMaterial.uniforms.uTime.value = state.clock.elapsedTime;
+      cloudMaterial.uniforms.uTime.value = reducedMotion ? 0 : state.clock.elapsedTime;
     }
   });
 
