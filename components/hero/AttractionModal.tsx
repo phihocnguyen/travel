@@ -36,7 +36,7 @@ export default function AttractionModal() {
     };
   }, [attraction, setSelectedAttractionId]);
   if (!attraction) return null;
-  return <div className="checkpoint-fonts fixed inset-0 z-[80] flex items-end justify-end p-3 sm:items-center sm:p-6">
+  return <div className="checkpoint-fonts fixed inset-0 z-[120] flex items-end justify-end p-3 sm:items-center sm:p-6">
     <button type="button" className="absolute inset-0 cursor-default bg-black/30 backdrop-blur-[3px]" onClick={() => setSelectedAttractionId(null)} aria-label="Đóng thông tin điểm đến" />
     <article role="dialog" aria-modal="true" aria-labelledby="checkpoint-title" className="relative flex max-h-[90dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-[#f8f7f3] text-[#292c28] shadow-2xl">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b border-black/10 px-5 py-4 sm:px-6">

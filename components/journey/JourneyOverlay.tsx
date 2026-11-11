@@ -83,7 +83,7 @@ export default function JourneyOverlay() {
   return (
     <div
       ref={root}
-      className="pointer-events-none absolute inset-0 z-[35] font-sans text-forest"
+      className="pointer-events-none absolute inset-0 z-[60] font-sans text-forest"
       aria-label="Hành trình khám phá Cao Lãnh, Đồng Tháp"
     >
       <div
