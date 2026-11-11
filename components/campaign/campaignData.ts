@@ -22,8 +22,8 @@ export const EVENT = {
     "Thử sức với các trò chơi, tích lũy Điểm Vườn và nhận những phần quà thú vị.",
   ],
   meta: [
-    { label: "Thời gian", value: "Dự kiến 21/11/2026" },
-    { label: "Địa điểm", value: "TP. Hồ Chí Minh" },
+    { label: "Thời gian", value: "17/11/2026" },
+    { label: "Địa điểm", value: "Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Tăng Nhơn Phú, TP. Hồ Chí Minh" },
   ],
   ctaTitle: "SẴN SÀNG KHỞI HÀNH?",
   ctaBody:

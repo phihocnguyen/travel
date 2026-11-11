@@ -1,6 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowUpRight, Clapperboard, Compass, House, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, Search, Settings2, Sparkles, Ticket, X } from 'lucide-react';
@@ -58,7 +59,7 @@ export default function UserDashboardShell({ user, children }: { user: Dashboard
     {open && <button type="button" aria-label="Đóng menu" onClick={close} className="fixed inset-0 z-40 bg-[#243c31]/35 backdrop-blur-sm lg:hidden" />}
     <aside ref={sidebar} inert={mobile && !open} role={mobile && open ? 'dialog' : undefined} aria-modal={mobile && open ? true : undefined} aria-label="Điều hướng dashboard" className={`fixed inset-y-0 left-0 z-50 flex w-[224px] flex-col bg-[#294438] text-white transition-[width,transform] duration-200 lg:w-[var(--sidebar-width)] ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
       <div className="flex h-24 shrink-0 items-center justify-between px-6">
-        <Link href="/dashboard" onClick={close} aria-label="Vị Xoài Dẫn Lối — Tổng quan" className="flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] bg-[#e4eac1] text-[#2f483b]"><Compass size={22} strokeWidth={1.6} /></span><span className={collapsed ? 'lg:hidden' : ''}><span className="block text-[17px] font-extrabold tracking-tight">Vị Xoài<span className="text-[#e4eac1]">.</span></span><span className="text-[9px] tracking-[0.18em] text-[#b3c1aa]">DẪN LỐI CHU DU</span></span></Link>
+        <Link href="/dashboard" onClick={close} aria-label="Vị Xoài Dẫn Lối — Tổng quan" className="flex items-center gap-3"><Image src="/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg" alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-xl bg-white object-contain" /><span className={collapsed ? 'lg:hidden' : ''}><span className="block text-[17px] font-extrabold tracking-tight">Vị Xoài<span className="text-[#e4eac1]">.</span></span><span className="text-[9px] tracking-[0.18em] text-[#b3c1aa]">DẪN LỐI CHU DU</span></span></Link>
         <button type="button" aria-label="Đóng menu" onClick={close} className="rounded-lg p-1 text-white/70 lg:hidden"><X size={18} /></button>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto px-4 pt-6">

@@ -1,8 +1,36 @@
-import { type TicketInput, type TicketTitleTransform, type TicketTextTransform } from "./types";
+import { type TicketInput, type TicketTitleTransform, type TicketTextTransform, TICKET_STICKER_ASSETS, STICKER_CHOICES, type TicketSticker } from "./types";
 import { FIXED_TICKET, TICKET_MESSAGES } from "./template";
 import { TICKET_NAME_FONTS } from "./name-style";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 export class TicketValidationError extends Error {}
+
+const MAX_STICKERS = 8;
+const TICKET_ASPECT_RATIO = 1417 / 827;
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+function normalizeStickers(value: unknown): TicketSticker[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, MAX_STICKERS).flatMap((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const raw = item as Record<string, unknown>;
+    const asset = TICKET_STICKER_ASSETS.find((choice) => choice.id === raw.asset)?.id;
+    const emoji = STICKER_CHOICES.find((choice) => choice === raw.emoji);
+    if (!asset && !emoji) return [];
+    const number = (key: string, fallback: number) => {
+      const parsed = Number(raw[key]);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+    const size = clamp(number("size", 18), 6, 30);
+    const rotation = clamp(number("rotation", 0), -30, 30);
+    const rotatedFactor = Math.abs(Math.cos(rotation * Math.PI / 180)) + Math.abs(Math.sin(rotation * Math.PI / 180));
+    const xMargin = size * rotatedFactor / 2;
+    const x = clamp(number("x", 20), xMargin, 100 - xMargin);
+    const yMargin = size * TICKET_ASPECT_RATIO * rotatedFactor / 2;
+    const y = clamp(number("y", 70), yMargin, 100 - yMargin);
+    const id = typeof raw.id === "string" && raw.id.length <= 80 ? raw.id : `sticker-${index}`;
+    return [{ id, ...(asset ? { asset } : { emoji }), x, y, size, rotation }];
+  });
+}
 
 function text(value: unknown, fallback: string, maxLength: number): string {
   if (typeof value !== "string") return fallback;
@@ -58,5 +86,5 @@ export function normalizeInput(value: unknown): NormalizedTicket {
   const theme = raw.theme && typeof raw.theme === "object" ? raw.theme as Record<string, unknown> : {};
   const ink = typeof theme.ink === "string" && /^#[0-9a-f]{6}$/i.test(theme.ink) ? theme.ink : FIXED_TICKET.theme.ink;
   const nameFont = TICKET_NAME_FONTS.find(font => font.id === theme.nameFont)?.id ?? "serif";
-  return { ...FIXED_TICKET, theme: { ...FIXED_TICKET.theme, ink, nameFont }, to: recipient, message: selectedMessage.text };
+  return { ...FIXED_TICKET, theme: { ...FIXED_TICKET.theme, ink, nameFont }, stickers: normalizeStickers(raw.stickers), to: recipient, message: selectedMessage.text };
 }

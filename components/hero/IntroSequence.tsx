@@ -64,7 +64,7 @@ export default function IntroSequence() {
           Vị Xoài Dẫn Lối
         </span>
         <span className="hidden text-forest/60 sm:block">
-          Trạm Hẹn Cao Lãnh · 21.11.2026
+          Trạm Hẹn Cao Lãnh · 17.11.2026
         </span>
       </header>
 
@@ -126,7 +126,7 @@ export default function IntroSequence() {
           </div>
 
           <div className="absolute -right-3 -top-4 rotate-3 rounded-2xl bg-mango px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-forest shadow-card">
-            21.11.2026
+            17.11.2026
           </div>
 
           <div className="absolute -bottom-5 left-5 max-w-[15rem] rounded-2xl border border-forest/10 bg-cream-soft/95 px-5 py-4 shadow-card backdrop-blur">
@@ -141,7 +141,7 @@ export default function IntroSequence() {
       </div>
 
       <footer className="relative z-10 flex items-center justify-between gap-4 text-[8px] font-medium uppercase tracking-[0.16em] text-forest/40">
-        <span>Trạm Hẹn Cao Lãnh · TP. Hồ Chí Minh</span>
+        <span>Trạm Hẹn Cao Lãnh · Đại học FPT TP. Hồ Chí Minh</span>
         <span className="hidden sm:block">
           Satellite © Esri · Terrain © Mapzen/AWS · Data © OpenStreetMap
         </span>

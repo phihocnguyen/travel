@@ -11,12 +11,21 @@ export type TicketTheme = {
 
 export type TicketSticker = {
   id: string;
-  emoji: string;
+  asset?: string;
+  emoji?: string;
   x: number;
   y: number;
   size: number;
   rotation: number;
 };
+
+export const TICKET_STICKER_ASSETS = [
+  { id: "basket", label: "Rổ xoài", src: "/Không%20viền/roxoai.png" },
+  { id: "lotus-rice", label: "Xôi xoài", src: "/Không%20viền/xoixoai.png" },
+  { id: "boat", label: "Xuồng ba lá", src: "/Không%20viền/xuongg.png" },
+  { id: "conical-hat", label: "Nón lá", src: "/Không%20viền/Nonla.png" },
+  { id: "brand", label: "Logo Vị Xoài", src: "/Không%20viền/typ.png" },
+] as const;
 
 export type TicketImage = {
   url: string | null;

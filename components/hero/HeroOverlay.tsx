@@ -7,10 +7,10 @@ import { ATTRACTIONS } from "@/lib/map/attractions";
 import { useMapUI } from "@/components/map/MapUIContext";
 
 const MENU_ITEMS = [
-  { label: "Overview", note: "The Mekong Delta" },
-  { label: "Destinations", note: `${ATTRACTIONS.length} checkpoints` },
-  { label: "Ecology", note: "Tram Chim · wetlands" },
-  { label: "Culture", note: "Heritage · craft villages" },
+  { label: "Tổng quan", note: "Đồng bằng sông Cửu Long" },
+  { label: "Điểm đến", note: `${ATTRACTIONS.length} điểm dừng` },
+  { label: "Sinh thái", note: "Tràm Chim · vùng đất ngập nước" },
+  { label: "Văn hóa", note: "Di sản · làng nghề" },
 ];
 
 function AudioIcon({ muted }: { muted: boolean }) {
@@ -125,20 +125,20 @@ export default function HeroOverlay() {
             <span />
             <span />
           </span>
-          Menu
+          Danh mục
         </button>
 
         <div className="hero-brand">
-          <span className="hero-brand__name">Dong Thap</span>
-          <span className="hero-brand__tag">The waterways · 2025</span>
+          <span className="hero-brand__name">Đồng Tháp</span>
+          <span className="hero-brand__tag">Miền sông nước · 2025</span>
         </div>
 
         <div className="hero-header__right">
           <Link href="/login" className="hero-auth-link">
-            Sign in
+            Đăng nhập
           </Link>
           <span className="hero-checkpoint-count">
-            {ATTRACTIONS.length} checkpoints
+            {ATTRACTIONS.length} điểm dừng
           </span>
           <button
             type="button"
@@ -148,7 +148,7 @@ export default function HeroOverlay() {
               setInquireOpen(true);
             }}
           >
-            Contact
+            Liên hệ
           </button>
         </div>
       </header>
@@ -157,15 +157,15 @@ export default function HeroOverlay() {
         <div className="hero-intro">
           <p className="hero-kicker">
             <span className="hero-kicker__line" aria-hidden />
-            <span>Mekong Delta</span>
+            <span>Đồng bằng sông Cửu Long</span>
             <span className="hero-kicker__dot" aria-hidden />
-            <span>Vietnam</span>
+            <span>Việt Nam</span>
             <span className="hero-kicker__line" aria-hidden />
           </p>
 
           <h1 className="hero-title">
-            <span className="hero-title__main">Dong Thap</span>
-            <span className="hero-title__accent">the waterways</span>
+            <span className="hero-title__main">Đồng Tháp</span>
+            <span className="hero-title__accent">miền sông nước</span>
           </h1>
 
           <div className="hero-rule" aria-hidden>
@@ -173,8 +173,8 @@ export default function HeroOverlay() {
           </div>
 
           <p className="hero-subtitle">
-            Where the Tien River opens into a sea of water, lotus fields,
-            melaleuca groves and winding canals shape a gentle land.
+            Nơi dòng Tiền mở ra mênh mang sông nước, những cánh đồng sen,
+            rừng tràm và con rạch quanh co dệt nên miền đất hiền hòa.
           </p>
 
           <div className="hero-actions">
@@ -184,7 +184,7 @@ export default function HeroOverlay() {
               onClick={() => explore(false)}
               disabled={!ready}
             >
-              <span>{ready ? "Explore the map" : "Loading the map"}</span>
+              <span>{ready ? "Khám phá bản đồ" : "Đang tải bản đồ"}</span>
               <ArrowIcon />
             </button>
             <button
@@ -194,7 +194,7 @@ export default function HeroOverlay() {
               disabled={!ready}
             >
               <AudioIcon muted={false} />
-              Begin with sound
+              Bắt đầu với âm thanh
             </button>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function HeroOverlay() {
       {explored && selectedAttractionId == null && (
         <div className="hero-hint">
           <span className="hero-hint__dot" aria-hidden />
-          Hover to see communes · Tap a checkpoint to explore
+          Di chuột để xem các xã · Chạm vào điểm dừng để khám phá
         </div>
       )}
 
@@ -219,20 +219,20 @@ export default function HeroOverlay() {
           <AudioIcon muted={!audioEnabled} />
           <span>
             {!explored
-              ? "Start without sound"
+              ? "Bắt đầu không âm thanh"
               : audioEnabled
-                ? "Mute sound"
-                : "Enable sound"}
+                ? "Tắt âm thanh"
+                : "Bật âm thanh"}
           </span>
         </button>
 
         <p className="hero-footer__hint">
-          Drag to rotate · Scroll to zoom · Tap to select
+          Kéo để xoay · Cuộn để phóng to · Chạm để chọn
         </p>
 
         <p className="hero-attribution">
-          Satellite imagery © Esri, Maxar, Earthstar Geographics · Terrain ©
-          Mapzen/AWS · Data © OpenStreetMap
+          Ảnh vệ tinh © Esri, Maxar, Earthstar Geographics · Địa hình ©
+          Mapzen/AWS · Dữ liệu © OpenStreetMap
         </p>
       </footer>
 
@@ -241,9 +241,9 @@ export default function HeroOverlay() {
         aria-live="polite"
       >
         <div className="hero-loader__inner">
-          <p className="hero-loader__brand">Dong Thap</p>
+          <p className="hero-loader__brand">Đồng Tháp</p>
           <p className="hero-loader__label">
-            {ready ? "Ready" : "Building the waterways map"}
+            {ready ? "Sẵn sàng" : "Đang dựng bản đồ sông nước"}
           </p>
           <div className="hero-loader__track">
             <span style={{ width: `${progress}%` }} />
@@ -258,13 +258,13 @@ export default function HeroOverlay() {
       >
         <div className="hero-drawer__head">
           <span className="hero-brand__name hero-brand__name--dark">
-            Dong Thap
+            Đồng Tháp
           </span>
           <button
             type="button"
             className="hero-drawer__close"
             onClick={() => setMenuOpen(false)}
-            aria-label="Close menu"
+            aria-label="Đóng danh mục"
           >
             ×
           </button>
@@ -293,12 +293,12 @@ export default function HeroOverlay() {
             }}
           >
             <span className="hero-drawer__index">05</span>
-            <span className="hero-drawer__label">Contact</span>
-            <span className="hero-drawer__note">Partnership · Press</span>
+            <span className="hero-drawer__label">Liên hệ</span>
+            <span className="hero-drawer__note">Hợp tác · Báo chí</span>
           </button>
         </nav>
         <p className="hero-drawer__foot">
-          The interactive atlas of Dong Thap · Travel checkpoints
+          Bản đồ tương tác Đồng Tháp · Các điểm dừng hành trình
         </p>
       </div>
 
@@ -307,7 +307,7 @@ export default function HeroOverlay() {
           type="button"
           className="hero-scrim"
           onClick={() => setMenuOpen(false)}
-          aria-label="Close menu"
+          aria-label="Đóng danh mục"
         />
       )}
 
@@ -315,7 +315,7 @@ export default function HeroOverlay() {
         className={`inquire-modal${inquireOpen ? " is-open" : ""}`}
         role="dialog"
         aria-modal="true"
-        aria-label="Contact"
+        aria-label="Liên hệ"
         aria-hidden={!inquireOpen}
       >
         <div className="inquire-card">
@@ -323,33 +323,33 @@ export default function HeroOverlay() {
             type="button"
             className="inquire-card__close"
             onClick={() => setInquireOpen(false)}
-            aria-label="Close"
+            aria-label="Đóng"
           >
             ×
           </button>
-          <p className="inquire-card__eyebrow">Inquire</p>
-          <h2 className="inquire-card__title">Connect with Dong Thap</h2>
+          <p className="inquire-card__eyebrow">Gửi lời nhắn</p>
+          <h2 className="inquire-card__title">Kết nối cùng Đồng Tháp</h2>
           {sent ? (
             <p className="inquire-card__done">
-              Thank you. We have received your message and will reply as soon
-              as possible.
+              Cảm ơn bạn. Chúng tôi đã nhận được lời nhắn và sẽ phản hồi sớm
+              nhất có thể.
             </p>
           ) : (
             <form onSubmit={submitInquire} className="inquire-form">
               <label>
-                <span>Full name</span>
+                <span>Họ và tên</span>
                 <input name="name" required autoComplete="name" />
               </label>
               <label>
-                <span>Email</span>
+                <span>Địa chỉ email</span>
                 <input name="email" type="email" required autoComplete="email" />
               </label>
               <label>
-                <span>Message</span>
+                <span>Lời nhắn</span>
                 <textarea name="message" rows={3} required />
               </label>
               <button type="submit" className="hero-cta hero-cta--primary">
-                Send message
+                Gửi lời nhắn
                 <ArrowIcon />
               </button>
             </form>
@@ -362,7 +362,7 @@ export default function HeroOverlay() {
           type="button"
           className="hero-scrim"
           onClick={() => setInquireOpen(false)}
-          aria-label="Close contact"
+          aria-label="Đóng cửa sổ liên hệ"
         />
       )}
     </div>

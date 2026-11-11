@@ -5,7 +5,7 @@ test('mock chatbot supports the four suggested topics', () => {
   expect(CHAT_TOPICS.map(topic => mockChatAnswer(topic).links?.[0].href)).toEqual([
     '/map', '/map', '/dashboard/tickets/new', '/dashboard/videos?compose=1',
   ]);
-  expect(mockChatAnswer(CHAT_TOPICS[2]).text).toContain('Dự kiến 21/11/2026');
+  expect(mockChatAnswer(CHAT_TOPICS[2]).text).toContain('17/11/2026');
 });
 
 test('mock chatbot understands Vietnamese itinerary and ticket requests', () => {

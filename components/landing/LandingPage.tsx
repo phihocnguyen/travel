@@ -115,12 +115,39 @@ export default function LandingPage() {
   const root = useRef<HTMLElement>(null);
   const navBackground = useRef<HTMLSpanElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("#hero");
 
   useEffect(() => {
     const update = () => setScrolled((previous) => previous ? window.scrollY > 8 : window.scrollY > 48);
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  useEffect(() => {
+    const sections = ["hero", "story", "destinations", "photos", "cta"];
+    let frame = 0;
+    const update = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        const marker = window.innerHeight * 0.38;
+        let current = "#hero";
+        for (const id of sections) {
+          const section = document.getElementById(id);
+          if (section && section.getBoundingClientRect().top <= marker) current = `#${id}`;
+        }
+        setActiveSection((previous) => previous === current ? previous : current);
+        frame = 0;
+      });
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => {
@@ -552,7 +579,7 @@ export default function LandingPage() {
         }
 
         .font-display {
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-display);
         }
 
         .font-script {
@@ -649,7 +676,8 @@ export default function LandingPage() {
                 key={name}
                 data-nav-item
                 href={href}
-                className={`nav-color text-[12px] font-bold transition-colors ${scrolled ? "text-[#14342a]/85 hover:text-[#b48325]" : "text-white/85 hover:text-[#ffe294]"}`}
+                aria-current={activeSection === href ? "location" : undefined}
+                className={`nav-color relative text-[12px] font-bold transition-colors ${activeSection === href ? `${scrolled ? "text-[#9a6818]" : "text-[#ffe294]"} after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-[#d7a83e]` : scrolled ? "text-[#14342a]/85 hover:text-[#b48325]" : "text-white/85 hover:text-[#ffe294]"}`}
               >
                 {name}
               </a>
@@ -698,12 +726,12 @@ export default function LandingPage() {
             <h1 className="hero-title font-display text-[clamp(38px,6vw,90px)] font-black uppercase leading-[.99] tracking-[-.065em]">
               <span className="block overflow-hidden">
                 <span data-hero-title className="block">
-                  THE TASTE
+                  HƯƠNG VỊ
                 </span>
               </span>
               <span className="block overflow-hidden">
                 <span data-hero-title className="block">
-                  OF CAO LANH
+                  CAO LÃNH
                 </span>
               </span>
             </h1>
@@ -713,7 +741,7 @@ export default function LandingPage() {
                 data-hero-script
                 className="font-script text-[clamp(38px,6.5vw,96px)] italic leading-[1.05] tracking-[-.075em] text-[#ffe1a0]"
               >
-                A Mango Journey
+                Hành trình vị xoài
               </p>
             </div>
 
@@ -782,7 +810,7 @@ export default function LandingPage() {
                 href="/map"
                 className="mt-4 inline-flex items-center gap-7 rounded-full bg-[#f0c85e] px-7 py-4 text-xs font-bold text-[#173b2f] shadow-[0_12px_35px_rgba(69,55,18,.2)] transition-colors hover:bg-[#ffdf84]"
               >
-                Explore Cao Lanh
+                Khám phá Cao Lãnh
                 <ArrowUpRight size={17} />
               </a>
             </div>
@@ -800,11 +828,11 @@ export default function LandingPage() {
               href="#story"
               className="flex items-center gap-3 hover:text-white"
             >
-              Scroll to discover
+              Cuộn xuống để khám phá
               <ArrowDown size={15} />
             </a>
             <span className="hidden sm:block">
-              Dong Thap · Vietnam
+              Đồng Tháp · Việt Nam
             </span>
           </div>
         </div>
@@ -824,16 +852,16 @@ export default function LandingPage() {
               className="mb-8 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.24em] text-[#5577a6]"
             >
               <span className="h-2 w-2 rounded-full bg-[#e3b94d]" />
-              01 / Our Story
+              01 / Câu chuyện
             </div>
 
             <div data-section-heading>
               <SplitTitle
                 className="font-display text-[clamp(38px,4.8vw,70px)] leading-[.99] tracking-[-.065em]"
                 lines={[
-                  { text: "A little fruit." },
-                  { text: "A thousand", italic: true },
-                  { text: "stories." },
+                  { text: "Một trái ngọt." },
+                  { text: "Ngàn", italic: true },
+                  { text: "câu chuyện." },
                 ]}
               />
             </div>
@@ -881,10 +909,10 @@ export default function LandingPage() {
               className="absolute -bottom-8 -left-4 rounded-2xl bg-[#f0c85e] px-7 py-6 shadow-xl sm:-left-10"
             >
               <p className="font-script text-3xl italic text-[#183e31]">
-                Made of nature
+                Kết tinh từ thiên nhiên
               </p>
               <p className="mt-2 text-[10px] font-semibold uppercase tracking-[.16em] text-[#36614b]">
-                CAO LANH · DONG THAP
+                CAO LÃNH · ĐỒNG THÁP
               </p>
             </div>
           </div>
@@ -906,15 +934,15 @@ export default function LandingPage() {
                 className="mb-7 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.24em] text-[#56759a]"
               >
                 <span className="h-2 w-2 rounded-full bg-[#e5b94e]" />
-                02 / Discover the Mekong
+                02 / Khám phá miền Tây
               </p>
 
               <div data-section-heading>
                 <SplitTitle
                   className="font-display text-[clamp(38px,5vw,72px)] leading-[.98] tracking-[-.065em]"
                   lines={[
-                    { text: "Every place," },
-                    { text: "a new feeling.", italic: true },
+                    { text: "Mỗi điểm đến," },
+                    { text: "một cảm xúc mới.", italic: true },
                   ]}
                 />
               </div>
@@ -975,15 +1003,15 @@ export default function LandingPage() {
             data-fade-up
             className="mb-9 text-[11px] font-bold uppercase tracking-[.3em] text-[#376782]"
           >
-            03 / YOUR NEXT JOURNEY
+            03 / CHUYẾN ĐI TIẾP THEO
           </p>
 
           <div data-section-heading>
             <SplitTitle
               className="font-display text-[clamp(42px,6vw,86px)] leading-[.95] tracking-[-.07em] text-[#163d43] [&_[data-split-line]]:mx-auto"
               lines={[
-                { text: "See you in" },
-                { text: "Cao Lanh.", italic: true },
+                { text: "Hẹn gặp ở" },
+                { text: "Cao Lãnh.", italic: true },
               ]}
             />
           </div>
@@ -1042,10 +1070,10 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-end justify-between gap-10 border-b border-white/20 pb-16">
             <div>
               <p className="mb-5 text-[10px] font-bold uppercase tracking-[.25em] text-[#a9c5b7]">
-                THE MANGO JOURNEY
+                HÀNH TRÌNH VỊ XOÀI
               </p>
               <h2 className="font-display text-[clamp(38px,5vw,72px)] font-bold tracking-[-.07em]">
-                caolanh<span className="text-[#f1d079]">.</span>
+                Cao Lãnh<span className="text-[#f1d079]">.</span>
               </h2>
             </div>
 
@@ -1060,9 +1088,9 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-between gap-5 text-[10px] font-semibold uppercase tracking-[.16em] text-white/50">
-            <span>© 2026 Cao Lanh Journey</span>
-            <span>Dong Thap, Vietnam</span>
-            <span>Made for the Mekong</span>
+            <span>© 2026 Hành trình Cao Lãnh</span>
+            <span>Đồng Tháp, Việt Nam</span>
+            <span>Dành cho miền Tây</span>
           </div>
         </div>
       </footer>

@@ -2,7 +2,7 @@
 .photo-library-heading { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:30px; margin-bottom:40px; }
 .photo-library-eyebrow { display:flex; align-items:center; gap:9px; margin-bottom:22px; color:#89936b; font-size:10px; font-weight:700; letter-spacing:.18em; }
 .photo-library-heading h2 { font-size:clamp(40px,5vw,72px); font-weight:650; line-height:1.06; letter-spacing:-.055em; }
-.photo-library-heading h2 em { font-family:'Playfair Display',Georgia,serif; font-weight:450; }
+.photo-library-heading h2 em { font-family:var(--font-display); font-weight:450; }
 .photo-library-heading>div>p:not(.photo-library-eyebrow) { color:#7a8978; font-size:13px; line-height:1.9; }
 .photo-library-heading>div>span { display:block; margin-top:16px; color:#9aa58b; font-size:10px; }
 .photo-library-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:30px; }

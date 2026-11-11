@@ -18,7 +18,7 @@ export default function JourneyOverlay() {
   const root = useRef<HTMLDivElement>(null);
   const {
     explored, ready, explore, journeyProgress,
-    setActiveChapter, activeChapter, season, setSeason, setJourneyProgress, setSelectedAttractionId, selectedAttractionId,
+    setActiveChapter, activeChapter, setJourneyProgress, setSelectedAttractionId, selectedAttractionId,
   } = useMapUI();
 
   useLayoutEffect(() => {
@@ -195,32 +195,6 @@ export default function JourneyOverlay() {
             </article>
           );
         })}
-      </div>
-
-      <div
-        className="pointer-events-auto absolute bottom-20 left-4 z-30 flex gap-1 rounded-full border border-cream/25 bg-forest/60 p-1 backdrop-blur-md sm:left-6"
-        role="group"
-        aria-label="Sắc thái mùa"
-      >
-        {([
-          ["mango", "Mùa xoài"],
-          ["dry", "Mùa khô"],
-          ["flood", "Mùa nước nổi"],
-        ] as const).map(([value, label]) => (
-          <button
-            type="button"
-            key={value}
-            onClick={() => setSeason(value)}
-            className={`rounded-full px-3 py-1.5 text-[9px] font-semibold transition-colors ${
-              season === value
-                ? "bg-cream text-forest"
-                : "text-cream/70 hover:text-cream"
-            }`}
-            aria-pressed={season === value}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       <footer className="absolute bottom-4 left-4 right-4 z-20 flex items-center gap-4 text-[8px] font-semibold uppercase tracking-[0.2em] text-cream/70 sm:left-6 sm:right-6 sm:text-[9px]">
