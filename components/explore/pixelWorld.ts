@@ -12,8 +12,6 @@ const paths: Point[][] = [
   [{x:1150,y:335},{x:1480,y:310},{x:1740,y:330}],
   [{x:1740,y:330},{x:1840,y:650},{x:1810,y:1000}],
   [{x:1080,y:805},{x:1450,y:850},{x:1810,y:1000}],
-  [{x:745,y:860},{x:870,y:1160},{x:1120,y:1370}],
-  [{x:1120,y:1370},{x:1510,y:1260},{x:1810,y:1000}],
 ];
 const hash = (x: number, y: number) => { let n = (x * 374761393 + y * 668265263) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967295; };
 const rect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string) => { c.fillStyle = fill; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
@@ -332,11 +330,6 @@ function drawSignatureScene(c:CanvasRenderingContext2D,stop:Stop,t:number,progre
     rect(c,85,320,790,55,"#6caeb5");for(let x=105;x<870;x+=62)rect(c,x,342,34,4,"#a4d1ca");
     rect(c,420,86,120,120,"#bd9874");rect(c,435,98,90,105,"#e0c69a");rect(c,465,66,30,120,"#a77b62");rect(c,470,58,20,13,"#dfbd8c");
     rect(c,360,208,240,19,"#9e765e");for(const x of [120,810]){rect(c,x-4,250,8,65,"#805d43");rect(c,x-22,250,44,10,"#ccaa77");}
-  } else if(stop.id==="chi-bo"){
-    rect(c,130,100,700,125,"#c9ae88");rect(c,150,112,660,99,"#e6d2a6");rect(c,110,82,740,26,"#a76755");rect(c,180,69,600,15,"#b98061");
-    for(const x of [245,480,715]){rect(c,x-38,122,76,88,"#9a795d");rect(c,x-30,129,60,78,"#d4bb95");rect(c,x-12,150,24,57,"#725743");}
-    rect(c,330,350,300,25,"#8b6a4d");for(let x=350;x<620;x+=31)rect(c,x,335,24,16,"#dfc792");
-    for(const x of [115,835]){tree(c,x,385);flower(c,x-20,430);flower(c,x+20,430);}
   }
 }
 function distanceToSegment(x:number,y:number,a:Point,b:Point){const dx=b.x-a.x,dy=b.y-a.y,u=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy)));return Math.hypot(x-a.x-u*dx,y-a.y-u*dy);}

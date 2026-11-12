@@ -37,7 +37,6 @@ export const STOPS: Stop[] = [
   { id: "vuon-xoai", name: "Vườn xoài Cao Lãnh", short: "Vườn xoài", category: "Nhà vườn", x: 745, y: 860, kind: "mango", color: "#d8aa4b", summary: "Gặp người làm vườn và tìm hiểu trái xoài Cát Chu theo mùa.", story: "Cao Lãnh nổi tiếng với những vườn xoài. Dạo dưới tán cây, nghe chuyện chăm trái và thưởng thức hương vị địa phương khi đúng mùa.", prompt: "Trái xoài chín vàng là phần thưởng cuối đường.", image: "/photos/vuon-xoai-f5d7675e-thumb.webp", href: "/map", photoGroup: "vuon-xoai" },
   { id: "my-phuoc-thanh", name: "Khu du lịch sinh thái Mỹ Phước Thành", short: "Đồng sen Mỹ Phước", category: "Sinh thái", x: 1740, y: 330, kind: "lotus", color: "#83ab8e", summary: "Một khoảng đồng sen và cảnh quê để dạo chơi, ngắm cảnh.", story: "Mỹ Phước Thành mang đến không gian đồng sen và cảnh quan đồng quê gần Cao Lãnh. Đi chậm qua lối ven nước và quan sát những sắc màu của miền Tây.", prompt: "Mặt nước lấp lánh dưới những cánh sen.", image: "/photos/my-phuoc-thanh-82eca7aa-thumb.webp", href: "/map", photoGroup: "my-phuoc-thanh" },
   { id: "tap-ket", name: "Di tích Địa điểm tập kết ra Bắc năm 1954", short: "Bến tập kết 1954", category: "Di sản", x: 1810, y: 1000, kind: "memorial", color: "#bc8a70", summary: "Không gian tưởng niệm bên sông Tiền.", story: "Di tích gợi lại sự kiện tập kết ra Bắc năm 1954 tại Cao Lãnh. Bến sông, tượng đài và khuôn viên cùng kể một câu chuyện lịch sử.", prompt: "Dừng bên sông để nhớ một chuyến đi xa.", image: "/photos/tap-ket-bd294019-thumb.webp", href: "/map", photoGroup: "tap-ket" },
-  { id: "chi-bo", name: "Khu lưu niệm Chi bộ An Nam Cộng sản Đảng", short: "Khu lưu niệm Chi bộ", category: "Di sản", x: 1120, y: 1370, kind: "temple", color: "#ae836e", summary: "Nhà lưu niệm và câu chuyện lịch sử vùng đất Cao Lãnh.", story: "Khu lưu niệm giới thiệu tư liệu về Chi bộ An Nam Cộng sản Đảng ở Hòa An và lịch sử địa phương.", prompt: "Mở từng trang tư liệu để tìm dấu xưa.", image: "/photos/chi-bo-5110da75-thumb.webp", href: "/map", photoGroup: "chi-bo" },
 ];
 
 export const INTERIOR = { width: 960, height: 690, entry: { x: 480, y: 540 }, exit: { x: 480, y: 649 } };
@@ -83,11 +82,6 @@ export const PHOTO_SPOTS: Record<string, PhotoSpot[]> = {
     {x:480,y:190,label:"Tượng đài",note:"Quan sát hình tượng tưởng niệm tại di tích.",photoIndex:2},
     {x:730,y:250,label:"Khuôn viên di tích",note:"Nhìn thêm một góc của khu di tích qua ảnh thật.",photoIndex:4},
   ],
-  "chi-bo": [
-    {x:235,y:250,label:"Nhà lưu niệm",note:"Ghé không gian lưu giữ câu chuyện lịch sử.",photoIndex:0},
-    {x:480,y:190,label:"Tư liệu Cao Lãnh",note:"Tìm hiểu dấu ấn của vùng đất qua ảnh chụp.",photoIndex:1},
-    {x:730,y:250,label:"Khuôn viên",note:"Dạo thêm một vòng quanh khu lưu niệm.",photoIndex:3},
-  ],
 };
 
 export type Worker = { x: number; y: number; name: string; role: string; lines: string[]; sprite: "farmer" | "vendor" | "rower" | "guide" | "gardener" | "caretaker" };
@@ -124,10 +118,6 @@ export const WORKERS: Record<string, Worker[]> = {
     {x:300,y:450,name:"Bác kể chuyện",role:"Kể lịch sử",sprite:"guide",lines:["Bến sông này gợi nhớ cuộc tập kết ra Bắc năm 1954.","Mình dừng một chút trước tượng đài để tưởng niệm nhé."]},
     {x:710,y:450,name:"Cô chăm vườn",role:"Chăm khuôn viên",sprite:"gardener",lines:["Hoa được chăm quanh khuôn viên tưởng niệm.","Các bức ảnh sẽ cho cháu thấy không gian ngoài đời."]},
   ],
-  "chi-bo": [
-    {x:300,y:450,name:"Cô thuyết minh",role:"Giới thiệu tư liệu",sprite:"guide",lines:["Khu lưu niệm kể câu chuyện về Chi bộ An Nam Cộng sản Đảng ở Hòa An.","Cháu thử trả lời ba câu hỏi ở bàn trưng bày nhé."]},
-    {x:710,y:450,name:"Bác trông nhà",role:"Giữ gìn di tích",sprite:"caretaker",lines:["Mỗi bức ảnh là một góc của khu lưu niệm hôm nay.","Đi chậm để xem hết các chi tiết nhé."]},
-  ],
 };
 
 export type Activity = { x:number;y:number; name:string; action:string; done:string; icon:"incense"|"flowers"|"fish"|"boat"|"cake"|"mango"|"lotus"; goal?:number };
@@ -161,15 +151,6 @@ export const QUIZZES: Record<string, Quiz> = {
       {question:"Sự kiện tập kết ra Bắc tại Cao Lãnh diễn ra năm nào?",options:["1945","1954","1960","1975"],answer:1,detail:"Di tích ghi dấu sự kiện tập kết ra Bắc năm 1954."},
       {question:"Cao Lãnh là khu vực tập kết chuyển quân trong bao lâu?",options:["30 ngày","60 ngày","100 ngày","Một năm"],answer:2,detail:"Đợt tập kết chuyển quân tại Cao Lãnh kéo dài 100 ngày."},
       {question:"Các chuyến tàu tại bến Cao Lãnh đưa đoàn người đi về hướng nào?",options:["Ra miền Bắc","Sang Campuchia","Về miền Tây","Ra biển Đông"],answer:0,detail:"Cán bộ, chiến sĩ và học sinh lên tàu tập kết ra miền Bắc."},
-    ],
-  },
-  "chi-bo": {
-    x:480,y:465,title:"Tìm hiểu khu lưu niệm Chi bộ",
-    source:"https://dongthap.gov.vn/tin-tuc/chi-tiet?id=6381532",
-    questions:[
-      {question:"Chi bộ An Nam Cộng sản Đảng đầu tiên của tỉnh ra đời ở làng nào?",options:["Mỹ Long","Hòa An","Tân Thuận Đông","Mỹ Hiệp"],answer:1,detail:"Chi bộ đầu tiên ra đời tại làng Hòa An."},
-      {question:"Khu lưu niệm lưu giữ điều gì về quá trình hình thành Chi bộ?",options:["Hiện vật và hình ảnh","Mẫu đá quý","Bản đồ thiên văn","Dụng cụ đánh cá"],answer:0,detail:"Nhà lưu niệm trưng bày hiện vật và hình ảnh về quá trình hình thành Chi bộ."},
-      {question:"Nhân vật nào được tưởng niệm tại Nhà lưu niệm?",options:["Nguyễn Trung Trực","Trương Định","Phạm Hữu Lầu","Võ Duy Dương"],answer:2,detail:"Không gian tưởng niệm dành cho đồng chí Phạm Hữu Lầu và đồng chí Trần Thị Nhượng."},
     ],
   },
 };
