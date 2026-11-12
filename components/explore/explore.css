@@ -63,3 +63,23 @@
 .ex-cakeSteps button.ex-cakeStepDone{border-color:#8bae7d;background:#d7e8ca;color:#4c7750}
 .ex-cakeSteps button.ex-cakeStepDone b{background:#6e9d65;color:white}
 @media(max-width:680px){.ex-cakeScene{height:135px;margin:6px auto}.ex-cakeSteps button{min-height:55px;font-size:9px;gap:3px}.ex-cakeSceneLabel{font-size:8px}}
+
+.ex-riverScene{position:relative;width:min(100%,460px);height:205px;margin:9px auto 10px;overflow:hidden;border:3px solid #355d43;background:#62aeb0;image-rendering:pixelated}
+.ex-riverScene>svg{display:block;width:100%;height:100%;image-rendering:pixelated}
+.ex-riverClue{position:absolute;display:grid;place-items:center;width:37px;height:37px;padding:0;border:2px solid #f7edca;background:#e5c879;color:#385d3e;font-family:Georgia,serif;font-size:24px;font-weight:900;box-shadow:3px 3px 0 #234631;transform:translate(-50%,-50%);cursor:pointer;transition:transform .15s,background-color .15s}
+.ex-riverClue:hover:not(:disabled),.ex-riverClue:focus-visible:not(:disabled){z-index:2;outline:3px solid white;transform:translate(-50%,-50%) scale(1.12)}
+.ex-riverClueFound{width:auto;min-width:37px;padding:2px 5px;background:#d8e9bc;color:#315b3c;font-family:Arial,Helvetica,sans-serif;font-size:8px;box-shadow:2px 2px 0 #234631}
+.ex-riverClueFound b{white-space:nowrap}
+.ex-riverBoat{position:absolute;left:50%;bottom:28px;width:84px;height:24px;transform:translateX(-50%);background:#805b3a;clip-path:polygon(0 0,100% 0,83% 100%,17% 100%);animation:ex-riverBob 1.7s ease-in-out infinite}
+.ex-riverBoat i{position:absolute;left:39px;bottom:5px;width:5px;height:28px;background:#d0b477;transform:rotate(24deg)}
+.ex-riverBoat b{position:absolute;left:20px;top:1px;color:#f4e2bd;font-size:13px}
+.ex-riverBoat>span{position:absolute;right:20px;top:0;color:#d89a68;font-size:13px}
+.ex-riverSceneLabel{position:absolute;left:7px;bottom:7px;padding:5px 7px;border:2px solid #355d43;background:#f7efcd;color:#3e6441;font-size:9px;font-weight:900}
+.ex-riverClueList{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:460px;margin:0 auto}
+.ex-riverClueList>div{display:flex;align-items:center;gap:6px;min-width:0;padding:6px;border:1px solid #c8c9a6;background:#eeebd3;text-align:left}
+.ex-riverClueList>div>b{display:grid;place-items:center;flex:none;width:20px;height:20px;background:#d7d8bc;color:#637554;font-size:11px}
+.ex-riverClueList span{display:grid;min-width:0}.ex-riverClueList strong{overflow:hidden;color:#506047;font-size:8px;text-overflow:ellipsis;white-space:nowrap}.ex-riverClueList small{overflow:hidden;color:#8a896f;font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+.ex-riverClueList .ex-riverListFound{border-color:#90ad78;background:#dfebcf}.ex-riverListFound>b{background:#709565;color:#fff}.ex-riverListFound strong{color:#365e3d}
+@keyframes ex-riverBob{50%{translate:0 -3px}}
+@media(max-width:680px){.ex-riverScene{height:158px;margin:6px auto}.ex-riverClue{width:32px;height:32px;font-size:20px}.ex-riverClueFound{width:auto;height:26px;font-size:7px}.ex-riverBoat{bottom:21px;width:70px;height:20px}.ex-riverBoat i{left:33px;bottom:4px}.ex-riverClueList{gap:4px}.ex-riverClueList>div{gap:4px;padding:4px}.ex-riverClueList>div>b{width:17px;height:17px;font-size:9px}.ex-riverClueList strong{font-size:7px}.ex-riverClueList small{font-size:6px}.ex-riverSceneLabel{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.ex-riverBoat{animation:none}}
