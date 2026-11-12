@@ -17,7 +17,7 @@ import {
 import { idAt } from "@/lib/geo/adminTextures";
 import { forEachRing, geometryContains } from "@/lib/geo/polygon";
 import { applyTextureQuality, type MapAssets } from "@/lib/map/assets";
-import { JOURNEY_CHECKPOINTS, getJourneyFrame } from "@/components/journey/journeyData";
+import { JOURNEY_CHECKPOINTS, getJourneyFocusStrength, getJourneyFrame } from "@/components/journey/journeyData";
 import { useMapUI } from "./MapUIContext";
 
 export const EXAGGERATION = 18;
@@ -447,7 +447,7 @@ export function Terrain({ assets, segments = 160, onHoverId }: TerrainProps) {
     const nearest = frame.chapter;
     let targetFocus = 0;
     if (!explored && nearest > 0 && nearest <= JOURNEY_CHECKPOINTS.length) {
-      targetFocus = frame.moving ? 0 : 1;
+      targetFocus = getJourneyFocusStrength(journeyProgress.current);
       const attraction = JOURNEY_CHECKPOINTS[nearest - 1].attraction;
       const [focalX, focalZ] = assets.projector.toLocal(attraction.lon, attraction.lat);
       focusTarget.set(

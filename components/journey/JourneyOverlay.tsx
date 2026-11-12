@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS, getJourneyFrame } from "./journeyData";
+import { JOURNEY_CHAPTERS, JOURNEY_CHECKPOINTS, getJourneyFocusStrength, getJourneyFrame } from "./journeyData";
 import JourneyStopCard from "./JourneyStopCard";
 import { useMapUI } from "../map/MapUIContext";
 
@@ -46,14 +46,11 @@ export default function JourneyOverlay() {
         chapter.inert = !visible;
         gsap.set(chapter, { autoAlpha: visible ? 1 : 0, y: 0, filter: "none" });
       });
-      if (nearest !== lastIndex) {
-        lastIndex = nearest;
-        setActiveChapter(nearest);
+      if (frame.chapter !== lastIndex) {
+        lastIndex = frame.chapter;
+        setActiveChapter(frame.chapter);
       }
-      // The focus only blooms near a checkpoint's hold segment; it fades while in transit.
-      const focus = nearest > 0 && nearest <= JOURNEY_CHECKPOINTS.length
-        ? (frame.moving ? 0 : 1) : 0;
-      stage.style.setProperty("--focus-strength", reduced ? "0" : focus.toFixed(3));
+      stage.style.setProperty("--focus-strength", getJourneyFocusStrength(p).toFixed(3));
     };
 
     const trigger = ScrollTrigger.create({

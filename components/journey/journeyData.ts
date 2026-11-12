@@ -11,7 +11,20 @@ export function getJourneyFrame(progress: number) {
   const t = Math.max(0, Math.min(1, (phase - 0.12) / 0.60));
   const transition = t * t * (3 - 2 * t);
   const moving = phase > 0.12 && phase < 0.72;
-  return { segment, transition, moving, chapter: phase >= 0.72 ? segment + 1 : segment };
+  return { segment, phase, transition, moving, chapter: phase >= 0.72 ? segment + 1 : segment };
+}
+
+/** Keep the checkpoint lit while stopped, with a short fade on arrival and departure. */
+export function getJourneyFocusStrength(progress: number) {
+  const { chapter, phase } = getJourneyFrame(progress);
+  if (chapter === 0) return 0;
+  const smooth = (value: number) => {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+  };
+  if (phase >= 0.72) return smooth((phase - 0.72) / 0.10);
+  if (phase <= 0.12) return 1;
+  return 1 - smooth((phase - 0.12) / 0.16);
 }
 
 // Spread the story across different marker indices rather than inventing coordinates.
