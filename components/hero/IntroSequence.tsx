@@ -78,7 +78,7 @@ export default function IntroSequence() {
           <h1 className="mt-5 font-display text-[clamp(2.6rem,5.6vw,5.4rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-forest">
             Theo vị xoài Cát,
             <br />
-            <em className="font-normal italic text-earth">mở lối chu du.</em>
+            <em className="font-normal italic text-earth">mở lối chu du</em>
           </h1>
 
           <p className="mt-5 max-w-md text-sm leading-relaxed text-forest/70 sm:text-[15px]">

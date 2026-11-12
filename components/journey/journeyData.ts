@@ -59,7 +59,7 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     index: "00",
     eyebrow: `${CAMPAIGN.name} · CAO LÃNH, ĐỒNG THÁP`,
     title: "Theo vị xoài Cát,",
-    emphasis: "mở lối chu du.",
+    emphasis: "mở lối chu du",
     description: CAMPAIGN.description,
     position: "center",
   },

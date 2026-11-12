@@ -861,9 +861,9 @@ export default function LandingPage() {
               <SplitTitle
                 className="font-display text-[clamp(38px,4.8vw,70px)] leading-[.99] tracking-[-.065em]"
                 lines={[
-                  { text: "Một trái ngọt." },
+                  { text: "Một trái ngọt" },
                   { text: "Ngàn", italic: true },
-                  { text: "câu chuyện." },
+                  { text: "câu chuyện" },
                 ]}
               />
             </div>
@@ -944,7 +944,7 @@ export default function LandingPage() {
                   className="font-display text-[clamp(38px,5vw,72px)] leading-[.98] tracking-[-.065em]"
                   lines={[
                     { text: "Mỗi điểm đến," },
-                    { text: "một cảm xúc mới.", italic: true },
+                    { text: "một cảm xúc mới", italic: true },
                   ]}
                 />
               </div>
@@ -1013,7 +1013,7 @@ export default function LandingPage() {
               className="font-display text-[clamp(42px,6vw,86px)] leading-[.95] tracking-[-.07em] text-[#163d43] [&_[data-split-line]]:mx-auto"
               lines={[
                 { text: "Hẹn gặp ở" },
-                { text: "Cao Lãnh.", italic: true },
+                { text: "Cao Lãnh", italic: true },
               ]}
             />
           </div>
@@ -1075,7 +1075,7 @@ export default function LandingPage() {
                 HÀNH TRÌNH VỊ XOÀI
               </p>
               <h2 className="font-display text-[clamp(38px,5vw,72px)] font-bold tracking-[-.07em]">
-                Cao Lãnh<span className="text-[#f1d079]">.</span>
+                Cao Lãnh
               </h2>
             </div>
 
