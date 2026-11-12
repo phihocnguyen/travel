@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpen, Camera, Compass, DoorOpen, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import { renderInterior, renderWorld } from "./pixelWorld";
@@ -14,9 +14,16 @@ import "./explore.css";
 type Player = { x: number; y: number; dir: number; moving: boolean };
 const START: Player = { x: 770, y: 540, dir: 0, moving: false };
 const SAVE_KEY = "cao-lanh-explore-stamps-v1";
+const DESKTOP_WEB_QUERY = "(min-width: 768px)";
+function subscribeDesktopWeb(onChange: () => void) {
+  const media = window.matchMedia(DESKTOP_WEB_QUERY);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
 const MOVE_KEYS: Record<string, [number, number]> = { ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0] };
 
 export default function ExploreGame() {
+  const desktopWeb = useSyncExternalStore(subscribeDesktopWeb, () => window.matchMedia(DESKTOP_WEB_QUERY).matches, () => false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<Player>({...START});
   const keysRef = useRef<Set<string>>(new Set());
@@ -126,7 +133,7 @@ export default function ExploreGame() {
         if(activity.icon==="incense")return;
         if(activity.icon==="mango"){destinationRef.current=null;setHarvestOpen(true);blip();return;}
         if(activity.icon==="cake"){destinationRef.current=null;setCakeOpen(true);blip();return;}
-        if(activity.icon==="boat"){destinationRef.current=null;setRiverTraceOpen(true);blip();return;}
+        if(activity.icon==="boat"){if(!desktopWeb)return;destinationRef.current=null;setRiverTraceOpen(true);blip();return;}
         const goal=activity.goal??3;const next=Math.min(goal,(activityProgress[inside.id]??0)+1);
         setActivityProgress(prev=>({...prev,[inside.id]:next}));setToast(next===goal?activity.done:`${activity.action} · ${next}/${goal}`);blip();return;
       }
@@ -137,7 +144,7 @@ export default function ExploreGame() {
     else if(boatSideRef.current==="east"&&Math.hypot(playerRef.current.x-XEO_QUYT_RIVER.eastDock.x,playerRef.current.y-XEO_QUYT_RIVER.eastDock.y)<68){crossingRef.current={from:"east",started:performance.now()};destinationRef.current=null;setCrossing(true);blip();}
     else if(boatSideRef.current==="west"&&Math.hypot(playerRef.current.x-XEO_QUYT_RIVER.westDock.x,playerRef.current.y-XEO_QUYT_RIVER.westDock.y)<68){crossingRef.current={from:"west",started:performance.now()};destinationRef.current=null;setCrossing(true);blip();}
     else if(nearRef.current)enterStop(nearRef.current);
-  },[photoIndex,dialogue,intro,journal,inside,leaveStop,enterStop,blip,activityProgress,quizId,openQuiz,harvestOpen,cakeOpen,riverTraceOpen]);
+  },[photoIndex,dialogue,intro,journal,inside,leaveStop,enterStop,blip,activityProgress,quizId,openQuiz,harvestOpen,cakeOpen,riverTraceOpen,desktopWeb]);
 
   const pickMango=(index:number)=>{
     if(pickedMangoes.includes(index)||pickedMangoes.length>=3)return;
@@ -285,12 +292,13 @@ export default function ExploreGame() {
       <div className={"ex-gameTop"}><span><i/> {inside?`ĐANG Ở TRONG · ${inside.short.toUpperCase()}`:"CAO LÃNH · THẾ GIỚI PIXEL"}</span><span className={"ex-gameTopRight"}><Compass size={14}/> {inside?"KHÁM PHÁ ẢNH THẬT":"TỰ DO KHÁM PHÁ"}</span></div>
       <div className={"ex-stage"}><canvas ref={canvasRef} onClick={clickMap} aria-label="Bản đồ trò chơi; dùng phím mũi tên hoặc W A S D để di chuyển, E để tương tác"/>
         {inside?<>
-          <div className={"ex-insideGuide"}><span className={"ex-insideKicker"}><Camera size={13}/> KHU KHÁM PHÁ</span><strong>{inside.name}</strong><p>{inside.prompt}</p><div>{PHOTO_SPOTS[inside.id].map((spot,i)=><button key={spot.label} onClick={()=>{destinationRef.current={x:spot.x,y:spot.y};setPhotoIndex(null);setDialogue(null);}}><span>{seenRef.current.has(`${inside.id}:${i}`)?"✓":"○"}</span>{spot.label}<ArrowRight size={11}/></button>)}</div>{activity&&<button className={"ex-activityJump"} onClick={()=>{destinationRef.current={x:activity.x,y:activity.y+50};setPhotoIndex(null);setDialogue(null);}}>✦ {activity.name} <b>{activityProgress[inside.id]??0}/{activity.goal??3}</b></button>}{QUIZZES[inside.id]&&<button className={"ex-activityJump"} onClick={()=>{const quiz=QUIZZES[inside.id];destinationRef.current={x:quiz.x,y:quiz.y};setPhotoIndex(null);setDialogue(null);}}>▣ Trả lời 3 câu hỏi <b>{quizResults[inside.id]===undefined?"MỚI":`${quizResults[inside.id]}/3`}</b></button>}<p className={"ex-npcHint"}>Gặp người dân có dấu … để nghe kể chuyện.</p></div>
+          <div className={"ex-insideGuide"}><span className={"ex-insideKicker"}><Camera size={13}/> KHU KHÁM PHÁ</span><strong>{inside.name}</strong><p>{inside.prompt}</p><div>{PHOTO_SPOTS[inside.id].map((spot,i)=><button key={spot.label} onClick={()=>{destinationRef.current={x:spot.x,y:spot.y};setPhotoIndex(null);setDialogue(null);}}><span>{seenRef.current.has(`${inside.id}:${i}`)?"✓":"○"}</span>{spot.label}<ArrowRight size={11}/></button>)}</div>{activity&&!(activity.icon==="boat"&&!desktopWeb)&&<button className={"ex-activityJump"} onClick={()=>{destinationRef.current={x:activity.x,y:activity.y+50};setPhotoIndex(null);setDialogue(null);}}>✦ {activity.name} <b>{activityProgress[inside.id]??0}/{activity.goal??3}</b></button>}{activity?.icon==="boat"&&!desktopWeb&&<p className="ex-npcHint">Minigame này dùng trên web máy tính.</p>}{QUIZZES[inside.id]&&<button className={"ex-activityJump"} onClick={()=>{const quiz=QUIZZES[inside.id];destinationRef.current={x:quiz.x,y:quiz.y};setPhotoIndex(null);setDialogue(null);}}>▣ Trả lời 3 câu hỏi <b>{quizResults[inside.id]===undefined?"MỚI":`${quizResults[inside.id]}/3`}</b></button>}<p className={"ex-npcHint"}>Gặp người dân có dấu … để nghe kể chuyện.</p></div>
           <button className={"ex-exitTop"} onClick={leaveStop}><DoorOpen size={15}/> Ra bản đồ</button>
           {photoIndex===null&&!journal&&!dialogue&&<>
             {nearActivity&&activity?.icon==="incense"&&ceremony?<div className={"ex-interact"}><span>✦</span> Đang thắp và cắm nhang…</div>
             :nearQuiz?<button className={"ex-interact"} onClick={()=>openQuiz(inside.id)}><BookOpen size={15}/> Nhấn <kbd>E</kbd> trả lời 3 câu hỏi <strong>{quizResults[inside.id]===undefined?"BẮT ĐẦU":`${quizResults[inside.id]}/3 · LÀM LẠI`}</strong></button>
             :nearActivity&&activity?.icon==="incense"?<div className={"ex-interact"}><span>✦</span> {activityProgress[inside.id]?"Đã cắm nhang tưởng niệm":"Bước vào vùng đỏ để thắp nhang"}</div>
+            :nearActivity&&activity?.icon==="boat"&&!desktopWeb?<div className="ex-interact">Minigame này dùng trên web máy tính</div>
             :nearActivity&&activity?<button className={"ex-interact"} onClick={interact}><span>✦</span> Nhấn <kbd>E</kbd> {activity.icon==="mango"?"mở cây xoài để hái":activity.action} <strong>{activityProgress[inside.id]??0}/{activity.goal??3}</strong></button>
             :nearWorker!==null?<button className={"ex-interact"} onClick={interact}><span>…</span> Nhấn <kbd>E</kbd> trò chuyện <strong>{WORKERS[inside.id][nearWorker].name}</strong></button>
             :nearSpot!==null?<button className={"ex-interact"} onClick={interact}><Camera size={15}/> Nhấn <kbd>E</kbd> xem ảnh thật <strong>{PHOTO_SPOTS[inside.id][nearSpot].label}</strong></button>
@@ -304,7 +312,7 @@ export default function ExploreGame() {
           {crossing&&<div className={"ex-interact"}>🚣 Đang chèo xuồng qua sông…</div>}
         </>}
         <div className={"ex-dpad"} aria-label="Điều khiển nhân vật"><button className={"ex-up"} aria-label="Đi lên" onPointerDown={setDirection(0,-1)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>▲</button><button className={"ex-left"} aria-label="Đi trái" onPointerDown={setDirection(-1,0)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>◀</button><button className={"ex-down"} aria-label="Đi xuống" onPointerDown={setDirection(0,1)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>▼</button><button className={"ex-right"} aria-label="Đi phải" onPointerDown={setDirection(1,0)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>▶</button></div>
-        <button className={"ex-actionButton"} onClick={interact} disabled={inside?nearSpot===null&&nearWorker===null&&!nearQuiz&&(!nearActivity||!activity||activity.icon==="incense")&&!nearExit:!near&&!nearBoat} aria-label="Tương tác với điểm đến">E</button>
+        <button className={"ex-actionButton"} onClick={interact} disabled={inside?nearSpot===null&&nearWorker===null&&!nearQuiz&&(!nearActivity||!activity||activity.icon==="incense"||activity.icon==="boat"&&!desktopWeb)&&!nearExit:!near&&!nearBoat} aria-label="Tương tác với điểm đến">E</button>
         {toast&&<div className={"ex-activityToast"} role="status">✦ {toast}</div>}
         {dialogue&&inside&&<div className={"ex-dialogue"} role="dialog" aria-label={`Trò chuyện với ${WORKERS[inside.id][dialogue.worker].name}`}><div className={"ex-dialoguePortrait"}>☺</div><div><span>{WORKERS[inside.id][dialogue.worker].name} · {WORKERS[inside.id][dialogue.worker].role}</span><p>{WORKERS[inside.id][dialogue.worker].lines[dialogue.line]}</p><button onClick={interact}>{dialogue.line<WORKERS[inside.id][dialogue.worker].lines.length-1?"Nghe tiếp":"Tạm biệt"} <ArrowRight size={14}/></button></div></div>}
         {harvestOpen&&<MangoHarvestDialog picked={pickedMangoes} onPick={pickMango} onClose={()=>setHarvestOpen(false)}/>}

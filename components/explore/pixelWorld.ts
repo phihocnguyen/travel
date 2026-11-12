@@ -138,8 +138,8 @@ export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:numbe
   rect(c,550,796,56,17,"#936d48");rect(c,427,796,67,17,"#936d48");
   for(let x=550;x<605;x+=12)rect(c,x,796,2,17,"#cb9c66");
   for(let x=430;x<493;x+=12)rect(c,x,796,2,17,"#cb9c66");
-  rect(c,565,768,5,26,"#73543b");rect(c,552,766,31,13,"#e5cd94");
-  c.fillStyle="#4c5f44";c.font="bold 10px Arial";c.textAlign="center";c.fillText("BẾN XUỒNG",568,775);
+  rect(c,565,768,5,26,"#73543b");rect(c,520,757,96,21,"#e5cd94");
+  c.fillStyle="#4c5f44";c.font="bold 9px Arial";c.textAlign="center";c.fillText("BẾN XUỒNG",568,771);
   // Other boats make the crossing feel inhabited; the darker boat waits at the active dock.
   drawBoat(c,220+Math.sin(t/1900)*13,655,t+300,0.7);
   drawBoat(c,360+Math.sin(t/2400)*18,1019,t+900,0.65);
