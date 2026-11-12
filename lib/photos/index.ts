@@ -21,14 +21,13 @@ export const PHOTO_FEATURES = {
   doCongTuong: byFilename('Đền_thờ_ông_bà_Đỗ_Công_Tường_mới.jpg'),
   tapKet: byFilename('Dia-Diem-Tap-Ket-Ra-.jpg'),
   chiBo: byFilename('dt2-17586109343251406392660.webp'),
-  laSen: byFilename('vn-11134259-7r98o-lwddjynijs2hd0@resize_ss640x400.jpg'),
   mangoTrail: byFilename('Farmstay cắm trại.jpg'),
 };
 
 const covers: Record<number, LocalPhoto> = {
   0: PHOTO_FEATURES.nguyenSinhSac, 1: PHOTO_FEATURES.doCongTuong,
   2: PHOTO_FEATURES.tapKet, 3: PHOTO_FEATURES.chiBo, 4: PHOTO_FEATURES.gaoGiong,
-  5: PHOTO_FEATURES.xeoQuyt, 6: PHOTO_FEATURES.myPhuocThanh, 7: PHOTO_FEATURES.laSen,
+  5: PHOTO_FEATURES.xeoQuyt, 6: PHOTO_FEATURES.myPhuocThanh,
   8: PHOTO_FEATURES.mangoTrail, 9: PHOTO_FEATURES.mangoTree, 10: PHOTO_FEATURES.farmer,
   11: PHOTO_FEATURES.market,
 };
