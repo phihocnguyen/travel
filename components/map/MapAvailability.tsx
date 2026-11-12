@@ -15,8 +15,12 @@ export default function MapAvailability() {
   const desktop = useSyncExternalStore(
     subscribe,
     () => window.matchMedia(desktopQuery).matches,
-    () => false,
+    () => undefined,
   );
+
+  if (desktop === undefined) {
+    return <div className="min-h-dvh bg-[#102c22]" aria-hidden="true" />;
+  }
 
   if (desktop) return <MapExperience />;
 
