@@ -20,7 +20,7 @@ function normalizeStickers(value: unknown): TicketSticker[] {
       const parsed = Number(raw[key]);
       return Number.isFinite(parsed) ? parsed : fallback;
     };
-    const size = clamp(number("size", 18), 6, 30);
+    const size = clamp(number("size", 18), 2, 30);
     const rotation = clamp(number("rotation", 0), -30, 30);
     const rotatedFactor = Math.abs(Math.cos(rotation * Math.PI / 180)) + Math.abs(Math.sin(rotation * Math.PI / 180));
     const xMargin = size * rotatedFactor / 2;
