@@ -669,7 +669,6 @@ export default function LandingPage() {
               ["Trang chủ", "#hero"],
               ["Câu chuyện", "#story"],
               ["Điểm đến", "#destinations"],
-              ["Game khám phá", "/explore"],
               ["Ảnh thật", "#photos"],
               ["Sự kiện", "#cta"],
             ].map(([name, href]) => (
@@ -805,16 +804,26 @@ export default function LandingPage() {
                 một câu chuyện khiến bạn muốn ở lại lâu hơn.
               </p>
 
-              <a
-                data-hero-support
-                data-magnetic
-                href="/map"
-                className="mt-4 inline-flex items-center gap-7 rounded-full bg-[#f0c85e] px-7 py-4 text-xs font-bold text-[#173b2f] shadow-[0_12px_35px_rgba(69,55,18,.2)] transition-colors hover:bg-[#ffdf84]"
-              >
-                Khám phá Cao Lãnh
-                <ArrowUpRight size={17} />
-              </a>
-              <a data-hero-support href="/explore" className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white underline underline-offset-4 hover:text-[#ffe294]">Chơi game khám phá Cao Lãnh <ArrowUpRight size={15}/></a>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <a
+                  data-hero-support
+                  data-magnetic
+                  href="/map"
+                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-[#f0c85e] px-6 py-3 text-xs font-bold text-[#173b2f] shadow-[0_12px_35px_rgba(69,55,18,.2)] transition-colors hover:bg-[#ffdf84]"
+                >
+                  Khám phá bản đồ
+                  <ArrowUpRight size={16} />
+                </a>
+                <a
+                  data-hero-support
+                  data-magnetic
+                  href="/explore"
+                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full border border-white/80 bg-white/15 px-6 py-3 text-xs font-bold text-white shadow-[0_12px_35px_rgba(8,36,32,.2)] backdrop-blur-sm transition-colors hover:bg-white hover:text-[#173b2f]"
+                >
+                  Chơi game Cao Lãnh
+                  <ArrowUpRight size={16} />
+                </a>
+              </div>
             </div>
 
 
