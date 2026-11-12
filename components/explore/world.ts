@@ -30,7 +30,7 @@ export type Stop = {
 
 export const STOPS: Stop[] = [
   { id: "sinh-sac", name: "Khu di tích Nguyễn Sinh Sắc", short: "Khu di tích", category: "Di sản", x: 780, y: 300, kind: "memorial", color: "#d98663", summary: "Không gian tưởng niệm giữa khuôn viên xanh và những hình tượng sen.", story: "Nơi yên nghỉ của cụ Phó bảng Nguyễn Sinh Sắc. Hãy ghé khu mộ, xem trưng bày và tìm hiểu dấu ấn của cụ tại Cao Lãnh.", prompt: "Một cánh sen mở lối đến câu chuyện lịch sử.", image: "/photos/nguyen-sinh-sac-c29aea76-thumb.webp", href: "/map", photoGroup: "nguyen-sinh-sac" },
-  { id: "do-cong-tuong", name: "Đền thờ ông bà Đỗ Công Tường", short: "Đền ông bà Chủ chợ", category: "Di sản", x: 1150, y: 335, kind: "temple", color: "#e4a45f", summary: "Câu chuyện về ông bà Chủ chợ và những ngày đầu hình thành Cao Lãnh.", story: "Ông bà Đỗ Công Tường gắn với ký ức hình thành chợ Cao Lãnh. Ngôi đền lưu giữ lòng biết ơn dành cho người có công với vùng đất.", prompt: "Tiếng chuông đưa bạn về thuở chợ xưa.", image: "/photos/do-cong-tuong-28b27b87-thumb.webp", href: "/map", photoGroup: "do-cong-tuong" },
+  { id: "do-cong-tuong", name: "Miếu thờ ông bà Đỗ Công Tường", short: "Miếu ông bà Chủ chợ", category: "Di sản", x: 1150, y: 335, kind: "temple", color: "#e4a45f", summary: "Câu chuyện về ông bà Chủ chợ và những ngày đầu hình thành Cao Lãnh.", story: "Ông bà Đỗ Công Tường gắn với ký ức hình thành chợ Cao Lãnh. Ngôi miếu lưu giữ lòng biết ơn dành cho người có công với vùng đất.", prompt: "Tiếng chuông đưa bạn về thuở chợ xưa.", image: "/photos/do-cong-tuong-28b27b87-thumb.webp", href: "/map", photoGroup: "do-cong-tuong" },
   { id: "gao-giong", name: "Khu du lịch sinh thái Gáo Giồng", short: "Rừng Gáo Giồng", category: "Thiên nhiên", x: 370, y: 260, kind: "forest", color: "#7caa76", summary: "Rừng tràm, kênh rạch và tiếng chim nước giữa Đồng Tháp Mười.", story: "Lên xuồng ba lá, len qua lối nước và ngắm chim trong rừng tràm. Gáo Giồng là một lát cắt xanh mát của vùng đất ngập nước.", prompt: "Một chiếc xuồng đang chờ dưới bóng tràm.", image: "/photos/gao-giong-93773162-thumb.webp", href: "/map", photoGroup: "gao-giong" },
   { id: "xeo-quyt", name: "Khu di tích Xẻo Quýt", short: "Rừng Xẻo Quýt", category: "Thiên nhiên · lịch sử", x: 350, y: 790, kind: "forest", color: "#6f9d85", summary: "Lối mòn rừng tràm dẫn đến những dấu tích căn cứ xưa.", story: "Xẻo Quýt từng là căn cứ của Tỉnh ủy Kiến Phong giai đoạn 1960–1975. Đường mòn và lạch nước nhỏ dẫn qua các hầm, lán được bảo tồn, phục dựng.", prompt: "Đi chậm một chút, khu rừng có chuyện để kể.", image: "/photos/xeo-quyt-89f22a8d-thumb.webp", href: "/map", photoGroup: "xeo-quyt" },
   { id: "cho-que", name: "Chợ quê cù lao Tân Thuận Đông", short: "Chợ quê cù lao", category: "Văn hóa", x: 1080, y: 805, kind: "market", color: "#e2a75c", summary: "Bánh dân gian, trái cây theo mùa và nhịp chợ ven sông Tiền.", story: "Chợ quê trên cù lao giới thiệu nông sản, món ăn truyền thống và sinh hoạt địa phương. Hãy thử một món bánh, nghe một khúc đờn ca tài tử nếu có chương trình.", prompt: "Mùi bánh mới kéo bạn tới gian hàng mái lá.", image: "/photos/cho-que-278c4110-thumb.webp", href: "/map", photoGroup: "cho-que" },
@@ -48,9 +48,9 @@ export const PHOTO_SPOTS: Record<string, PhotoSpot[]> = {
     {x:730,y:250,label:"Dấu ấn di tích",note:"Ngắm thêm một góc của khu di tích qua ảnh chụp tại điểm đến.",photoIndex:4},
   ],
   "do-cong-tuong": [
-    {x:235,y:250,label:"Mái đền xưa",note:"Kiến trúc đền thờ gợi nhắc ký ức về ông bà Chủ chợ.",photoIndex:0},
+    {x:235,y:250,label:"Mái miếu xưa",note:"Kiến trúc miếu thờ gợi nhắc ký ức về ông bà Chủ chợ.",photoIndex:0},
     {x:480,y:190,label:"Không gian thờ tự",note:"Ghé lại nơi người dân tưởng nhớ ông bà Đỗ Công Tường.",photoIndex:4},
-    {x:730,y:250,label:"Góc sân đền",note:"Quan sát thêm những chi tiết ở di tích qua ảnh thật.",photoIndex:2},
+    {x:730,y:250,label:"Góc sân miếu",note:"Quan sát thêm những chi tiết ở di tích qua ảnh thật.",photoIndex:2},
   ],
   "gao-giong": [
     {x:235,y:250,label:"Lối rừng tràm",note:"Bóng cây và lối nước tạo nên nhịp điệu rất riêng của Gáo Giồng.",photoIndex:0},
@@ -91,8 +91,8 @@ export const WORKERS: Record<string, Worker[]> = {
     {x:700,y:470,name:"Chú hướng dẫn",role:"Kể chuyện di tích",sprite:"guide",lines:["Đây là nơi yên nghỉ của cụ Phó bảng Nguyễn Sinh Sắc.","Bạn có thể xem thêm ảnh thật ở ba khung trưng bày phía trên."]},
   ],
   "do-cong-tuong": [
-    {x:300,y:450,name:"Bác trông đền",role:"Quét sân",sprite:"caretaker",lines:["Ông bà Đỗ Công Tường được người dân nhớ đến như ông bà Chủ chợ.","Sân đền hôm nay rất yên bình, cháu ngắm kiến trúc một vòng nhé."]},
-    {x:710,y:450,name:"Cô hướng dẫn",role:"Giới thiệu câu chuyện",sprite:"guide",lines:["Ngôi đền giữ lại ký ức về buổi đầu hình thành chợ Cao Lãnh.","Ba bức ảnh phía trước sẽ cho cháu thấy không gian thật."]},
+    {x:300,y:450,name:"Bác trông miếu",role:"Quét sân",sprite:"caretaker",lines:["Ông bà Đỗ Công Tường được người dân nhớ đến như ông bà Chủ chợ.","Sân miếu hôm nay rất yên bình, cháu ngắm kiến trúc một vòng nhé."]},
+    {x:710,y:450,name:"Cô hướng dẫn",role:"Giới thiệu câu chuyện",sprite:"guide",lines:["Ngôi miếu giữ lại ký ức về buổi đầu hình thành chợ Cao Lãnh.","Ba bức ảnh phía trước sẽ cho cháu thấy không gian thật."]},
   ],
   "gao-giong": [
     {x:310,y:460,name:"Chú lái xuồng",role:"Chuẩn bị xuồng",sprite:"rower",lines:["Kênh rạch len qua rừng tràm, đi xuồng mới thấy hết vẻ đẹp nơi này.","Nhớ nhìn mặt nước, cá đang bơi quanh cầu gỗ đấy."]},
@@ -123,7 +123,7 @@ export const WORKERS: Record<string, Worker[]> = {
 export type Activity = { x:number;y:number; name:string; action:string; done:string; icon:"incense"|"flowers"|"fish"|"boat"|"cake"|"mango"|"lotus"; goal?:number };
 export const ACTIVITIES: Partial<Record<string, Activity>> = {
   "sinh-sac": {x:480,y:355,name:"Thắp nhang cho cụ",action:"Thắp một nén nhang",done:"Bạn đã thắp nhang tưởng niệm cụ Nguyễn Sinh Sắc.",icon:"incense",goal:1},
-  "do-cong-tuong": {x:480,y:420,name:"Xếp hoa sân đền",action:"Xếp thêm một chậu hoa",done:"Sân đền đã thêm sắc hoa!",icon:"flowers"},
+  "do-cong-tuong": {x:480,y:420,name:"Xếp hoa sân miếu",action:"Xếp thêm một chậu hoa",done:"Sân miếu đã thêm sắc hoa!",icon:"flowers"},
   "gao-giong": {x:480,y:420,name:"Cho cá ăn",action:"Rải một ít thức ăn",done:"Đàn cá đã bơi lại gần!",icon:"fish"},
   "xeo-quyt": {x:480,y:420,name:"Chèo xuồng qua lạch",action:"Chèo thêm một nhịp",done:"Xuồng đã qua lạch nước!",icon:"boat"},
   "cho-que": {x:480,y:420,name:"Gói bánh quê",action:"Gói thêm một chiếc bánh",done:"Mẻ bánh đã sẵn sàng!",icon:"cake"},
