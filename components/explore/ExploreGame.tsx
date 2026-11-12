@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpen, Camera, Compass, DoorOpen, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import { renderInterior, renderWorld } from "./pixelWorld";
 import MangoHarvestDialog from "./MangoHarvestDialog";
+import CakeWrappingDialog from "./CakeWrappingDialog";
 import { ACTIVITIES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, XEO_QUYT_RIVER, isHouse, isRiver, type Stop } from "./world";
 import { LOCAL_PHOTOS } from "@/lib/photos/catalog";
 import "./explore.css";
@@ -47,6 +48,7 @@ export default function ExploreGame() {
   const [dialogue,setDialogue] = useState<{worker:number;line:number}|null>(null);
   const [activityProgress,setActivityProgress] = useState<Record<string,number>>({});
   const [harvestOpen,setHarvestOpen] = useState(false);
+  const [cakeOpen,setCakeOpen] = useState(false);
   const [pickedMangoes,setPickedMangoes] = useState<number[]>([]);
   const [quizId,setQuizId] = useState<string|null>(null);
   const [quizIndex,setQuizIndex] = useState(0);
@@ -63,8 +65,8 @@ export default function ExploreGame() {
   const [mounted,setMounted] = useState(false);
   const [position,setPosition] = useState({x:START.x,y:START.y});
   const audioRef = useRef<AudioContext|null>(null);
-  const renderStateRef=useRef({inside:inside as Stop|null,photoIndex:photoIndex as number|null,dialogue:dialogue as {worker:number;line:number}|null,intro,journal,activityProgress,quizId,harvestOpen});
-  useEffect(()=>{renderStateRef.current={inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen};},[inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen]);
+  const renderStateRef=useRef({inside:inside as Stop|null,photoIndex:photoIndex as number|null,dialogue:dialogue as {worker:number;line:number}|null,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen});
+  useEffect(()=>{renderStateRef.current={inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen};},[inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen]);
 
   useEffect(()=>{
     try { const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"[]"); if(Array.isArray(saved)){const clean=saved.filter((id:unknown)=>typeof id==="string"&&STOPS.some(s=>s.id===id));visitedRef.current=new Set(clean);setVisited(clean);} } catch { /* a fresh passport is fine */ }
@@ -81,7 +83,7 @@ export default function ExploreGame() {
     if(!stop) return;
     if(crossingRef.current)return;
     renderStateRef.current.inside=stop;
-    setInside(stop);setIntro(false);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setNear(null);nearRef.current=null;spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;
+    setInside(stop);setIntro(false);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setCakeOpen(false);setNear(null);nearRef.current=null;spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;
     playerRef.current={x:INTERIOR.entry.x,y:INTERIOR.entry.y,dir:0,moving:false};
     destinationRef.current=null;
     viewRef.current.x=Math.max(0,Math.min(INTERIOR.width-viewRef.current.w,INTERIOR.entry.x-viewRef.current.w/2));
@@ -97,7 +99,7 @@ export default function ExploreGame() {
     renderStateRef.current.inside=null;
     ceremonyRef.current=null;setCeremony(false);
     playerRef.current={x:inside.x,y:inside.y+104,dir:0,moving:false};
-    destinationRef.current=null;setInside(null);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setNearSpot(null);setNearWorker(null);setNearActivity(false);setNearQuiz(false);setNearExit(false);
+    destinationRef.current=null;setInside(null);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setCakeOpen(false);setNearSpot(null);setNearWorker(null);setNearActivity(false);setNearQuiz(false);setNearExit(false);
     spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;
     viewRef.current.x=Math.max(0,Math.min(WORLD.width-viewRef.current.w,playerRef.current.x-viewRef.current.w/2));
     viewRef.current.y=Math.max(0,Math.min(WORLD.height-viewRef.current.h,playerRef.current.y-viewRef.current.h/2));blip();
@@ -108,7 +110,7 @@ export default function ExploreGame() {
   const nextQuiz=()=>{if(!quizId||quizChoice===null)return;if(quizIndex<2){setQuizIndex(index=>index+1);setQuizChoice(null);}else{setQuizResults(prev=>({...prev,[quizId]:quizScore}));setQuizId(null);setToast(`Hoàn thành 3 câu hỏi · đúng ${quizScore}/3`);}};
 
   const interact=useCallback(()=>{
-    if(crossingRef.current||ceremonyRef.current!==null||quizId||harvestOpen)return;
+    if(crossingRef.current||ceremonyRef.current!==null||quizId||harvestOpen||cakeOpen)return;
     if(photoIndex!==null){setPhotoIndex(null);return;}
     if(dialogue&&inside){if(dialogue.line<WORKERS[inside.id][dialogue.worker].lines.length-1)setDialogue({...dialogue,line:dialogue.line+1});else setDialogue(null);return;}
     if(intro){setIntro(false);return;}
@@ -120,6 +122,7 @@ export default function ExploreGame() {
         if(!activity)return;
         if(activity.icon==="incense")return;
         if(activity.icon==="mango"){destinationRef.current=null;setHarvestOpen(true);blip();return;}
+        if(activity.icon==="cake"){destinationRef.current=null;setCakeOpen(true);blip();return;}
         const goal=activity.goal??3;const next=Math.min(goal,(activityProgress[inside.id]??0)+1);
         setActivityProgress(prev=>({...prev,[inside.id]:next}));setToast(next===goal?activity.done:`${activity.action} · ${next}/${goal}`);blip();return;
       }
@@ -130,7 +133,7 @@ export default function ExploreGame() {
     else if(boatSideRef.current==="east"&&Math.hypot(playerRef.current.x-XEO_QUYT_RIVER.eastDock.x,playerRef.current.y-XEO_QUYT_RIVER.eastDock.y)<68){crossingRef.current={from:"east",started:performance.now()};destinationRef.current=null;setCrossing(true);blip();}
     else if(boatSideRef.current==="west"&&Math.hypot(playerRef.current.x-XEO_QUYT_RIVER.westDock.x,playerRef.current.y-XEO_QUYT_RIVER.westDock.y)<68){crossingRef.current={from:"west",started:performance.now()};destinationRef.current=null;setCrossing(true);blip();}
     else if(nearRef.current)enterStop(nearRef.current);
-  },[photoIndex,dialogue,intro,journal,inside,leaveStop,enterStop,blip,activityProgress,quizId,openQuiz,harvestOpen]);
+  },[photoIndex,dialogue,intro,journal,inside,leaveStop,enterStop,blip,activityProgress,quizId,openQuiz,harvestOpen,cakeOpen]);
 
   const pickMango=(index:number)=>{
     if(pickedMangoes.includes(index)||pickedMangoes.length>=3)return;
@@ -140,10 +143,16 @@ export default function ExploreGame() {
     setToast(next.length===3?ACTIVITIES["vuon-xoai"]!.done:`Đã hái ${next.length}/3 trái xoài`);
     blip();
   };
+  const wrapCake=()=>{
+    const next=Math.min(3,(activityProgress["cho-que"]??0)+1);
+    setActivityProgress(prev=>({...prev,"cho-que":next}));
+    setToast(next===3?ACTIVITIES["cho-que"]!.done:`Đã làm ${next}/3 công đoạn`);
+    blip();
+  };
 
   useEffect(()=>{
     const down=(event:KeyboardEvent)=>{
-      if(harvestOpen){if(event.code==="Escape"){event.preventDefault();setHarvestOpen(false);}else if(event.code in MOVE_KEYS||event.code==="KeyE"||event.code==="Space")event.preventDefault();return;}
+      if(harvestOpen||cakeOpen){if(event.code==="Escape"){event.preventDefault();setHarvestOpen(false);setCakeOpen(false);}else if(event.code in MOVE_KEYS||event.code==="KeyE"||event.code==="Space")event.preventDefault();return;}
       if(event.code in MOVE_KEYS){event.preventDefault();keysRef.current.add(event.code);destinationRef.current=null;}
       if(event.code==="KeyE"||event.code==="Space"){if(!event.repeat){event.preventDefault();interact();}}
       if(event.code==="Escape"){if(quizId)setQuizId(null);else if(photoIndex!==null)setPhotoIndex(null);else if(dialogue)setDialogue(null);else if(journal)setJournal(false);else if(inside)leaveStop();else setIntro(false);}
@@ -152,7 +161,7 @@ export default function ExploreGame() {
     const blur=()=>{keysRef.current.clear();touchRef.current=[0,0];};
     window.addEventListener("keydown",down);window.addEventListener("keyup",up);window.addEventListener("blur",blur);
     return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up);window.removeEventListener("blur",blur);};
-  },[interact,photoIndex,dialogue,journal,inside,leaveStop,quizId,harvestOpen]);
+  },[interact,photoIndex,dialogue,journal,inside,leaveStop,quizId,harvestOpen,cakeOpen]);
 
   useEffect(()=>{
     const canvas=canvasRef.current;if(!canvas)return;
@@ -175,7 +184,7 @@ export default function ExploreGame() {
       if(dx||dy)destinationRef.current=null;
       const target=destinationRef.current;
       if(!dx&&!dy&&target){const dist=Math.hypot(target.x-p.x,target.y-p.y);if(dist<7)destinationRef.current=null;else{dx=(target.x-p.x)/dist;dy=(target.y-p.y)/dist;}}
-      const len=Math.hypot(dx,dy);p.moving=len>.05&&scene.photoIndex===null&&!scene.dialogue&&!scene.intro&&!scene.journal&&!scene.quizId&&!scene.harvestOpen&&!crossingRef.current&&ceremonyRef.current===null;
+      const len=Math.hypot(dx,dy);p.moving=len>.05&&scene.photoIndex===null&&!scene.dialogue&&!scene.intro&&!scene.journal&&!scene.quizId&&!scene.harvestOpen&&!scene.cakeOpen&&!crossingRef.current&&ceremonyRef.current===null;
       const world=inside?INTERIOR:WORLD;
       if(p.moving){const speed=190*dt;const nx=Math.max(35,Math.min((inside?world.width-35:WORLD.width-160),p.x+dx/len*speed));const ny=Math.max(45,Math.min(world.height-36,p.y+dy/len*speed));
         if(inside){p.x=nx;p.y=ny;}else{if(!isRiver(nx,p.y)&&!isHouse(nx,p.y))p.x=nx;if(!isRiver(p.x,ny)&&!isHouse(p.x,ny))p.y=ny;}
@@ -230,7 +239,7 @@ export default function ExploreGame() {
   };
   const stopDirection=(event:React.PointerEvent<HTMLButtonElement>)=>{event.preventDefault();touchRef.current=[0,0];};
   const clickMap=(event:React.MouseEvent<HTMLCanvasElement>)=>{
-    if(photoIndex!==null||dialogue||intro||journal||crossing||ceremony||quizId||harvestOpen)return;
+    if(photoIndex!==null||dialogue||intro||journal||crossing||ceremony||quizId||harvestOpen||cakeOpen)return;
     const bounds=event.currentTarget.getBoundingClientRect();const view=viewRef.current;
     const x=view.x+(event.clientX-bounds.left)/bounds.width*view.w;
     const y=view.y+(event.clientY-bounds.top)/bounds.height*view.h;
@@ -251,7 +260,7 @@ export default function ExploreGame() {
       if(stop&&Math.hypot(playerRef.current.x-stop.x,playerRef.current.y-stop.y)<90)enterStop(stop);else destinationRef.current=isRiver(x,y)?dock:{x:Math.min(WORLD.width-160,x),y};
     }
   };
-  const reset=()=>{visitedRef.current=new Set();seenRef.current=new Set();boatSideRef.current="east";crossingRef.current=null;ceremonyRef.current=null;ceremonyDoneRef.current=false;nearBoatRef.current=false;setVisited([]);setActivityProgress({});setPickedMangoes([]);setHarvestOpen(false);setQuizResults({});setQuizId(null);setBoatSide("east");setCrossing(false);setCeremony(false);setNearBoat(false);try{localStorage.removeItem(SAVE_KEY);}catch{}playerRef.current={...START};destinationRef.current=null;setJournal(false);setInside(null);setPhotoIndex(null);setDialogue(null);};
+  const reset=()=>{visitedRef.current=new Set();seenRef.current=new Set();boatSideRef.current="east";crossingRef.current=null;ceremonyRef.current=null;ceremonyDoneRef.current=false;nearBoatRef.current=false;setVisited([]);setActivityProgress({});setPickedMangoes([]);setHarvestOpen(false);setCakeOpen(false);setQuizResults({});setQuizId(null);setBoatSide("east");setCrossing(false);setCeremony(false);setNearBoat(false);try{localStorage.removeItem(SAVE_KEY);}catch{}playerRef.current={...START};destinationRef.current=null;setJournal(false);setInside(null);setPhotoIndex(null);setDialogue(null);};
   const photos=inside?LOCAL_PHOTOS.filter(p=>p.group===inside.photoGroup):[];
   const selectedSpot=inside&&photoIndex!==null?PHOTO_SPOTS[inside.id][photoIndex]:null;
   const selectedPhoto=selectedSpot?photos[selectedSpot.photoIndex]:null;
@@ -287,6 +296,7 @@ export default function ExploreGame() {
         {toast&&<div className={"ex-activityToast"} role="status">✦ {toast}</div>}
         {dialogue&&inside&&<div className={"ex-dialogue"} role="dialog" aria-label={`Trò chuyện với ${WORKERS[inside.id][dialogue.worker].name}`}><div className={"ex-dialoguePortrait"}>☺</div><div><span>{WORKERS[inside.id][dialogue.worker].name} · {WORKERS[inside.id][dialogue.worker].role}</span><p>{WORKERS[inside.id][dialogue.worker].lines[dialogue.line]}</p><button onClick={interact}>{dialogue.line<WORKERS[inside.id][dialogue.worker].lines.length-1?"Nghe tiếp":"Tạm biệt"} <ArrowRight size={14}/></button></div></div>}
         {harvestOpen&&<MangoHarvestDialog picked={pickedMangoes} onPick={pickMango} onClose={()=>setHarvestOpen(false)}/>}
+        {cakeOpen&&<CakeWrappingDialog step={activityProgress["cho-que"]??0} onAdvance={wrapCake} onClose={()=>setCakeOpen(false)}/>}
         {quizId&&<div className="ex-quizBackdrop"><section className="ex-quizCard" role="dialog" aria-modal="true" aria-label={QUIZZES[quizId].title}><button className="ex-quizClose" onClick={()=>setQuizId(null)} aria-label="Đóng câu hỏi"><X size={18}/></button><span className="ex-quizKicker">THỬ THÁCH LỊCH SỬ · CÂU {quizIndex+1}/3</span><h2>{QUIZZES[quizId].title}</h2><div className="ex-quizProgress"><i style={{width:`${(quizIndex+1)/3*100}%`}}/></div><p className="ex-quizQuestion">{QUIZZES[quizId].questions[quizIndex].question}</p><div className="ex-quizOptions">{QUIZZES[quizId].questions[quizIndex].options.map((option,index)=><button key={option} className={quizChoice!==null?(index===QUIZZES[quizId].questions[quizIndex].answer?"ex-correct":index===quizChoice?"ex-wrong":""):""} disabled={quizChoice!==null} onClick={()=>chooseQuiz(index)}><b>{"ABCD"[index]}</b>{option}</button>)}</div>{quizChoice!==null&&<div className="ex-quizFeedback" role="status"><strong>{quizChoice===QUIZZES[quizId].questions[quizIndex].answer?"Chính xác!":"Chưa đúng."}</strong> {QUIZZES[quizId].questions[quizIndex].detail}<button onClick={nextQuiz}>{quizIndex===2?`Xem kết quả · ${quizScore}/3`:"Câu tiếp theo"}<ArrowRight size={15}/></button></div>}<a className="ex-quizSource" href={QUIZZES[quizId].source} target="_blank" rel="noopener noreferrer">Nguồn: Cổng thông tin Đồng Tháp ↗</a></section></div>}
         {selectedPhoto&&selectedSpot&&inside&&<div className={"ex-photoBackdrop"} onMouseDown={event=>{if(event.target===event.currentTarget)setPhotoIndex(null);}}><div className={"ex-photoCard"} role="dialog" aria-modal="true" aria-label={`Ảnh thật: ${selectedSpot.label}`}><button className={"ex-photoClose"} onClick={()=>setPhotoIndex(null)} aria-label="Đóng ảnh"><X size={18}/></button><div className={"ex-photoFrame"}><img src={selectedPhoto.src} alt={selectedPhoto.alt}/><span>ẢNH CHỤP TẠI ĐỊA ĐIỂM</span></div><div className={"ex-photoContent"}><span>GÓC KHÁM PHÁ {String((photoIndex??0)+1).padStart(2,"0")} / 03</span><h2>{selectedSpot.label}</h2><p>{selectedSpot.note}</p><small>{selectedPhoto.alt}</small><div className={"ex-photoThumbs"}>{PHOTO_SPOTS[inside.id].map((spot,i)=>{const photo=photos[spot.photoIndex];return <button key={spot.label} className={i===photoIndex?"ex-selected":""} onClick={()=>{seenRef.current.add(`${inside.id}:${i}`);setPhotoIndex(i);}} aria-label={`Xem ảnh ${spot.label}`}><img src={photo.thumbnail} alt=""/></button>;})}</div><button className={"ex-photoContinue"} onClick={()=>setPhotoIndex(null)}>Tiếp tục đi dạo <ArrowRight size={15}/></button></div></div></div>}
         {intro&&<div className={"ex-introBackdrop"}><div className={"ex-introCard"}><div className={"ex-introIcon"}>🥭</div><span>CHÀO MỪNG ĐẾN CAO LÃNH</span><h2>Hành trình bắt đầu!</h2><p>Đi đến gần cửa của mỗi điểm đến và nhấn <b>E</b> để bước vào. Bên trong, hãy tìm các khung ảnh để xem Cao Lãnh ngoài đời thật.</p><div className={"ex-introHow"}><span>⌨ Phím mũi tên / WASD để đi</span><span>✦ E để vào cửa và xem ảnh</span><span>☝ Chạm bản đồ để di chuyển</span></div><button onClick={()=>setIntro(false)}>Bắt đầu khám phá <ArrowRight size={17}/></button></div></div>}

@@ -51,3 +51,15 @@
 @keyframes ex-mangoFall{to{transform:translate(-50%,145px) rotate(25deg) scale(.5);opacity:0}}
 @media(max-width:680px){.ex-mangoCard{padding:15px 12px 11px;border-width:3px;box-shadow:4px 4px 0 #173b2a}.ex-mangoCard h2{font-size:23px}.ex-mangoScene{height:205px}.ex-mangoFruit{width:36px;height:44px}.ex-mangoFooter{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ex-mangoFruit{animation:none}.ex-mangoFruitPicked{opacity:0}}
+
+.ex-cakeScene{position:relative;width:min(100%,400px);height:190px;margin:9px auto 11px;overflow:hidden;border:3px solid #7f5e3e;background:#c39a6d;image-rendering:pixelated}
+.ex-cakeScene svg{display:block;width:100%;height:100%;image-rendering:pixelated}
+.ex-cakeSceneLabel{position:absolute;left:7px;bottom:7px;padding:5px 7px;border:2px solid #4e744d;background:#f7efcd;color:#3e6441;font-size:9px;font-weight:900}
+.ex-cakeSteps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.ex-cakeSteps button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:63px;padding:6px;border:2px solid #b4bea1;background:#e6e5cc;color:#77846d;font-size:10px;font-weight:800}
+.ex-cakeSteps button b{display:grid;place-items:center;width:20px;height:20px;background:#c9d2bb;color:#486447;font-size:11px}
+.ex-cakeSteps button.ex-cakeStepActive{border-color:#416d4d;background:#e4efcf;color:#31563a;box-shadow:3px 3px 0 #9bb28b}
+.ex-cakeSteps button.ex-cakeStepActive:hover{background:#d4e9ba}
+.ex-cakeSteps button.ex-cakeStepDone{border-color:#8bae7d;background:#d7e8ca;color:#4c7750}
+.ex-cakeSteps button.ex-cakeStepDone b{background:#6e9d65;color:white}
+@media(max-width:680px){.ex-cakeScene{height:135px;margin:6px auto}.ex-cakeSteps button{min-height:55px;font-size:9px;gap:3px}.ex-cakeSceneLabel{font-size:8px}}

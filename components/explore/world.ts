@@ -126,7 +126,7 @@ export const ACTIVITIES: Partial<Record<string, Activity>> = {
   "do-cong-tuong": {x:480,y:420,name:"Xếp hoa sân miếu",action:"Xếp thêm một chậu hoa",done:"Sân miếu đã thêm sắc hoa!",icon:"flowers"},
   "gao-giong": {x:480,y:420,name:"Cho cá ăn",action:"Rải một ít thức ăn",done:"Đàn cá đã bơi lại gần!",icon:"fish"},
   "xeo-quyt": {x:480,y:420,name:"Chèo xuồng qua lạch",action:"Chèo thêm một nhịp",done:"Xuồng đã qua lạch nước!",icon:"boat"},
-  "cho-que": {x:480,y:420,name:"Gói bánh quê",action:"Gói thêm một chiếc bánh",done:"Mẻ bánh đã sẵn sàng!",icon:"cake"},
+  "cho-que": {x:480,y:420,name:"Gói bánh quê",action:"Mở bàn gói bánh",done:"Mẻ bánh đã sẵn sàng!",icon:"cake"},
   "vuon-xoai": {x:480,y:420,name:"Hái xoài chín",action:"Mở cây xoài để hái",done:"Giỏ xoài đã đầy rồi!",icon:"mango"},
   "my-phuoc-thanh": {x:480,y:420,name:"Ngắm sen nở",action:"Khám phá thêm một bông sen",done:"Bạn đã ngắm đủ ba sắc sen!",icon:"lotus"},
   "tap-ket": {x:480,y:355,name:"Dâng hoa tưởng niệm",action:"Đặt thêm một nhành hoa",done:"Bó hoa tưởng niệm đã hoàn thành.",icon:"flowers"},
