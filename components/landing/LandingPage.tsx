@@ -660,7 +660,7 @@ export default function LandingPage() {
             aria-label="Vị Xoài Dẫn Lối · Trang chủ"
             className="flex items-center gap-3"
           >
-            <span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-md bg-[#f8f5df] sm:h-12 sm:w-12" style={{ backgroundImage: "url(/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg)", backgroundSize: "165%", backgroundPosition: "50% 28%" }} />
+            <span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-md bg-[#f8f5df] sm:h-12 sm:w-12" style={{ backgroundImage: "url(/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg)", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
             <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className={`nav-color mt-1 block text-[10px] font-normal transition-colors ${scrolled ? "text-[#657361]" : "text-white/75"}`}>Cao Lãnh · Đồng Tháp</span></span>
           </a>
 
