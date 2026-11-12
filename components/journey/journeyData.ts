@@ -1,7 +1,7 @@
 import { ATTRACTIONS, type AttractionCategory } from "@/lib/map/attractions";
 import { CAMPAIGN } from "@/components/campaign/campaignData";
 
-export const CHECKPOINT_COUNT = Math.min(4, ATTRACTIONS.length);
+export const CHECKPOINT_COUNT = ATTRACTIONS.length;
 
 // Shared arrival/hold timing for camera, marker, card and terrain focus.
 export function getJourneyFrame(progress: number) {
@@ -27,13 +27,7 @@ export function getJourneyFocusStrength(progress: number) {
   return 1 - smooth((phase - 0.12) / 0.16);
 }
 
-// Spread the story across different marker indices rather than inventing coordinates.
-export const JOURNEY_CHECKPOINTS = Array.from({ length: CHECKPOINT_COUNT }, (_, i) => {
-  const index = CHECKPOINT_COUNT === 1
-    ? 0
-    : Math.round((i * (ATTRACTIONS.length - 1)) / (CHECKPOINT_COUNT - 1));
-  return { index, attraction: ATTRACTIONS[index] };
-});
+export const JOURNEY_CHECKPOINTS = ATTRACTIONS.map((attraction, index) => ({ index, attraction }));
 
 const CATEGORY_LABELS: Record<AttractionCategory, string> = {
   Ecology: "Sinh thái",

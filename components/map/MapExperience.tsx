@@ -5,6 +5,7 @@ import MapExplorer from "./MapExplorer";
 import MapCanvas from "./MapCanvas";
 import AttractionModal from "@/components/hero/AttractionModal";
 import JourneyOverlay from "@/components/journey/JourneyOverlay";
+import { CHECKPOINT_COUNT } from "@/components/journey/journeyData";
 import CheckpointFocus from "@/components/effects/CheckpointFocus";
 import IntroSequence from "@/components/hero/IntroSequence";
 import { MapUIProvider, useMapUI } from "./MapUIContext";
@@ -14,9 +15,8 @@ function ExperienceStage() {
   return (
     <main
       data-journey-scroll-space
-      className={`relative w-full overflow-visible bg-[#0b2a1b] ${
-        explored ? "h-dvh" : "h-[850dvh]"
-      }`}
+      className="relative w-full overflow-visible bg-[#0b2a1b]"
+      style={{ height: explored ? "100dvh" : `${CHECKPOINT_COUNT * 200 + 100}dvh` }}
     >
       <div
         data-journey-stage
