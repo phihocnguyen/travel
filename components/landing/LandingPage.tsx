@@ -531,20 +531,19 @@ export default function LandingPage() {
       );
     }, el);
 
-    let scrollTween: gsap.core.Tween | undefined;
     const scrollToSection = (event: MouseEvent) => {
-      const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"]');
+      const targetElement = event.target;
+      if (!(targetElement instanceof Element)) return;
+      const link = targetElement.closest<HTMLAnchorElement>('a[href^="#"]');
       if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const target = document.getElementById(link.hash.slice(1));
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
       if (!target) return;
       event.preventDefault();
       history.replaceState(null, "", link.hash);
-      scrollTween?.kill();
-      scrollTween = gsap.to(window, {
-        scrollTo: { y: target, autoKill: true },
-        duration: 1.1,
-        ease: "power2.inOut",
-        overwrite: true,
+      const top = target.id === "hero" ? 0 : target.getBoundingClientRect().top + window.scrollY - 84;
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
       });
     };
     el.addEventListener("click", scrollToSection);
@@ -557,7 +556,6 @@ export default function LandingPage() {
 
     return () => {
       el.removeEventListener("click", scrollToSection);
-      scrollTween?.kill();
       window.removeEventListener("load", refresh);
       mm.revert();
       ctx.revert();
