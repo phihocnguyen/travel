@@ -30,3 +30,24 @@
 .ex-quizOptions{display:grid;gap:9px}.ex-quizOptions button{display:flex;align-items:center;gap:13px;text-align:left;width:100%;min-height:49px;border:2px solid #9eb08a;background:#fff9e6;color:#34513a;padding:8px 11px;font-size:13px;font-weight:700}.ex-quizOptions button:hover:not(:disabled){background:#e6efd8;border-color:#537b58}.ex-quizOptions button b{display:grid;place-items:center;flex:none;width:28px;height:28px;background:#dce5ca;color:#416348;font-size:13px}.ex-quizOptions button.ex-correct{background:#d4eacb;border-color:#4d8d54}.ex-quizOptions button.ex-wrong{background:#f3d9cf;border-color:#b46b58}.ex-quizOptions button:disabled{cursor:default}
 .ex-quizFeedback{margin-top:15px;padding:13px;background:#e8ebcf;border-left:4px solid #6d9364;font-size:12px;line-height:1.5}.ex-quizFeedback strong{color:#2f673e}.ex-quizFeedback button{display:flex;align-items:center;gap:7px;margin-top:11px;padding:9px 12px;background:#416d4d;border:0;color:white;font-size:11px;font-weight:900}.ex-quizSource{display:inline-block;margin-top:15px;color:#668063;font-size:10px;font-weight:700;text-decoration:underline}
 @media(max-width:680px){.ex-quizCard{padding:20px 15px;border-width:3px;box-shadow:5px 5px 0 #173b2a}.ex-quizCard h2{font-size:24px}.ex-quizQuestion{font-size:14px;margin:17px 0 11px}.ex-quizOptions button{min-height:43px;font-size:12px}}
+
+.ex-mangoBackdrop{position:absolute;inset:0;z-index:10;display:grid;place-items:center;padding:12px;background:#173b2add}
+.ex-mangoCard{position:relative;width:min(490px,100%);max-height:calc(100% - 8px);overflow:auto;border:5px solid #31563a;background:#f8f0d5;box-shadow:8px 8px 0 #173b2a;padding:19px 21px 16px;color:#304e39;text-align:center}
+.ex-mangoClose{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:34px;height:34px;border:2px solid #607651;background:#e7d8ae;color:#34543d}
+.ex-mangoKicker{display:block;padding-right:28px;font-size:9px;font-weight:900;letter-spacing:.17em;color:#8b7653}
+.ex-mangoCard h2{margin:8px 0 4px;font-family:Georgia,serif;font-size:28px;line-height:1.1}
+.ex-mangoCard p{margin:0 0 7px;font-size:12px;color:#65765e}
+.ex-mangoScene{position:relative;width:min(100%,400px);height:255px;margin:auto;overflow:hidden;border:3px solid #4e744d;background:#a9cf89;image-rendering:pixelated}
+.ex-mangoTree{display:block;width:100%;height:100%;image-rendering:pixelated}
+.ex-mangoFruit{position:absolute;width:45px;height:54px;padding:0;border:0;background:transparent;filter:drop-shadow(3px 4px 0 #28462b80);transform:translate(-50%,-50%);touch-action:manipulation;animation:ex-mangoBreathe 1.3s ease-in-out infinite alternate}
+.ex-mangoFruit svg{display:block;width:100%;height:100%;image-rendering:pixelated}
+.ex-mangoFruit:hover:not(:disabled),.ex-mangoFruit:focus-visible:not(:disabled){outline:3px solid #fff9dc;outline-offset:3px;filter:drop-shadow(3px 4px 0 #28462b80) brightness(1.1)}
+.ex-mangoFruitPicked{pointer-events:none;animation:ex-mangoFall .65s ease-in forwards}
+.ex-mangoBasket{position:absolute;right:8px;bottom:6px;display:grid;grid-template-columns:auto auto;gap:2px 7px;min-width:112px;padding:7px 9px;border:3px solid #5d4332;background:#b88753;color:#fff7d9;text-align:left;box-shadow:3px 3px 0 #31543b}
+.ex-mangoBasket span{font-size:8px;font-weight:900;letter-spacing:.07em}.ex-mangoBasket strong{font-size:11px}.ex-mangoBasket div{grid-column:1/-1;min-height:20px;white-space:nowrap}.ex-mangoBasket i{display:inline-block;width:14px;height:17px;margin-right:4px;background:#f5c449;clip-path:polygon(21% 0,79% 0,79% 12%,100% 12%,100% 77%,79% 77%,79% 94%,29% 94%,29% 82%,7% 82%,7% 24%,21% 24%);box-shadow:inset -3px -2px 0 #b96e2e}
+.ex-mangoFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px;font-size:11px;font-weight:800;text-align:left}
+.ex-mangoFooter button{border:2px solid #31563a;background:#416d4d;color:#fff9e7;padding:8px 12px;font-size:11px;font-weight:900}
+@keyframes ex-mangoBreathe{to{translate:0 -3px}}
+@keyframes ex-mangoFall{to{transform:translate(-50%,145px) rotate(25deg) scale(.5);opacity:0}}
+@media(max-width:680px){.ex-mangoCard{padding:15px 12px 11px;border-width:3px;box-shadow:4px 4px 0 #173b2a}.ex-mangoCard h2{font-size:23px}.ex-mangoScene{height:205px}.ex-mangoFruit{width:36px;height:44px}.ex-mangoFooter{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ex-mangoFruit{animation:none}.ex-mangoFruitPicked{opacity:0}}
