@@ -669,6 +669,7 @@ export default function LandingPage() {
               ["Trang chủ", "#hero"],
               ["Câu chuyện", "#story"],
               ["Điểm đến", "#destinations"],
+              ["Game khám phá", "/explore"],
               ["Ảnh thật", "#photos"],
               ["Sự kiện", "#cta"],
             ].map(([name, href]) => (
@@ -813,6 +814,7 @@ export default function LandingPage() {
                 Khám phá Cao Lãnh
                 <ArrowUpRight size={17} />
               </a>
+              <a data-hero-support href="/explore" className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white underline underline-offset-4 hover:text-[#ffe294]">Chơi game khám phá Cao Lãnh <ArrowUpRight size={15}/></a>
             </div>
 
 

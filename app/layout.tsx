@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${khaviax.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}<Suspense fallback={null}><SiteCursor/><UserPresence/></Suspense></body>
+      <body className="min-h-full" suppressHydrationWarning>{children}<Suspense fallback={null}><SiteCursor/><UserPresence/></Suspense></body>
     </html>
   );
 }
