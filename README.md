@@ -21,7 +21,10 @@ Server Components và Route Handlers có thể gọi `getDatabase()` từ `lib/d
 ví dụ `await getDatabase().query("SELECT now()")`. Module chỉ chạy phía server,
 khởi tạo pool khi cần và tái sử dụng kết nối khi Next.js tải lại mã.
 
-Vé, ảnh vé, bài viết và ảnh trong bài được lưu trong PostgreSQL. Mỗi user có
+Vé và bài viết được lưu trong PostgreSQL. Ảnh vé, file PNG in vé, ảnh bìa và ảnh
+trong bài được lưu trên disk; database chỉ giữ đường dẫn và metadata. Xem
+[lưu trữ ảnh](docs/image-storage.md) và [deploy VPS bằng Docker](README-DEPLOY.md).
+Mỗi user có
 một vé với mã `VXDL000`–`VXDL999`. File in màu xuất ở 4120 × 2320 px, 300 DPI.
 
 ```bash
@@ -32,6 +35,7 @@ npm run db:verify        # kiểm tra ràng buộc bằng dữ liệu thử đư
 npm run test:print       # kiểm tra độ phân giải, DPI và màu file in
 npm run test:tickets     # kiểm thử luồng vé qua API và trình duyệt
 npm run test:blog        # kiểm thử dán ảnh/HTML, lưu, duyệt và đọc bài
+npm run test:video       # upload/stream video trên DB tạm, phiên đăng nhập giả lập
 ```
 
 Chạy kiểm thử trình duyệt ở môi trường phát triển, với Chromium của Playwright

@@ -1,4 +1,5 @@
 import "server-only";
+import { writeImage, readStoredImage } from "@/lib/storage/images";
 import { getDatabase } from "@/lib/db";
 import { ensureDatabaseUser } from "@/lib/auth/user";
 import { POST_CATEGORIES,type BlogPost,type PostAuthor,type PostInput,type PostStatus,type PostSummary } from "./types";
@@ -53,7 +54,8 @@ async function attachments(client:PoolClient,id:string,userId:string,html:string
     const match=/^data:image\/jpeg;base64,([a-z0-9+/=]+)$/i.exec(input.coverImageDataUrl);if(!match)throw new PostValidationError("Ảnh bìa phải là JPEG.");
     const buffer=Buffer.from(match[1],"base64");if(buffer.length>8*1024*1024)throw new PostValidationError("Ảnh bìa vượt 8MB.");
     try{await sharp(buffer,{limitInputPixels:40_000_000}).metadata();}catch{throw new PostValidationError("Không thể đọc ảnh bìa.");}
-    await client.query("INSERT INTO blog_covers(post_id,image_data) VALUES ($1,$2) ON CONFLICT(post_id) DO UPDATE SET image_data=EXCLUDED.image_data",[id,buffer]);
+    const filePath=await writeImage("blog-covers",buffer);
+    await client.query("INSERT INTO blog_covers(post_id,file_path) VALUES ($1,$2) ON CONFLICT(post_id) DO UPDATE SET file_path=EXCLUDED.file_path,image_data=NULL",[id,filePath]);
   }else if(input.removeCover)await client.query("DELETE FROM blog_covers WHERE post_id=$1",[id]);
 }
 export async function createPost(author:PostAuthor,value:unknown):Promise<BlogPost>{
@@ -69,4 +71,4 @@ export async function updatePost(subject:string,id:string,value:unknown):Promise
 }
 export async function deletePost(subject:string,id:string){if(!UUID.test(id))return false;return (await getDatabase().query("DELETE FROM blog_posts p USING users u WHERE p.author_id=u.id AND u.auth_subject=$1 AND p.id=$2",[subject,id])).rowCount===1;}
 export async function reviewPost(id:string,status:Extract<PostStatus,"approved"|"rejected">,note:string|null){if(!UUID.test(id))return null;await getDatabase().query("UPDATE blog_posts SET status=$2,reviewed_at=now(),review_note=$3 WHERE id=$1",[id,status,note?.slice(0,2000)??null]);return getPost(id);}
-export async function readCover(id:string):Promise<Buffer|null>{if(!UUID.test(id))return null;return (await getDatabase().query("SELECT image_data FROM blog_covers WHERE post_id=$1",[id])).rows[0]?.image_data??null;}
+export async function readCover(id:string):Promise<Buffer|null>{if(!UUID.test(id))return null;return readStoredImage((await getDatabase().query("SELECT file_path,image_data FROM blog_covers WHERE post_id=$1",[id])).rows[0]);}

@@ -1,4 +1,5 @@
 import "server-only";
+import { writeImage, readStoredImage } from "@/lib/storage/images";
 import { getDatabase } from "@/lib/db";
 import type { PoolClient } from "pg";
 import { normalizeInput, parseDataUrl, TicketValidationError } from "./validation";
@@ -35,8 +36,9 @@ async function saveImage(client: PoolClient, id: string, input: TicketInput) {
     const png = image.buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
     const jpeg = image.buffer[0]===255 && image.buffer[1]===216 && image.buffer[2]===255;
     if (!(image.contentType === "image/png" ? png : jpeg)) throw new TicketValidationError("Nội dung ảnh không đúng định dạng.");
-    await client.query(`INSERT INTO ticket_images(ticket_id,content_type,image_data) VALUES ($1,$2,$3)
-      ON CONFLICT(ticket_id) DO UPDATE SET content_type=EXCLUDED.content_type,image_data=EXCLUDED.image_data,updated_at=now()`, [id,image.contentType,image.buffer]);
+    const filePath = await writeImage("ticket-images", image.buffer);
+    await client.query(`INSERT INTO ticket_images(ticket_id,content_type,file_path) VALUES ($1,$2,$3)
+      ON CONFLICT(ticket_id) DO UPDATE SET content_type=EXCLUDED.content_type,file_path=EXCLUDED.file_path,image_data=NULL,updated_at=now()`, [id,image.contentType,filePath]);
   } else if (input.removeImage) await client.query("DELETE FROM ticket_images WHERE ticket_id=$1", [id]);
 }
 async function persist(subject: string, id: string | null, value: unknown): Promise<TicketDesign | null> {
@@ -90,8 +92,9 @@ export async function updateTicket(subject: string, id: string, value: unknown):
 export async function deleteTicket(subject: string, id: string): Promise<boolean> { void subject; void id; throw new TicketValidationError("Mỗi tài khoản có một mã vé cố định. Bạn có thể chỉnh sửa vé thay vì xóa và cấp mã mới."); }
 export async function readTicketImage(subject: string, id: string, admin = false): Promise<{data: Buffer; contentType: "image/jpeg" | "image/png"} | null> {
   if (!UUID.test(id)) return null;
-  const result = await getDatabase().query(`SELECT i.image_data,i.content_type FROM ticket_images i JOIN tickets t ON t.id=i.ticket_id JOIN users u ON u.id=t.user_id WHERE t.id=$1 AND ($3::boolean OR u.auth_subject=$2)`, [id,subject,admin]);
-  return result.rows[0] ? { data: result.rows[0].image_data, contentType: result.rows[0].content_type } : null;
+  const result = await getDatabase().query(`SELECT i.file_path,i.image_data,i.content_type FROM ticket_images i JOIN tickets t ON t.id=i.ticket_id JOIN users u ON u.id=t.user_id WHERE t.id=$1 AND ($3::boolean OR u.auth_subject=$2)`, [id,subject,admin]);
+  const data = await readStoredImage(result.rows[0]);
+  return data ? { data, contentType: result.rows[0].content_type } : null;
 }
 export async function listAdminTickets(query = ""): Promise<(TicketDesign & {ownerName: string; ownerEmail: string | null; printed: boolean; collected: boolean; printStatus: string | null})[]> {
   const result = await getDatabase().query(`${SELECT} JOIN users u ON u.id=t.user_id WHERE ($1='' OR t.ticket_code=$1) ORDER BY t.created_at DESC LIMIT 100`, [query.trim().toUpperCase()]);

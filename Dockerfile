@@ -14,6 +14,7 @@ FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
 COPY --from=build --chown=node:node /app /app
+RUN mkdir -p /app/.data/uploads && chown -R node:node /app/.data
 USER node
 EXPOSE 3000
 CMD ["npm", "run", "start", "--", "--hostname", "0.0.0.0", "--port", "3000"]

@@ -104,7 +104,7 @@
 
 .landing-fonts {
   --font-dm-sans: "Helvetica", Arial, sans-serif;
-  --font-editorial: var(--font-khaviax), Georgia, serif;
+  --font-editorial: "Playfair Display", Georgia, serif;
 }
 
 @theme {
@@ -120,8 +120,8 @@
   --color-earth: #93381f;
   --color-ink: #17331f;
 
-  /* Khaviax for headings, Helvetica Neue for body --------------------- */
-  --font-display: var(--font-khaviax), Georgia, serif;
+  /* Playfair Display includes the local Vietnamese font subset. */
+  --font-display: "Playfair Display", Georgia, serif;
   --font-sans: "Helvetica", Arial, sans-serif;
 
   --shadow-brand: 0 30px 90px -30px rgba(8, 45, 27, 0.55);

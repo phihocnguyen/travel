@@ -10,7 +10,7 @@ Trình duyệt → Cloudflare (HTTPS) → VPS:443 / Nginx (HTTPS)
                                       PostgreSQL:5432
 ```
 
-Chỉ Nginx công khai cổng 80/443. App và database không publish cổng ra Internet. Database nằm trong Docker volume `travel_postgres_data`, tồn tại khi thay container.
+Chỉ Nginx công khai cổng 80/443. App và database không publish cổng ra Internet. Database nằm trong Docker volume `travel_postgres_data`; ảnh upload nằm trên disk trong volume `travel_image_data`, mount tại `/app/.data/uploads`. Cả hai tồn tại khi thay container. Xem [chi tiết lưu trữ ảnh và cập nhật bản đang chạy](docs/image-storage.md).
 
 ## Chạy trước bằng IP khi chưa có domain
 
@@ -221,7 +221,7 @@ sudo docker compose run --rm migrate
 sudo docker compose run --rm --no-deps app npm run db:seed
 ```
 
-Chỉ tiếp tục nếu từng lệnh thành công. `db:migrate` tạo/cập nhật schema, có kiểm tra checksum; một số migration hiện có cũng thêm video mẫu. `db:seed` nạp nội dung khởi đầu và quyền. Không cần tự viết SQL tạo bảng.
+Chỉ tiếp tục nếu từng lệnh thành công. Service `migrate` chạy `db:migrate` để tạo/cập nhật schema, sau đó `images:migrate` để chuyển ảnh cũ từ DB sang disk và kiểm tra bản sao trước khi xóa bytes khỏi DB. Một số migration hiện có cũng thêm video mẫu. `db:seed` nạp nội dung khởi đầu và quyền. Không cần tự viết SQL tạo bảng.
 
 Tạo tài khoản admin ban đầu với mật khẩu bạn nhập, tránh mật khẩu mặc định `admin` của script:
 
@@ -259,24 +259,29 @@ Không chạy Playwright/kiểm thử tạo dữ liệu trên database productio
 
 ## 8. Backup và restore
 
-Vé, bài viết và media upload được lưu trong PostgreSQL. Các file `public` cần giữ trong source hoặc bản sao riêng. Volume không phải backup: mất VPS/đĩa vẫn mất dữ liệu.
+Vé, bài viết, metadata ảnh và video upload nằm trong PostgreSQL. Nội dung ảnh upload nằm trên disk trong volume `travel_image_data`. Phải backup **cả DB và volume ảnh**, đồng thời giữ các file `public` trong source hoặc bản sao riêng. Volume không phải backup: mất VPS/đĩa vẫn mất dữ liệu.
 
-Tạo backup (chạy bằng Bash trên VPS):
+Tạo backup nhất quán bằng cách dừng app trong lúc sao lưu (chạy bằng Bash trên VPS). Nếu đang dùng chế độ IP, thêm `-f docker-compose.ip.yml` vào mọi lệnh Compose:
 
 ```bash
 cd /opt/travel
 mkdir -p backups
 chmod 700 backups
 umask 077
-backup_file="backups/travel-$(date +%F-%H%M%S).dump"
+backup_stamp="$(date +%F-%H%M%S)"
+backup_file="backups/travel-$backup_stamp.dump"
+sudo docker compose stop nginx app
 sudo docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$backup_file"
 test -s "$backup_file" && echo "Backup: $backup_file"
+sudo docker compose run --rm -T --no-deps --user root --entrypoint tar app -czf - -C /app/.data/uploads . > "backups/images-$backup_stamp.tar.gz"
+sudo docker compose start app nginx
 ```
 
-Chỉ coi backup thành công nếu `pg_dump` thoát với mã 0. Sao chép backup ra máy khác, ví dụ từ PowerShell:
+Chỉ coi backup thành công nếu cả `pg_dump` lẫn `tar` thoát với mã 0. Không chạy migration/import trong lúc backup. Sao chép cả hai file ra máy khác, ví dụ từ PowerShell:
 
 ```powershell
 scp root@103.252.137.103:/opt/travel/backups/travel-YYYY-MM-DD-HHMMSS.dump .
+scp root@103.252.137.103:/opt/travel/backups/images-YYYY-MM-DD-HHMMSS.tar.gz .
 ```
 
 Thiết lập lịch backup hằng ngày bằng cron/timer theo các lệnh trên, lưu bản ngoài VPS và định kỳ thử restore. Giữ riêng bản sao `.env`, certificate/private key ở nơi an toàn; chúng không nằm trong SQL dump.
@@ -289,9 +294,16 @@ sudo docker compose exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d travel_r
 sudo docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d travel_restore_test -c "SELECT count(*) FROM users;"'
 ```
 
-Nếu cần phục hồi thật: dừng app để tránh ghi mới, restore vào DB mới, đổi `POSTGRES_DB` trong `.env` sang DB đã restore rồi tạo lại container app/migrate. Giữ DB cũ đến khi xác minh dữ liệu. Restore backup cũ đồng nghĩa dữ liệu ghi sau thời điểm backup không có trong DB phục hồi.
+Nếu cần phục hồi thật: dừng app để tránh ghi mới, restore vào DB mới, đổi `POSTGRES_DB` trong `.env` sang DB đã restore. Phục hồi archive ảnh cùng thời điểm trước khi tạo lại container app/migrate:
 
-**Không chạy `docker compose down -v`** nếu muốn giữ database. `down` không có `-v` giữ named volume. Không đổi major version PostgreSQL trực tiếp trên volume đang dùng; cần quy trình pg_upgrade hoặc dump/restore.
+```bash
+sudo docker compose run --rm -T --no-deps --user root --entrypoint tar app -xzf - -C /app/.data/uploads < backups/images-YYYY-MM-DD-HHMMSS.tar.gz
+sudo docker compose run --rm --no-deps --user root --entrypoint sh app -c 'chown -R node:node /app/.data/uploads'
+```
+
+Giữ DB/volume cũ đến khi xác minh dữ liệu. Không test restore đè lên volume production. Restore backup cũ đồng nghĩa dữ liệu ghi sau thời điểm backup không có trong DB phục hồi.
+
+**Không chạy `docker compose down -v`** nếu muốn giữ database và ảnh upload. `down` không có `-v` giữ named volume. Không đổi major version PostgreSQL trực tiếp trên volume đang dùng; cần quy trình pg_upgrade hoặc dump/restore.
 
 Đổi `POSTGRES_PASSWORD` trong `.env` không đổi mật khẩu của DB đã khởi tạo. Muốn rotate phải đổi password role bằng PostgreSQL rồi cập nhật môi trường app tương ứng.
 
@@ -320,7 +332,7 @@ curl -I https://travel.example.com
 
 Lưu tag thành công vào `.env`: thêm/cập nhật `APP_IMAGE_TAG=TAG_VUA_DEPLOY` rồi `unset APP_IMAGE_TAG` để các lần vận hành sau dùng đúng image. Nếu upload source bằng tar, thay bước `git pull` bằng upload/giải nén bản mới, giữ `.env` và `deploy/certs`.
 
-Không chạy lại seed mỗi lần update. Nếu migration lỗi, dừng cập nhật và xem log; runner hiện dùng transaction nên migration thất bại được rollback. Có thể khởi động lại image cũ nếu DB còn tương thích. Quay về image cũ không tự rollback schema: khi schema đã thay đổi không tương thích, cần bản sửa hoặc phục hồi DB đã backup và source tương ứng.
+Không chạy lại seed mỗi lần update. Nếu migration lỗi, dừng cập nhật và xem log; schema runner dùng transaction. Export ảnh commit từng ảnh để có thể chạy tiếp sau gián đoạn; ảnh chưa export thành công vẫn giữ bytes trong DB. Sau khi export ảnh sang disk, bản app cũ chỉ đọc bytea không còn tương thích: muốn rollback bản cũ phải phục hồi backup DB trước chuyển đổi. Quay về image cũ không tự rollback schema hoặc dữ liệu.
 
 ## 10. Xử lý lỗi và vận hành
 

@@ -15,6 +15,9 @@ x-app: &app
     GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
     ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+    IMAGE_STORAGE_DIR: /app/.data/uploads
+  volumes:
+    - image_data:/app/.data/uploads
   logging:
     driver: json-file
     options:
@@ -45,7 +48,7 @@ services:
   migrate:
     <<: *app
     restart: "no"
-    command: ["npm", "run", "db:migrate"]
+    command: ["sh", "-c", "npm run db:migrate && npm run images:migrate"]
     depends_on:
       db:
         condition: service_healthy
@@ -83,3 +86,4 @@ services:
 
 volumes:
   postgres_data:
+  image_data:

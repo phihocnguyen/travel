@@ -5,19 +5,16 @@ import Image from "next/image";
 import PhotoLibrary from "@/components/photos/PhotoLibrary";
 import { PHOTO_FEATURES } from "@/lib/photos";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import {
   ArrowUpRight,
   ArrowDown,
   MapPin,
   Compass,
   Menu,
-  MoveUpRight,
 } from "lucide-react";
 import { EVENT } from "@/components/campaign/campaignData";
 import HeaderAccount from "@/components/auth/HeaderAccount";
+import HeroVideo from "./HeroVideo";
 
 const destinations = [
  {number:"01",title:"Khu di tích Xẻo Quýt",category:"THIÊN NHIÊN & LỊCH SỬ",location:"Cao Lãnh",image:PHOTO_FEATURES.xeoQuyt.src,description:"Theo lạch nước xanh, nghe rừng tràm kể chuyện."},
@@ -44,7 +41,7 @@ function SplitTitle({
             data-split-line
             className={`block w-fit ${
               line.italic
-                ? "font-serif italic font-normal"
+                ? "italic font-normal"
                 : "font-bold"
             }`}
           >
@@ -83,7 +80,7 @@ function JourneyCard({
 
           <div className="absolute inset-0 bg-gradient-to-t from-[#102820]/75 via-transparent to-transparent" />
 
-          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-4 py-2 text-[11px] font-semibold text-white backdrop-blur-lg">
+          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-[#14342a]/75 px-4 py-2 text-[11px] font-semibold text-white">
             <MapPin size={12} />
             {destination.location}
           </div>
@@ -113,12 +110,18 @@ function JourneyCard({
 
 export default function LandingPage() {
   const root = useRef<HTMLElement>(null);
-  const navBackground = useRef<HTMLSpanElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("#hero");
 
   useEffect(() => {
-    const update = () => setScrolled((previous) => previous ? window.scrollY > 8 : window.scrollY > 48);
+    let previous = false;
+    const update = () => {
+      const next = window.scrollY > (previous ? 8 : 48);
+      if (next !== previous) {
+        previous = next;
+        setScrolled(next);
+      }
+    };
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
@@ -126,441 +129,147 @@ export default function LandingPage() {
 
   useEffect(() => {
     const sections = ["hero", "story", "destinations", "photos", "cta"];
-    let frame = 0;
-    const update = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        const marker = window.innerHeight * 0.38;
-        let current = "#hero";
-        for (const id of sections) {
-          const section = document.getElementById(id);
-          if (section && section.getBoundingClientRect().top <= marker) current = `#${id}`;
+    let observer: IntersectionObserver;
+    // Track the navigation marker without measuring every section on every frame.
+    const observe = () => {
+      observer?.disconnect();
+      const marker = Math.round(window.innerHeight * 0.38);
+      observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveSection(`#${entry.target.id}`);
         }
-        setActiveSection((previous) => previous === current ? previous : current);
-        frame = 0;
-      });
+      }, { rootMargin: `-${marker}px 0px -${Math.max(0, window.innerHeight - marker - 1)}px 0px` });
+      for (const id of sections) {
+        const section = document.getElementById(id);
+        if (section) observer.observe(section);
+      }
     };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    observe();
+    window.addEventListener("resize", observe, { passive: true });
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      if (frame) window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", observe);
     };
   }, []);
 
-  useEffect(() => {
-    if (!navBackground.current) return;
-    const tween = gsap.to(navBackground.current, {
-      opacity: scrolled ? 1 : 0,
-      duration: 0.65,
-      ease: "power1.inOut",
-      overwrite: true,
-    });
-    return () => { tween.kill(); };
-  }, [scrolled]);
-
   useLayoutEffect(() => {
-    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-
     const el = root.current;
     if (!el) return;
-
-    const mm = gsap.matchMedia();
-
-    const ctx = gsap.context(() => {
-      // ============================================
-      // 01 — CINEMATIC HERO INTRO
-      // ============================================
-
-      const intro = gsap.timeline({
-        defaults: { ease: "power3.out" },
-        delay: 0.15,
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const animations = new Set<Animation>();
+    const originalOpacity = new Map<HTMLElement, string>();
+    const prepare = (node: HTMLElement) => {
+      if (!originalOpacity.has(node)) originalOpacity.set(node, node.style.opacity);
+      node.style.opacity = "0";
+    };
+    const reveal = (node: HTMLElement, delay = 0, distance = 24, duration = 650) => {
+      const animation = node.animate([
+        { opacity: 0, transform: `translate3d(0, ${motion.matches ? 0 : distance}px, 0)` },
+        { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      ], {
+        duration: motion.matches ? 180 : duration,
+        delay: motion.matches ? Math.min(delay, 100) : delay,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        fill: "both",
       });
+      animations.add(animation);
+      const restore = () => {
+        node.style.opacity = originalOpacity.get(node) ?? "";
+        animations.delete(animation);
+      };
+      animation.oncancel = restore;
+      animation.onfinish = () => {
+        restore();
+        animation.cancel();
+      };
+    };
 
-      intro
-        .fromTo(
-          "[data-hero-photo]",
-          { scale: 1.22, filter: "blur(8px)" },
-          {
-            scale: 1,
-            filter: "blur(0px)",
-            duration: 2.2,
-            ease: "expo.out",
-          },
-          0
-        )
-        .fromTo(
-          "[data-nav-item]",
-          { opacity: 0, y: -25 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.9,
-            stagger: 0.07,
-          },
-          0.35
-        )
-        .fromTo(
-          "[data-hero-kicker]",
-          { opacity: 0, y: 25 },
-          { opacity: 1, y: 0, duration: 0.9 },
-          0.45
-        )
-        .fromTo(
-          "[data-hero-title]",
-          {
-            yPercent: 115,
-            rotate: 2,
-            opacity: 0,
-          },
-          {
-            yPercent: 0,
-            rotate: 0,
-            opacity: 1,
-            duration: 1.35,
-            stagger: 0.14,
-            ease: "expo.out",
-          },
-          0.6
-        )
-        .fromTo(
-          "[data-hero-script]",
-          {
-            y: 90,
-            opacity: 0,
-            rotate: -4,
-          },
-          {
-            y: 0,
-            opacity: 1,
-            rotate: 0,
-            duration: 1.6,
-            ease: "expo.out",
-          },
-          0.88
-        )
-        .fromTo(
-          "[data-hero-support]",
-          { opacity: 0, y: 35 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            stagger: 0.1,
-          },
-          1.25
-        )
-        .fromTo(
-          "[data-hero-bottom]",
-          { opacity: 0, y: 25 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-          },
-          1.6
-        );
-
-      // ============================================
-      // 02 — HERO PARALLAX ON SCROLL
-      // ============================================
-
-      gsap.to("[data-hero-photo]", {
-        yPercent: 5,
-        scale: 1.15,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "#hero",
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
+    const groups = new Map<Element, { targets: HTMLElement[]; delay: number; distance: number }>();
+    // Queue the hero too: a restored scroll position must not reveal offscreen content.
+    const intro: [string, number, number][] = [
+      ["[data-nav-item]", 0, -10],
+      ["[data-hero-kicker]", 100, 18],
+      ["[data-hero-title]", 180, 48],
+      ["[data-hero-script]", 320, 32],
+      ["[data-hero-support]", 430, 20],
+      ["[data-hero-bottom]", 500, 16],
+    ];
+    for (const [selector, delay, distance] of intro) {
+      el.querySelectorAll<HTMLElement>(selector).forEach((node, index) => {
+        prepare(node);
+        groups.set(node, { targets: [node], delay: delay + index * 70, distance });
       });
+    }
 
-      gsap.to("[data-hero-headline]", {
-        yPercent: 30,
-        opacity: 0,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "#hero",
-          start: "top top",
-          end: "bottom top",
-          scrub: 1,
-        },
-      });
-
-      // ============================================
-      // 03 — TEXT REVEALS
-      // ============================================
-
-      gsap.utils
-        .toArray<HTMLElement>("[data-section-heading]")
-        .forEach((heading) => {
-          const lines = heading.querySelectorAll(
-            "[data-split-line]"
-          );
-
-          gsap.fromTo(
-            lines,
-            { yPercent: 110, opacity: 0 },
-            {
-              yPercent: 0,
-              opacity: 1,
-              duration: 1.15,
-              stagger: 0.14,
-              ease: "expo.out",
-              scrollTrigger: {
-                trigger: heading,
-                start: "top 85%",
-                once: true,
-              },
-            }
-          );
-        });
-
-      gsap.utils
-        .toArray<HTMLElement>("[data-fade-up]")
-        .forEach((item) => {
-          gsap.fromTo(
-            item,
-            { y: 65, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 1.15,
-              ease: "power3.out",
-              scrollTrigger: {
-                trigger: item,
-                start: "top 90%",
-                once: true,
-              },
-            }
-          );
-        });
-
-      // ============================================
-      // 04 — IMAGE REVEALS
-      // ============================================
-
-      gsap.utils
-        .toArray<HTMLElement>("[data-image-frame]")
-        .forEach((frame) => {
-          const image = frame.querySelector("img");
-
-          gsap.fromTo(
-            frame,
-            {
-              clipPath: "inset(18% 12% 18% 12% round 28px)",
-              opacity: 0.65,
-            },
-            {
-              clipPath: "inset(0% 0% 0% 0% round 28px)",
-              opacity: 1,
-              duration: 1.65,
-              ease: "expo.inOut",
-              scrollTrigger: {
-                trigger: frame,
-                start: "top 90%",
-                once: true,
-              },
-            }
-          );
-
-          if (image) {
-            gsap.fromTo(
-              image,
-              { scale: 1.25 },
-              {
-                scale: 1,
-                duration: 1.9,
-                ease: "expo.out",
-                scrollTrigger: {
-                  trigger: frame,
-                  start: "top 90%",
-                  once: true,
-                },
-              }
-            );
-          }
-        });
-
-      // ============================================
-      // 05 — GALLERY PARALLAX
-      // ============================================
-
-      gsap.utils
-        .toArray<HTMLElement>("[data-destination]")
-        .forEach((card, index) => {
-          const photo = card.querySelector(
-            "[data-destination-image]"
-          );
-
-          gsap.fromTo(
-            card,
-            {
-              opacity: 0,
-              y: index % 2 ? 100 : 65,
-            },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 1.4,
-              ease: "expo.out",
-              scrollTrigger: {
-                trigger: card,
-                start: "top 90%",
-                once: true,
-              },
-            }
-          );
-
-          if (photo) {
-            gsap.fromTo(
-              photo,
-              { yPercent: -3, scale: 1.12 },
-              {
-                yPercent: 3,
-                scale: 1.12,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: card,
-                  start: "top bottom",
-                  end: "bottom top",
-                  scrub: 1.2,
-                },
-              }
-            );
-          }
-        });
-
-      // ============================================
-      // 06 — SECTION IMAGE PARALLAX
-      // ============================================
-
-      gsap.to("[data-story-image]", {
-        yPercent: 5,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "#story",
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1,
-        },
-      });
-
-      // ============================================
-      // 07 — CTA REVEAL
-      // ============================================
-
-      gsap.fromTo(
-        "[data-cta-orb]",
-        { scale: 0.5, opacity: 0, rotate: -35 },
-        {
-          scale: 1,
-          opacity: 1,
-          rotate: 0,
-          ease: "expo.out",
-          duration: 1.8,
-          scrollTrigger: {
-            trigger: "#cta",
-            start: "top 80%",
-            once: true,
-          },
-        }
-      );
-
-      // ============================================
-      // 08 — DESKTOP MOUSE INTERACTION
-      // ============================================
-
-      mm.add(
-        "(min-width: 1024px) and (hover: hover) and (pointer: fine)",
-        () => {
-          const magnets = el.querySelectorAll(
-            "[data-magnetic]"
-          );
-
-          const cleanups: (() => void)[] = [];
-
-          magnets.forEach((node) => {
-            const button = node as HTMLElement;
-
-            const move = (e: MouseEvent) => {
-              const rect = button.getBoundingClientRect();
-
-              const x =
-                e.clientX - (rect.left + rect.width / 2);
-
-              const y =
-                e.clientY - (rect.top + rect.height / 2);
-
-              gsap.to(button, {
-                x: x * 0.18,
-                y: y * 0.18,
-                duration: 0.4,
-                ease: "power3.out",
-                overwrite: true,
-              });
-            };
-
-            const leave = () => {
-              gsap.to(button, {
-                x: 0,
-                y: 0,
-                duration: 0.7,
-                ease: "elastic.out(1, 0.55)",
-                overwrite: true,
-              });
-            };
-
-            button.addEventListener("mousemove", move);
-            button.addEventListener("mouseleave", leave);
-
-            cleanups.push(() => {
-              button.removeEventListener("mousemove", move);
-              button.removeEventListener("mouseleave", leave);
-            });
-          });
-
-          return () => {
-            cleanups.forEach((fn) => fn());
-          };
-        }
-      );
-    }, el);
-
+    // Reveal when content reaches the visible area, not when its first pixel touches the bottom.
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.1) continue;
+        observer.unobserve(entry.target);
+        const group = groups.get(entry.target);
+        group?.targets.forEach((node, index) => reveal(node, group.delay + index * 85, group.distance));
+      }
+    }, { rootMargin: `0px 0px -${Math.round(window.innerHeight * 0.12)}px 0px`, threshold: 0.1 });
+    const selector = "[data-section-heading], [data-fade-up], [data-destination], [data-image-frame]";
+    el.querySelectorAll<HTMLElement>(selector).forEach(node => {
+      // Observe individual blocks instead of revealing a whole parent section at once.
+      if (node.querySelector(selector)) return;
+      const lines = Array.from(node.querySelectorAll<HTMLElement>("[data-split-line]"));
+      const targets = node.hasAttribute("data-section-heading") && lines.length ? lines : [node];
+      targets.forEach(prepare);
+      groups.set(node, { targets, delay: 0, distance: 24 });
+    });
+    groups.forEach((_group, node) => observer.observe(node));
+    const reduceMotion = () => {
+      if (motion.matches) animations.forEach(animation => animation.cancel());
+    };
+    motion.addEventListener("change", reduceMotion);
+    let scrollFrame = 0;
+    const cancelScroll = () => {
+      if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
+      scrollFrame = 0;
+    };
     const scrollToSection = (event: MouseEvent) => {
-      const targetElement = event.target;
-      if (!(targetElement instanceof Element)) return;
-      const link = targetElement.closest<HTMLAnchorElement>('a[href^="#"]');
+      if (!(event.target instanceof Element)) return;
+      const link = event.target.closest<HTMLAnchorElement>('a[href^="#"]');
       if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
       if (!target) return;
       event.preventDefault();
+      cancelScroll();
       history.replaceState(null, "", link.hash);
       const top = target.id === "hero" ? 0 : target.getBoundingClientRect().top + window.scrollY - 84;
-      window.scrollTo({
-        top: Math.max(0, top),
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
-      });
+      const from = window.scrollY;
+      const destination = Math.max(0, Math.min(top, document.documentElement.scrollHeight - window.innerHeight));
+      const distance = destination - from;
+      const duration = Math.min(900, Math.max(450, Math.abs(distance) * 0.2));
+      const started = performance.now();
+      // Animate only during a menu click; OS/CSS smooth-scroll settings cannot turn it into a jump.
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - started) / duration);
+        const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
+        window.scrollTo({ top: from + distance * eased, behavior: "instant" });
+        scrollFrame = progress < 1 ? window.requestAnimationFrame(step) : 0;
+      };
+      scrollFrame = window.requestAnimationFrame(step);
     };
     el.addEventListener("click", scrollToSection);
-
-    const refresh = () => ScrollTrigger.refresh();
-
-    document.fonts?.ready.then(refresh);
-
-    window.addEventListener("load", refresh);
-
+    window.addEventListener("wheel", cancelScroll, { passive: true });
+    window.addEventListener("touchstart", cancelScroll, { passive: true });
+    window.addEventListener("keydown", cancelScroll);
     return () => {
+      cancelScroll();
+      observer.disconnect();
+      animations.forEach(animation => animation.cancel());
+      originalOpacity.forEach((opacity, node) => { node.style.opacity = opacity; });
+      motion.removeEventListener("change", reduceMotion);
       el.removeEventListener("click", scrollToSection);
-      window.removeEventListener("load", refresh);
-      mm.revert();
-      ctx.revert();
+      window.removeEventListener("wheel", cancelScroll);
+      window.removeEventListener("touchstart", cancelScroll);
+      window.removeEventListener("keydown", cancelScroll);
     };
   }, []);
+
 
   return (
     <main
@@ -597,12 +306,6 @@ export default function LandingPage() {
           box-shadow:
             0 30px 85px rgba(17, 61, 69, 0.15),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-        }
-
-        .hero-grain {
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -632,26 +335,15 @@ export default function LandingPage() {
       >
         {/* BACKGROUND */}
         <div className="absolute inset-0">
-          <video
-            data-hero-photo
-            src="/FDown.vn_Tai_video_Facebook_720p%20(HD)_0dd2.mp4"
-            poster={PHOTO_FEATURES.harvest.src}
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
+          <HeroVideo poster={PHOTO_FEATURES.harvest.src} />
 
           <div className="absolute inset-0 bg-gradient-to-r from-[#064d70]/55 via-[#246991]/25 to-[#0c4666]/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#072e34]/45 via-transparent to-[#0c4666]/20" />
-          <div className="hero-grain pointer-events-none absolute inset-0 opacity-[0.13]" />
         </div>
 
         {/* NAVIGATION */}
         <header data-site-header className={`landing-nav fixed left-1/2 top-0 z-[100] isolate flex items-center justify-between gap-8 transition-[translate,width,padding,border-radius,color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${scrolled ? "w-[calc(100%_-_1.5rem)] -translate-x-1/2 translate-y-3 rounded-xl px-4 py-3 text-[#14342a] sm:w-[calc(100%_-_3rem)] sm:translate-y-4 sm:px-6" : "w-full -translate-x-1/2 translate-y-0 rounded-none px-6 py-7 text-white sm:px-10 lg:px-16"}`}>
-          <span ref={navBackground} aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-white opacity-0 shadow-[0_4px_14px_rgba(20,52,42,0.08)]" />
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-white shadow-[0_4px_14px_rgba(20,52,42,0.08)] transition-opacity duration-300" style={{ opacity: scrolled ? 1 : 0 }} />
           <a
             data-nav-item
             href="#hero"
@@ -816,7 +508,7 @@ export default function LandingPage() {
                   data-hero-support
                   data-magnetic
                   href="/explore"
-                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full border border-white/80 bg-white/15 px-6 py-3 text-xs font-bold text-white shadow-[0_12px_35px_rgba(8,36,32,.2)] backdrop-blur-sm transition-colors hover:bg-white hover:text-[#173b2f]"
+                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full border border-white/80 bg-white/15 px-6 py-3 text-xs font-bold text-white shadow-[0_12px_35px_rgba(8,36,32,.2)] transition-colors hover:bg-white hover:text-[#173b2f]"
                 >
                   Chơi game Cao Lãnh
                   <ArrowUpRight size={16} />
@@ -1003,9 +695,9 @@ export default function LandingPage() {
       >
         <div
           data-cta-orb
-          className="pointer-events-none absolute -right-40 -top-56 h-[650px] w-[650px] rounded-full bg-[#f3d574]/70 blur-[100px]"
+          className="pointer-events-none absolute -right-40 -top-56 h-[650px] w-[650px] rounded-full bg-[radial-gradient(ellipse,rgba(243,213,116,0.7),transparent_70%)]"
         />
-        <div className="pointer-events-none absolute -bottom-64 -left-48 h-[600px] w-[600px] rounded-full bg-[#76aed6]/60 blur-[100px]" />
+        <div className="pointer-events-none absolute -bottom-64 -left-48 h-[600px] w-[600px] rounded-full bg-[radial-gradient(ellipse,rgba(118,174,214,0.6),transparent_70%)]" />
 
         <div className="relative mx-auto max-w-[1100px] text-center">
           <p
@@ -1017,7 +709,7 @@ export default function LandingPage() {
 
           <div data-section-heading>
             <SplitTitle
-              className="font-display text-[clamp(42px,6vw,86px)] leading-[.95] tracking-[-.07em] text-[#163d43] [&_[data-split-line]]:mx-auto"
+              className="font-display text-[clamp(42px,6vw,86px)] leading-[1.25] tracking-[-.035em] text-[#163d43] [&>span+span]:mt-2 [&_[data-split-line]]:mx-auto"
               lines={[
                 { text: "Hẹn gặp ở" },
                 { text: "Cao Lãnh", italic: true },
@@ -1039,7 +731,7 @@ export default function LandingPage() {
             {EVENT.meta.map((item) => (
               <span
                 key={item.label}
-                className="rounded-full border border-[#376782]/20 bg-white/35 px-5 py-3 text-[11px] font-semibold text-[#325f6c] backdrop-blur-lg"
+                className="rounded-full border border-[#376782]/20 bg-white/70 px-5 py-3 text-[11px] font-semibold text-[#325f6c]"
               >
                 {item.label}: {item.value}
               </span>
@@ -1086,14 +778,6 @@ export default function LandingPage() {
               </h2>
             </div>
 
-            <a
-              href="#hero"
-              data-magnetic
-              className="grid h-20 w-20 place-items-center rounded-full border border-white/35 transition-colors hover:bg-[#f1d079] hover:text-[#173e2b]"
-              aria-label="Về đầu trang"
-            >
-              <MoveUpRight size={28} />
-            </a>
           </div>
 
           <div className="mt-8 flex flex-wrap justify-between gap-5 text-[10px] font-semibold uppercase tracking-[.16em] text-white/50">

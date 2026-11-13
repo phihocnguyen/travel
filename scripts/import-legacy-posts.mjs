@@ -1,6 +1,7 @@
 import { readFile,readdir } from "node:fs/promises";
 import path from "node:path";
 import { databasePool,reportFailure } from "./db-utils.mjs";
+import { writeImage } from "../lib/storage/disk.mjs";
 const pool=databasePool();
 let client;
 try{
@@ -16,7 +17,7 @@ try{
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT(id) DO NOTHING RETURNING id`,[post.id,user,post.title,post.category,post.excerpt??"",post.content,post.contentFormat==="html"?"html":"plain",post.status,post.createdAt,post.updatedAt,post.reviewedAt??null,post.reviewNote??null]);
     if(!row.rowCount)continue;imported++;
     const cover=await readFile(path.join(directory,`${post.id}.jpg`)).catch(error=>{if(error.code==="ENOENT")return null;throw error;});
-    if(cover)await client.query("INSERT INTO blog_covers(post_id,image_data) VALUES ($1,$2)",[post.id,cover]);
+    if(cover){const filePath=await writeImage("blog-covers",cover);await client.query("INSERT INTO blog_covers(post_id,file_path) VALUES ($1,$2)",[post.id,filePath]);}
   }
   await client.query("COMMIT");console.log(`Imported ${imported} legacy posts. Existing DB posts and source files preserved.`);
 }catch(error){if(client)await client.query("ROLLBACK").catch(()=>{});reportFailure("Legacy post import",error);}finally{client?.release();await pool.end();}

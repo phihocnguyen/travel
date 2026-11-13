@@ -1,16 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import { Suspense } from "react";
 import SiteCursor from "@/components/effects/SiteCursor";
 import UserPresence from "@/components/auth/UserPresence";
 import "./globals.css";
-
-const khaviax = localFont({
-  src: "../public/1FTV-VIP-Khaviax.ttf",
-  variable: "--font-khaviax",
-  display: "swap",
-  weight: "400",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")),
@@ -29,7 +21,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="vi" className={`${khaviax.variable} h-full antialiased`}>
+    <html lang="vi" className="h-full antialiased">
       <body className="min-h-full" suppressHydrationWarning>{children}<Suspense fallback={null}><SiteCursor/><UserPresence/></Suspense></body>
     </html>
   );
