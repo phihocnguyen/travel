@@ -1,64 +1,38 @@
 "use client";
+import { useRef, useState } from "react";
+import { Check, RotateCcw, X } from "lucide-react";
+import { useItemDrop } from "./useItemDrop";
+import "./minigames.css";
 
-import { X } from "lucide-react";
-
-const STEPS = ["Trải lá chuối", "Thêm nếp và nhân", "Gấp lá, buộc lạt"] as const;
-
-type Props = {
-  step: number;
-  onAdvance: () => void;
-  onClose: () => void;
-};
-
-export default function CakeWrappingDialog({ step, onAdvance, onClose }: Props) {
-  return (
-    <div className="ex-mangoBackdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="ex-mangoCard ex-cakeCard" role="dialog" aria-modal="true" aria-labelledby="ex-cakeTitle">
-        <button className="ex-mangoClose" onClick={onClose} aria-label="Đóng trò gói bánh" autoFocus><X size={18} /></button>
-        <span className="ex-mangoKicker">CHỢ QUÊ TÂN THUẬN ĐÔNG · MINI GAME</span>
-        <h2 id="ex-cakeTitle">Gói bánh quê</h2>
-        <p>Làm lần lượt ba công đoạn để hoàn thành chiếc bánh.</p>
-        <div className="ex-cakeScene" aria-label={`Chiếc bánh đang ở công đoạn ${step} trên 3`}>
-          <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <path fill="#c39a6d" d="M0 0h400v250H0z" />
-            <path fill="#ae8156" d="M0 31h400v9H0zM0 112h400v9H0zM0 202h400v9H0z" />
-            <path fill="#e3cba0" d="M85 20h235v215H85z" />
-            <path fill="#c69e67" d="M95 30h215v195H95z" />
-            {step === 0 && <>
-              <path fill="#407446" d="M117 139h72v17h-72zM127 115h55v25h-55zM224 87h54v17h-54zM211 105h71v29h-71z" />
-              <path fill="#6b9f5b" d="M123 121h56v15h-56zM216 109h62v19h-62z" />
-              <path fill="#f7e8c2" d="M170 177h55v18h-55z" />
-              <path fill="#dcbf73" d="M177 182h23v8h-23z" />
-            </>}
-            {step >= 1 && step < 3 && <>
-              <path fill="#315e3c" d="M200 51h23v19h25v23h24v42h-21v30h-27v23h-47v-22h-29v-32h-20V94h22V72h28V52z" />
-              <path fill="#4f884b" d="M183 62h34v20h29v21h17v28h-23v27h-24v21h-32v-22h-29v-29h-18v-23h24V83h22z" />
-              <path fill="#78a962" d="M184 74h20v88h-20zM163 102h78v16h-78z" />
-            </>}
-            {step === 2 && <>
-              <path fill="#f7e9ca" d="M165 100h72v47h-72z" />
-              <path fill="#e4cd9f" d="M170 108h63v30h-63z" />
-              <path fill="#dfb658" d="M188 111h27v22h-27z" />
-              <path fill="#b47f46" d="M195 117h13v10h-13z" />
-            </>}
-            {step === 3 && <>
-              <path fill="#315e3c" d="M161 69h78v16h17v18h17v70h-18v17h-19v16h-73v-17h-19v-20h-16v-69h18V84h15z" />
-              <path fill="#4c854b" d="M164 79h71v18h17v17h14v52h-16v17h-17v14h-66v-16h-17v-20h-13v-47h15V97h12z" />
-              <path fill="#78a65e" d="M166 87h53v14h-53zM148 111h20v48h-20z" />
-              <path fill="#d2b46b" d="M195 80h12v112h-12zM145 129h119v11H145z" />
-              <path fill="#a27c4b" d="M195 129h12v11h-12z" />
-            </>}
-          </svg>
-          <span className="ex-cakeSceneLabel">{step === 0 ? "Lá, nếp và nhân đã sẵn sàng" : step === 3 ? "Bánh đã gói xong!" : STEPS[step - 1] + " ✓"}</span>
-        </div>
-        <div className="ex-cakeSteps">
-          {STEPS.map((label, index) => <button key={label} type="button" onClick={onAdvance} disabled={index !== step}
-            className={index < step ? "ex-cakeStepDone" : index === step ? "ex-cakeStepActive" : ""}>
-            <b>{index < step ? "✓" : index + 1}</b><span>{label}</span>
-          </button>)}
-        </div>
-        <div className="ex-mangoFooter"><span role="status">{step === 3 ? "Mẻ bánh đã sẵn sàng!" : `Đã làm ${step}/3 công đoạn`}</span><button type="button" onClick={onClose}>{step === 3 ? "Hoàn thành" : "Quay lại chợ"}</button></div>
-      </section>
-    </div>
-  );
+const ITEMS = [{ id: "leaf", name: "Lá chuối" }, { id: "rice", name: "Nếp" }, { id: "filling", name: "Nhân đậu" }, { id: "tie", name: "Dây lạt" }];
+function Ingredient({ kind }: { kind: string }) {
+  return <svg viewBox="0 0 90 76" fill="none" aria-hidden="true">{kind === "leaf" ? <><path d="M12 65Q6 14 72 7 85 58 12 65Z" fill="#598449" stroke="#355f3c" strokeWidth="2"/><path d="m14 62 53-48m-38 34 28-4m-18-6 23-4M42 35l-7-16" stroke="#a0b776" strokeWidth="2"/></> : kind === "tie" ? <><path d="M18 12q53 4 46 35Q56 71 22 57 2 45 24 24q28-22 48 15" stroke="#bda067" strokeWidth="7"/><path d="M18 12q53 4 46 35Q56 71 22 57 2 45 24 24q28-22 48 15" stroke="#e4cf97" strokeWidth="3"/></> : <><path d="M10 34q35 28 70 0l-8 23q-27 16-54 0Z" fill="#ddd0ab" stroke="#b29b73" strokeWidth="2"/><ellipse cx="45" cy="34" rx="34" ry="20" fill={kind === "rice" ? "#f7eed4" : "#d7ab53"} stroke="#bda87d" strokeWidth="2"/><path d="m23 30 6 3m9-10 6 3m11 0 6 3m-29 5 6 3m11 0 6 3m8-9 6 3m-29 8 6 3" stroke={kind === "rice" ? "#d9cbaa" : "#f1d58a"} strokeWidth="3" strokeLinecap="round"/></>}</svg>;
+}
+function Cake({ step, rice, left, right }: { step: number; rice: boolean; left: boolean; right: boolean }) {
+  return <svg className="mg-cakeArt" viewBox="0 0 720 440" fill="none" aria-hidden="true">{step === 0 ? <path d="M205 113q145-30 290 0v216q-145 30-290 0Z" stroke="#8c9b65" strokeWidth="3" strokeDasharray="9 9"/> : <>
+    <path d="M193 107q155-25 314 0v218q-154 25-314 0Z" fill="#64914f" stroke="#365b33" strokeWidth="3"/><path d="M350 101v229" stroke="#b6c781" strokeWidth="5"/>{[132,162,192,222,252,282,310].map(y => <path key={y} d={`M211 ${y-10} 345 ${y+12}m10 0 132-22`} stroke="#9bb76e" strokeWidth="2"/>)}
+    {(rice || step >= 2) && <><path d="M275 154q75-24 150 0v132q-75 22-150 0Z" fill="#eee2bc" stroke="#d7c89f" strokeWidth="2"/><path d="m289 166 12 4m19-7 12 3m28-2 12 3m24-1 12 4m-117 25 13 3m91 0 13 3m-118 25 13 3m90 0 13 3m-117 25 12 3m15 16 12 2m29 0 12-3" stroke="#fffae5" strokeWidth="4" strokeLinecap="round"/></>}
+    {step >= 2 && <><path d="M322 169q28-12 56 0v101q-28 12-56 0Z" fill="#d4aa50"/><path d="m334 181 8 4m16 9 7 3m-28 16 8 4m8 20 8 3m-25 13 9 3" stroke="#f1d48b" strokeWidth="5" strokeLinecap="round"/></>}
+    {(left || step === 3) && <g className="mg-folded"><path d="M205 114 374 145 374 298 205 322Z" fill="#487540" stroke="#365b33" strokeWidth="3"/><path d="m225 143 130 23m-130 7 130 20m-130 12 130 17m-130 13 130 10m-130 18 130 4" stroke="#759753" strokeWidth="2"/></g>}
+    {(right || step === 3) && <g className="mg-folded"><path d="M495 114 337 145 337 298 495 322Z" fill="#6d9451" stroke="#3e6638" strokeWidth="3"/><path d="m480 139-128 27m128 9-128 20m128 14-128 16m128 15-128 10m128 22-128 2" stroke="#9cb574" strokeWidth="2"/></g>}
+    {step === 3 && <><path d="m229 123 236 1-22 37H249Zm0 191 236 1-23-38H250Z" fill="#466e3d" stroke="#365b33" strokeWidth="3"/><path d="M350 128v179m-118-91h234" stroke="#6c5734" strokeWidth="9"/><path d="M350 128v179m-118-91h234" stroke="#e3cc8b" strokeWidth="5"/><path d="M350 216q-36-35-29-5 4 15 29 5 33-31 27-5-7 15-27 5Z" stroke="#f3dda0" strokeWidth="5"/></>}
+  </>}</svg>;
+}
+type Props = { step: number; onAdvance: () => void; onReplay: () => void; onClose: () => void };
+export default function CakeWrappingDialog({ step, onAdvance, onReplay, onClose }: Props) {
+  const board = useRef<HTMLButtonElement>(null);
+  const [rice,setRice] = useState(false), [left,setLeft] = useState(false), [right,setRight] = useState(false);
+  const [feedback,setFeedback] = useState("");
+  const instruction = step === 0 ? "Đặt lá chuối lên chiếu để bắt đầu." : step === 1 ? rice ? "Thêm nhân đậu lên phần nếp vừa trải." : "Trải nếp trước, rồi thêm nhân đậu vào giữa." : step === 2 ? left && right ? "Hai mép lá đã gọn. Đặt dây lạt lên bánh để buộc nhé!" : "Chạm hai mép lá để gấp vào giữa." : "Chiếc bánh đầu tiên đã gói xong!";
+  const expected = step === 0 ? "leaf" : step === 1 ? rice ? "filling" : "rice" : step === 2 && left && right ? "tie" : null;
+  const drop = useItemDrop(board, id => { if(id !== expected){setFeedback(instruction);return;} setFeedback("");if(id === "rice")setRice(true);else onAdvance(); }, () => {setFeedback("");return step < 3;});
+  const fold = (side: string) => {drop.clear();setFeedback("");if(side === "left")setLeft(true);else setRight(true);};
+  const replay = () => {drop.clear();setRice(false);setLeft(false);setRight(false);setFeedback("");onReplay();};
+  return <div className="ex-mangoBackdrop mg-backdrop" onMouseDown={e => {if(e.target === e.currentTarget && !drop.drag)onClose();}}><section className="mg-card" role="dialog" aria-modal="true" aria-labelledby="mg-cake-title">
+    <header className="mg-header"><div><span>CHỢ QUÊ TÂN THUẬN ĐÔNG</span><h2 id="mg-cake-title">Khéo tay gói bánh</h2></div><button className="mg-close" onClick={onClose} aria-label="Đóng trò gói bánh" autoFocus><X size={19}/></button></header>
+    <ol className="mg-steps">{["Trải lá","Nếp và nhân","Gấp, buộc bánh"].map((title,i)=><li key={title} className={i < step ? "is-done" : i === step ? "is-current" : ""}><b>{i < step ? <Check size={12}/> : i+1}</b>{title}</li>)}</ol>
+    <div className="mg-cakeScene"><img className="mg-sceneImage" src="/explore/cake-table.svg" alt="Bàn gỗ với chiếu lót để gói bánh" draggable={false}/><Cake step={step} rice={rice} left={left} right={right}/><button ref={board} className={`mg-boardTarget ${drop.selected !== null ? "is-ready" : ""}`} onClick={drop.placeSelected} disabled={step === 3} aria-label="Đặt nguyên liệu đã chọn lên chiếu gói bánh">{step === 0 && <span>{drop.selected ? "ĐẶT LÁ VÀO ĐÂY" : "CHIẾU GÓI BÁNH"}</span>}</button>{step === 2 && !left && <button className="mg-fold mg-foldLeft" onClick={()=>fold("left")}>Gấp vào →</button>}{step === 2 && !right && <button className="mg-fold mg-foldRight" onClick={()=>fold("right")}>← Gấp vào</button>}</div>
+    {step < 3 && <div className="mg-ingredients" aria-label="Nguyên liệu gói bánh">{ITEMS.map(item=><button key={item.id} {...drop.bind(item.id)} className={drop.selected === item.id ? "is-selected" : ""}><Ingredient kind={item.id}/><span>{item.name}</span></button>)}</div>}
+    <div className="mg-feedback" role="status"><p>{feedback || instruction}</p></div><footer className="mg-footer">{step === 3 ? <><strong className="mg-finished">Gọn lá, chắc lạt. Khéo tay quá!</strong><button className="mg-secondary" onClick={replay}><RotateCcw size={14}/>Gói chiếc nữa</button></> : <small>Kéo nguyên liệu vào chiếu, hoặc chọn rồi chạm vào chiếu.</small>}<button className="mg-primary" onClick={onClose}>{step === 3 ? "Hoàn thành" : "Về chợ"}</button></footer>
+  </section></div>;
 }

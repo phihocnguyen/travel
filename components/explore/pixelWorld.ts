@@ -1,3 +1,4 @@
+import { mapPattern, mapSprite, mapTexture } from "./mapArt";
 import { ACTIVITIES, HOMES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, XEO_QUYT_RIVER, isRiver, type Activity, type Stop, type Worker } from "./world";
 
 type Point = { x: number; y: number };
@@ -14,15 +15,21 @@ const paths: Point[][] = [
   [{x:1080,y:805},{x:1450,y:850},{x:1810,y:1000}],
 ];
 const hash = (x: number, y: number) => { let n = (x * 374761393 + y * 668265263) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967295; };
-const rect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string) => { c.fillStyle = fill; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const WATER=new Set(["#59a6af","#63a9ad","#6aaeb6","#68aeb0","#6aadb4","#60a9b4","#61a9b0","#71b8b6","#62a9b0","#6baab2","#69abb2"]);
+const rect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string) => {
+  if(w>=30&&WATER.has(fill)){mapTexture(c,"water",Math.round(x),Math.round(y),Math.round(w),Math.round(h),"#72a9a2");return;}
+  c.fillStyle=fill;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
+};
 
 function tree(c: CanvasRenderingContext2D, x: number, y: number, variant = 0) {
+  if(mapSprite(c,variant?"tram":"tree",x-(variant?25:33),y-(variant?72:68),variant?50:66,84))return;
   rect(c,x-3,y+2,6,12,"#73533e");
   rect(c,x-15,y-22,30,24,variant ? "#376d4e" : "#4b8556");
   rect(c,x-11,y-29,22,9,variant ? "#508b5f" : "#67a765");
   rect(c,x-10,y-18,5,4,"#88b976"); rect(c,x+6,y-12,5,4,"#2f674b");
 }
 function palm(c: CanvasRenderingContext2D, x: number, y: number) {
+  if(mapSprite(c,"palm",x-40,y-72,80,88))return;
   rect(c,x-3,y-7,6,21,"#8d6845"); rect(c,x-8,y-21,16,13,"#427e55");
   rect(c,x-21,y-16,16,6,"#4d9a5d"); rect(c,x+5,y-16,16,6,"#4d9a5d");
   rect(c,x-12,y-29,24,8,"#5ca568"); rect(c,x-3,y-23,6,8,"#b4a14d");
@@ -31,11 +38,13 @@ function flower(c: CanvasRenderingContext2D,x:number,y:number) {
   rect(c,x-1,y-3,2,7,"#4d8d59"); rect(c,x-4,y-6,3,3,"#e7969b"); rect(c,x+1,y-6,3,3,"#e7969b"); rect(c,x-1,y-9,3,3,"#f5b6b1"); rect(c,x-1,y-6,2,2,"#f8d076");
 }
 function hut(c: CanvasRenderingContext2D,x:number,y:number,roof:string) {
+  if(mapSprite(c,"hut",x-48,y-48,96,79))return;
   rect(c,x-27,y-5,54,31,"#8e6746"); rect(c,x-25,y-3,50,25,"#d9ba7d");
   rect(c,x-31,y-15,62,12,roof); rect(c,x-22,y-25,44,10,roof);
   rect(c,x-8,y+4,16,18,"#684833"); rect(c,x-20,y+2,8,8,"#5e8d81"); rect(c,x+12,y+2,8,8,"#5e8d81");
 }
 function home(c:CanvasRenderingContext2D,x:number,y:number,style:number){
+  if(mapSprite(c,"house",x-83,y-82,166,129))return;
   const wall=["#d9bc88","#cda984","#b6c6a2"][style],roof=["#ad654f","#8e674d","#a97952"][style];
   // Packed earth yard, raised floor, layered tile roof and a small front porch.
   rect(c,x-73,y-30,146,70,"#b7aa77");rect(c,x-65,y-23,130,56,"#c9ba85");
@@ -53,7 +62,9 @@ function home(c:CanvasRenderingContext2D,x:number,y:number,style:number){
 function drawStop(c: CanvasRenderingContext2D, s: Stop, t: number, visited: boolean) {
   const {x,y} = s;
   rect(c,x-43,y+18,86,10,"#5a855a");
-  if (s.kind === "memorial") {
+  const illustrated = (s.kind==="memorial"||s.kind==="temple") ? mapSprite(c,s.kind,x-66,y-78,132,116) : s.kind==="lotus" ? mapSprite(c,"lotus",x-65,y-50,130,89) : false;
+  if(illustrated){ /* The entry marker and name below still use the original coordinates. */ }
+  else if (s.kind === "memorial") {
     rect(c,x-31,y-27,62,51,"#d5c69e"); rect(c,x-35,y-34,70,10,"#a66758"); rect(c,x-20,y-42,40,8,"#bd8066");
     rect(c,x-11,y-13,22,37,"#8d9b81"); rect(c,x-7,y-8,14,32,"#d9dfba");
     flower(c,x-35,y+14); flower(c,x+36,y+12);
@@ -67,8 +78,8 @@ function drawStop(c: CanvasRenderingContext2D, s: Stop, t: number, visited: bool
     rect(c,x-47,y+23,92,6,"#b28c62"); rect(c,x-36,y+17,9,5,"#ecbe5d"); rect(c,x+35,y+17,9,5,"#e98562");
     rect(c,x-58,y+7,16,16,"#95714a");rect(c,x+40,y+7,16,16,"#95714a");
   } else if(s.kind === "mango") {
-    tree(c,x-22,y-3); tree(c,x+18,y-7,1);
-    for(const [dx,dy] of [[-28,-19],[-17,-12],[11,-21],[24,-13]]) rect(c,x+dx,y+dy,5,6,"#f3c45d");
+    tree(c,x-22,y-3); tree(c,x+18,y-7);
+    for(const [dx,dy] of [[-28,-19],[-17,-12],[11,-21],[24,-13]]) {if(!mapSprite(c,"mango",x+dx-3,y+dy-15,14,18))rect(c,x+dx,y+dy,5,6,"#f3c45d");}
     rect(c,x-39,y+17,78,9,"#a0784c");
     rect(c,x+28,y+6,18,13,"#a27b4e");rect(c,x+31,y+1,12,7,"#e7ba5b");
   } else if(s.kind === "lotus") {
@@ -86,26 +97,18 @@ function drawStop(c: CanvasRenderingContext2D, s: Stop, t: number, visited: bool
   rect(c,x-12,y+21,24,14,"#825a43");rect(c,x-8,y+23,16,12,"#2d4636");rect(c,x-4,y+27,8,8,"#e4bd61");
 }
 
-export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:number;w:number;h:number}, player: Point & {dir:number;moving:boolean}, visited: Set<string>, t:number, boatX:number, aboard=false) {
-  c.save(); c.translate(-Math.round(view.x),-Math.round(view.y));
-  rect(c,0,0,WORLD.width,WORLD.height,"#8ebc74");
-  const tile = 32;
-  const minX=Math.max(0,Math.floor(view.x/tile)-1), maxX=Math.min(Math.ceil(WORLD.width/tile),Math.ceil((view.x+view.w)/tile)+1);
-  const minY=Math.max(0,Math.floor(view.y/tile)-1), maxY=Math.min(Math.ceil(WORLD.height/tile),Math.ceil((view.y+view.h)/tile)+1);
-  for(let y=minY;y<maxY;y++) for(let x=minX;x<maxX;x++) {
-    const h=hash(x,y); rect(c,x*tile,y*tile,tile,tile,h>.7?"#94c47b":h<.16?"#85b66e":"#8ebc74");
-    if(h>.77){rect(c,x*tile+8,y*tile+10,3,5,"#6da65d");rect(c,x*tile+20,y*tile+18,3,5,"#74aa61");}
-  }
+// Terrain, paths and foliage are static. Paint them once instead of repeating
+// thousands of placement and drawing operations in every animation frame.
+let worldBackground:HTMLCanvasElement|null=null;
+let interiorBackground:{id:string;canvas:HTMLCanvasElement}|null=null;
+export function releaseSceneCaches(){worldBackground=null;interiorBackground=null;}
+function paintWorldBackground(c:CanvasRenderingContext2D){
+  mapTexture(c,"grass",0,0,WORLD.width,WORLD.height,"#a6bb81");
+  const tile=32,minX=0,maxX=Math.ceil(WORLD.width/tile),minY=0,maxY=Math.ceil(WORLD.height/tile);
   const river=XEO_QUYT_RIVER;
   rect(c,river.outer.left,river.outer.top,river.outer.right-river.outer.left,river.outer.bottom-river.outer.top,"#59a6af");
   rect(c,river.island.left-8,river.island.top-8,river.island.right-river.island.left+16,river.island.bottom-river.island.top+16,"#d1c18d");
-  rect(c,river.island.left,river.island.top,river.island.right-river.island.left,river.island.bottom-river.island.top,"#79ae70");
-  for(let y=river.outer.top+17;y<river.outer.bottom-10;y+=28)for(let x=river.outer.left+14;x<river.outer.right-8;x+=38){
-    if(!isRiver(x,y))continue;
-    const drift=Math.sin(t/420+x*.02+y*.03)*4;
-    rect(c,x+drift,y,13,3,"#9ad1ca");
-    if(hash(x,y)>.77)rect(c,x+10,y+12,8,4,"#78b98b");
-  }
+  mapTexture(c,"grass",river.island.left,river.island.top,river.island.right-river.island.left,river.island.bottom-river.island.top,"#a6bb81");
   for(let y=river.island.top+16;y<river.island.bottom;y+=32)for(let x=river.island.left+14;x<river.island.right;x+=32){
     const h=hash(x,y);if(h>.8)rect(c,x,y,13,5,"#8fc37a");else if(h<.12)flower(c,x,y);
   }
@@ -123,16 +126,16 @@ export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:numbe
   for(let x=1510;x<1900;x+=80){rect(c,x,1270,5,90,"#c3a875");for(let y=1290;y<1360;y+=25)flower(c,x+27,y);}
   // A winding blue edge evokes the river without claiming geographic accuracy.
   for(let y=0;y<WORLD.height;y+=16){const edge=2160+Math.round(Math.sin(y/100)*29);rect(c,edge,y,WORLD.width-edge,16,"#60a9b4");rect(c,edge-10,y,10,16,"#d9c693"); if(y%64===0)rect(c,edge+25,y+4,16,3,"#83c5c7");}
-  c.lineJoin="bevel"; c.lineCap="square";
-  for(const path of paths){c.beginPath();c.moveTo(path[0].x,path[0].y);for(const p of path.slice(1)) c.lineTo(p.x,p.y);c.lineWidth=33;c.strokeStyle="#b2a17c";c.stroke();c.lineWidth=24;c.strokeStyle="#dec99b";c.stroke();}
+  c.lineJoin="round"; c.lineCap="round";
+  for(const path of paths){c.beginPath();c.moveTo(path[0].x,path[0].y);for(const p of path.slice(1)) c.lineTo(p.x,p.y);c.lineWidth=43;c.strokeStyle="#8e9e6d";c.stroke();c.lineWidth=37;c.strokeStyle="#c0b18a";c.stroke();c.lineWidth=31;c.strokeStyle=mapPattern(c,"earth")??"#d9c49a";c.stroke();}
   HOMES.forEach(site=>home(c,site.x,site.y,site.style));
   // Wooden bridge and roadside markers.
   rect(c,125,457,150,13,"#8d6948");for(let x=130;x<275;x+=19)rect(c,x,457,2,13,"#d1a878");
   for(const [x,y] of [[780,560],[980,650],[540,480]]){rect(c,x-3,y-17,6,25,"#815e3e");rect(c,x-17,y-23,34,12,"#dfc587");rect(c,x+10,y-20,5,5,"#8d683f");}
   for(let y=minY;y<maxY;y++)for(let x=minX;x<maxX;x++){
-    const px=x*tile+16,py=y*tile+16,h=hash(x+49,y+73);
-    if(px>2100 || isRiver(px,py) || HOMES.some(home=>Math.abs(home.x-px)<91&&Math.abs(home.y-py)<75) || STOPS.some(s=>Math.hypot(s.x-px,s.y-py)<82) || paths.some(path=>path.some((p,i)=>i>0&&distanceToSegment(px,py,path[i-1],p)<30))) continue;
-    if(h>.84) tree(c,px,py,h>.93?1:0); else if(h>.77) palm(c,px,py); else if(h<.09) flower(c,px,py);
+    const px=x*tile+9+hash(x,y)*14,py=y*tile+9+hash(y,x)*14,h=hash(x+49,y+73);
+    if(px>2100 || isRiver(px,py) || HOMES.some(home=>Math.abs(home.x-px)<91&&Math.abs(home.y-py)<75) || STOPS.some(s=>Math.hypot(s.x-px,s.y-py)<105) || paths.some(path=>path.some((p,i)=>i>0&&distanceToSegment(px,py,path[i-1],p)<45))) continue;
+    if(h>.94) tree(c,px,py,h>.975?1:0); else if(h>.91) palm(c,px,py); else if(h<.04) flower(c,px,py);
   }
   // Two piers face each other. The only crossing is the player-controlled rowboat.
   rect(c,550,796,56,17,"#936d48");rect(c,427,796,67,17,"#936d48");
@@ -140,6 +143,24 @@ export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:numbe
   for(let x=430;x<493;x+=12)rect(c,x,796,2,17,"#cb9c66");
   rect(c,565,768,5,26,"#73543b");rect(c,520,757,96,21,"#e5cd94");
   c.fillStyle="#4c5f44";c.font="bold 9px Manrope, Arial, sans-serif";c.textAlign="center";c.fillText("BẾN XUỒNG",568,771);
+}
+
+export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:number;w:number;h:number}, player: Point & {dir:number;moving:boolean}, visited: Set<string>, t:number, boatX:number, aboard=false) {
+  c.save(); c.translate(-Math.round(view.x),-Math.round(view.y));
+  if(!worldBackground){
+    worldBackground=document.createElement("canvas");worldBackground.width=WORLD.width;worldBackground.height=WORLD.height;
+    const base=worldBackground.getContext("2d");if(base)paintWorldBackground(base);
+  }
+  const sx=Math.max(0,Math.floor(view.x)),sy=Math.max(0,Math.floor(view.y));
+  const sw=Math.min(WORLD.width-sx,Math.ceil(view.w)+1),sh=Math.min(WORLD.height-sy,Math.ceil(view.h)+1);
+  c.drawImage(worldBackground,sx,sy,sw,sh,sx,sy,sw,sh);
+  const river=XEO_QUYT_RIVER;
+  for(let y=river.outer.top+17;y<river.outer.bottom-10;y+=28)for(let x=river.outer.left+14;x<river.outer.right-8;x+=38){
+    if(!isRiver(x,y)||x<view.x-20||x>view.x+view.w+20||y<view.y-10||y>view.y+view.h+10)continue;
+    const drift=Math.sin(t/420+x*.02+y*.03)*4;
+    c.beginPath();c.moveTo(x+drift,y);c.quadraticCurveTo(x+7+drift,y+2,x+14+drift,y);c.strokeStyle="#b4d0b7";c.lineWidth=1.3;c.stroke();
+    if(hash(x,y)>.77)rect(c,x+10,y+12,8,4,"#78b98b");
+  }
   // Other boats make the crossing feel inhabited; the darker boat waits at the active dock.
   drawBoat(c,220+Math.sin(t/1900)*13,655,t+300,0.7);
   drawBoat(c,360+Math.sin(t/2400)*18,1019,t+900,0.65);
@@ -171,13 +192,10 @@ function drawPlayer(c: CanvasRenderingContext2D, player: Point & {dir:number;mov
   else {rect(c,x-4,y-16,2,2,"#423d34");rect(c,x+3,y-16,2,2,"#423d34");}
 }
 
-export function renderInterior(c:CanvasRenderingContext2D,view:{x:number;y:number;w:number;h:number},player:Point & {dir:number;moving:boolean},stop:Stop,t:number,seen:Set<string>,activityProgress:number,ceremony:number|null=null){
-  c.save();c.translate(-Math.round(view.x),-Math.round(view.y));
+function paintInteriorBackground(c:CanvasRenderingContext2D,stop:Stop){
   const nature=stop.kind==="forest"||stop.kind==="mango"||stop.kind==="lotus";
-  const ground=stop.id==="gao-giong"?"#78aa88":stop.id==="xeo-quyt"?"#658e6f":stop.id==="cho-que"?"#c7af81":stop.id==="vuon-xoai"?"#9cbd77":stop.id==="do-cong-tuong"?"#c5ae8d":"#b7bf93";
-  rect(c,0,0,INTERIOR.width,INTERIOR.height,ground);
-  const shades=stop.id==="gao-giong"?["#78aa88","#83b58f"]:stop.id==="xeo-quyt"?["#658e6f","#719a77"]:stop.id==="vuon-xoai"?["#9cbd77","#a9c985"]:stop.id==="cho-que"?["#c7af81","#d0ba8e"]:stop.id==="do-cong-tuong"?["#c5ae8d","#ceb998"]:["#b7bf93","#c3cba0"];
-  for(let y=0;y<INTERIOR.height;y+=32)for(let x=0;x<INTERIOR.width;x+=32){const h=hash(x/32+stop.x,y/32+stop.y);rect(c,x,y,32,32,h>.6?shades[1]:shades[0]);if(nature&&h>.77)rect(c,x+8,y+10,3,5,"#5f9b60");}
+  mapTexture(c,nature?"grass":"earth",0,0,INTERIOR.width,INTERIOR.height,nature?"#a6bb81":"#d9c49a");
+  if(stop.kind==="forest"){c.fillStyle="#416d5419";c.fillRect(0,0,INTERIOR.width,INTERIOR.height);}
   // Each destination has its own illustrated courtyard. The paths keep the photo stations legible.
   if(nature){
     rect(c,25,30,910,86,"#3d785e");rect(c,30,116,900,20,"#5f9a73");
@@ -212,8 +230,18 @@ export function renderInterior(c:CanvasRenderingContext2D,view:{x:number;y:numbe
     else for(const x of [140,820]){tree(c,x,375);rect(c,x-30,415,60,9,"#b59067");}
   }
   // Three branches converge at the entry gate.
-  c.lineJoin="bevel";c.lineCap="square";
-  for(const s of PHOTO_SPOTS[stop.id]){c.beginPath();c.moveTo(INTERIOR.entry.x,INTERIOR.entry.y);c.lineTo(s.x,s.y+36);c.lineWidth=28;c.strokeStyle=nature?"#ab986c":"#a99170";c.stroke();c.lineWidth=20;c.strokeStyle=nature?"#dcc99c":"#e2d1aa";c.stroke();}
+  c.lineJoin="round";c.lineCap="round";
+  for(const s of PHOTO_SPOTS[stop.id]){c.beginPath();c.moveTo(INTERIOR.entry.x,INTERIOR.entry.y);c.lineTo(s.x,s.y+36);c.lineWidth=28;c.strokeStyle=nature?"#ab986c":"#a99170";c.stroke();c.lineWidth=20;c.strokeStyle=mapPattern(c,"earth")??"#d9c49a";c.stroke();}
+}
+
+export function renderInterior(c:CanvasRenderingContext2D,view:{x:number;y:number;w:number;h:number},player:Point & {dir:number;moving:boolean},stop:Stop,t:number,seen:Set<string>,activityProgress:number,ceremony:number|null=null){
+  c.save();c.translate(-Math.round(view.x),-Math.round(view.y));
+  if(interiorBackground?.id!==stop.id){
+    const canvas=document.createElement("canvas");canvas.width=INTERIOR.width;canvas.height=INTERIOR.height;
+    const base=canvas.getContext("2d");if(base)paintInteriorBackground(base,stop);
+    interiorBackground={id:stop.id,canvas};
+  }
+  c.drawImage(interiorBackground.canvas,0,0);
   drawSignatureScene(c,stop,t,activityProgress);
   const spots=PHOTO_SPOTS[stop.id];
   for(let i=0;i<spots.length;i++){

@@ -1,63 +1,40 @@
 "use client";
-
-import { X } from "lucide-react";
+import { useRef, useState } from "react";
+import { RotateCcw, Star, X } from "lucide-react";
+import { useItemDrop } from "./useItemDrop";
+import "./minigames.css";
 
 const FRUITS = [
-  { left: "28%", top: "35%" },
-  { left: "61%", top: "31%" },
-  { left: "47%", top: "52%" },
-] as const;
+  { left: "31%", top: "27%", ripe: true }, { left: "49%", top: "43%", ripe: true }, { left: "65%", top: "29%", ripe: true },
+  { left: "25%", top: "45%", ripe: false }, { left: "43%", top: "18%", ripe: false }, { left: "59%", top: "16%", ripe: false },
+];
+type Props = { picked: number[]; onPick: (index: number) => void; onReplay: () => void; onClose: () => void };
 
-type Props = {
-  picked: number[];
-  onPick: (index: number) => void;
-  onClose: () => void;
-};
-
-export default function MangoHarvestDialog({ picked, onPick, onClose }: Props) {
-  return (
-    <div className="ex-mangoBackdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="ex-mangoCard" role="dialog" aria-modal="true" aria-labelledby="ex-mangoTitle">
-        <button className="ex-mangoClose" onClick={onClose} aria-label="Đóng trò hái xoài" autoFocus><X size={18} /></button>
-        <span className="ex-mangoKicker">VƯỜN XOÀI CAO LÃNH · MINI GAME</span>
-        <h2 id="ex-mangoTitle">Hái xoài trên cây</h2>
-        <p>Chạm vào từng trái xoài chín để hái xuống giỏ.</p>
-        <div className="ex-mangoScene">
-          <svg className="ex-mangoTree" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <path fill="#a9cf89" d="M0 0h400v320H0z" />
-            <path fill="#8dbb78" d="M0 252h400v68H0z" />
-            <path fill="#6b9d61" d="M0 278h400v42H0z" />
-            <path fill="#6f4d34" d="M178 139h45v143h-45zM146 159h30v22h58v-22h27v34h-38v24h-45v-27h-32z" />
-            <path fill="#a67849" d="M189 164h13v116h-13zM154 166h45v9h-45z" />
-            <path fill="#315f38" d="M122 37h154v22h43v25h25v72h-31v25h-72v17h-105v-18H84v-29H57V91h30V61h35z" />
-            <path fill="#427a43" d="M121 47h141v22h47v22h21v56h-35v26h-58v17h-93v-17H98v-29H72V95h28V68h21z" />
-            <path fill="#63994f" d="M129 52h94v18h45v18h31v21h-58v18H99V92h31zM79 117h70v21h-25v27H91v-26H79z" />
-            <path fill="#85aa58" d="M139 58h68v14h-68zM114 83h53v16h-53zM242 92h45v16h-45zM101 130h33v17h-33z" />
-            <path fill="#315f38" d="M11 292h53v7H11zM284 295h65v8h-65zM365 277h23v8h-23z" />
-          </svg>
-          {FRUITS.map((fruit, index) => (
-            <button key={index} type="button" className={`ex-mangoFruit ${picked.includes(index) ? "ex-mangoFruitPicked" : ""}`}
-              style={fruit} disabled={picked.includes(index)} onClick={() => onPick(index)}
-              aria-label={`Hái trái xoài ${index + 1}`}>
-              <svg viewBox="0 0 40 48" aria-hidden="true">
-                <path fill="#315f38" d="M18 0h5v9h-5zM21 5h12v5h-5v5h-7z" />
-                <path fill="#926638" d="M17 8h5v6h-5z" />
-                <path fill="#c47a28" d="M10 13h22v5h5v17h-5v6H13v-5H7V21h3z" />
-                <path fill="#f1b941" d="M12 13h16v5h5v16h-5v5H14v-5H9V22h3z" />
-                <path fill="#ffdc68" d="M13 18h8v5h-8zM10 23h6v9h-6z" />
-              </svg>
-            </button>
-          ))}
-          <div className="ex-mangoBasket" aria-label={`Giỏ có ${picked.length} trên 3 trái xoài`}>
-            <span>GIỎ XOÀI</span><strong>{picked.length}/3</strong>
-            <div aria-hidden="true">{Array.from({ length: picked.length }, (_, index) => <i key={index} />)}</div>
-          </div>
-        </div>
-        <div className="ex-mangoFooter">
-          <span role="status">{picked.length === 3 ? "Giỏ xoài đã đầy rồi!" : `Đã hái ${picked.length}/3 trái`}</span>
-          <button type="button" onClick={onClose}>{picked.length === 3 ? "Hoàn thành" : "Quay lại vườn"}</button>
-        </div>
-      </section>
+export default function MangoHarvestDialog({ picked, onPick, onReplay, onClose }: Props) {
+  const basket = useRef<HTMLButtonElement>(null);
+  const [message, setMessage] = useState("Chọn xoài vàng chín, kéo xuống giỏ. Để xoài xanh trên cây nhé!");
+  const [mistakes, setMistakes] = useState(0);
+  const complete = picked.length >= 3;
+  const stars = Math.max(1, 3 - mistakes);
+  const drop = useItemDrop(basket, id => {
+    const index = Number(id);
+    if (picked.includes(index) || !FRUITS[index]?.ripe) return;
+    onPick(index);
+    setMessage(picked.length === 2 ? "Đủ ba trái chín rồi! Giỏ xoài đẹp quá." : `Thêm một trái vào giỏ! Còn ${2 - picked.length} trái chín trên cây.`);
+  }, id => {
+    const index = Number(id);
+    if (complete || picked.includes(index)) return false;
+    if (!FRUITS[index]?.ripe) { setMistakes(n => n + 1); setMessage("Trái này còn xanh. Mình để lại cho chín thêm nhé!"); return false; }
+    setMessage("Đúng trái chín rồi! Kéo xuống giỏ, hoặc chạm vào giỏ để cất."); return true;
+  });
+  const replay = () => { drop.clear(); setMistakes(0); setMessage("Thử một giỏ mới nhé. Chỉ hái những trái vàng chín!"); onReplay(); };
+  return <div className="ex-mangoBackdrop mg-backdrop" onMouseDown={e => { if (e.target === e.currentTarget && !drop.drag) onClose(); }}><section className="mg-card" role="dialog" aria-modal="true" aria-labelledby="mg-mango-title">
+    <header className="mg-header"><div><span>VƯỜN XOÀI CAO LÃNH</span><h2 id="mg-mango-title">Hái một giỏ nắng</h2></div><button className="mg-close" onClick={onClose} aria-label="Đóng trò hái xoài" autoFocus><X size={19}/></button></header>
+    <div className="mg-harvestScene"><img className="mg-sceneImage" src="/explore/mango-orchard.svg" alt="Vườn xoài dưới nắng" draggable={false}/><div className="mg-counter"><strong>{picked.length} / 3 trái chín</strong></div>
+      {FRUITS.map((fruit, index) => picked.includes(index) ? null : <button key={index} {...drop.bind(String(index))} className={`mg-fruit ${drop.selected === String(index) ? "is-selected" : ""}`} style={{ left: fruit.left, top: fruit.top, ...drop.bind(String(index)).style }} aria-label={`Xoài ${fruit.ripe ? "vàng chín" : "còn xanh"} số ${index + 1}`} disabled={complete}><img src={fruit.ripe ? "/explore/mango-ripe.svg" : "/explore/mango-green.svg"} alt="" draggable={false}/></button>)}
+      <button ref={basket} className={`mg-basket ${drop.selected !== null ? "is-ready" : ""}`} onClick={drop.placeSelected} aria-label={`Cất xoài đã chọn vào giỏ. Đang có ${picked.length} trên 3 trái.`}><div className="mg-basketFruit" aria-hidden="true">{picked.map((id, i) => <img key={id} className="mg-picked" src="/explore/mango-ripe.svg" alt="" style={{ left: `${20 + i * 20}%`, rotate: `${i * 16 - 18}deg` }}/>)}</div><img src="/explore/harvest-basket.svg" alt="" draggable={false}/><span>{drop.selected !== null ? "THẢ XOÀI VÀO ĐÂY" : "GIỎ CỦA BẠN"}</span></button>
     </div>
-  );
+    <div className="mg-feedback" role="status"><p>{complete ? "Giỏ xoài đã đầy!" : message}</p></div>
+    <footer className="mg-footer">{complete ? <><div className="mg-result"><span className="mg-stars" aria-label={`${stars} trên 3 sao`}>{[1, 2, 3].map(i => <Star key={i} size={18} fill={i <= stars ? "currentColor" : "none"}/>)}</span><strong>{mistakes === 0 ? "Tinh mắt nhà vườn!" : "Giỏ xoài đã đầy!"}</strong></div><button className="mg-secondary" onClick={replay}><RotateCcw size={14}/>Chơi lại</button></> : <small>Có thể chạm trái xoài rồi chạm giỏ, hoặc kéo thả.</small>}<button className="mg-primary" onClick={onClose}>{complete ? "Mang giỏ về" : "Về vườn"}</button></footer>
+  </section></div>;
 }

@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpen, Camera, Compass, DoorOpen, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
-import { renderInterior, renderWorld } from "./pixelWorld";
+import { releaseSceneCaches, renderInterior, renderWorld } from "./pixelWorld";
 import MangoHarvestDialog from "./MangoHarvestDialog";
 import CakeWrappingDialog from "./CakeWrappingDialog";
 import RiverTraceDialog from "./RiverTraceDialog";
 import { ACTIVITIES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, XEO_QUYT_RIVER, isHouse, isRiver, type Stop } from "./world";
 import { LOCAL_PHOTOS } from "@/lib/photos/catalog";
+import { loadMapArt } from "./mapArt";
 import "./explore.css";
 
 type Player = { x: number; y: number; dir: number; moving: boolean };
@@ -83,6 +84,10 @@ export default function ExploreGame() {
     setMounted(true);
   },[]);
   useEffect(()=>{if(!toast)return;const timer=window.setTimeout(()=>setToast(""),2200);return()=>window.clearTimeout(timer);},[toast]);
+
+  useEffect(()=>{
+    if(harvestOpen||cakeOpen||riverTraceOpen){keysRef.current.clear();touchRef.current=[0,0];destinationRef.current=null;}
+  },[harvestOpen,cakeOpen,riverTraceOpen]);
 
   const blip = useCallback(()=>{
     if(!sound) return;
@@ -171,7 +176,11 @@ export default function ExploreGame() {
 
   useEffect(()=>{
     const down=(event:KeyboardEvent)=>{
-      if(harvestOpen||cakeOpen||riverTraceOpen){if(event.code==="Escape"){event.preventDefault();setHarvestOpen(false);setCakeOpen(false);setRiverTraceOpen(false);}else if(event.code in MOVE_KEYS||event.code==="KeyE"||event.code==="Space")event.preventDefault();return;}
+      if(harvestOpen||cakeOpen||riverTraceOpen){
+        if(event.code==="Escape"){event.preventDefault();setHarvestOpen(false);setCakeOpen(false);setRiverTraceOpen(false);}
+        else if(event.code in MOVE_KEYS||event.code==="KeyE"||(event.code==="Space"&&!(event.target instanceof HTMLElement&&event.target.closest("button"))))event.preventDefault();
+        return;
+      }
       if(event.code in MOVE_KEYS){event.preventDefault();keysRef.current.add(event.code);destinationRef.current=null;}
       if(event.code==="KeyE"||event.code==="Space"){if(!event.repeat){event.preventDefault();interact();}}
       if(event.code==="Escape"){if(quizId)setQuizId(null);else if(photoIndex!==null)setPhotoIndex(null);else if(dialogue)setDialogue(null);else if(journal)setJournal(false);else if(inside)leaveStop();else setIntro(false);}
@@ -185,16 +194,25 @@ export default function ExploreGame() {
   useEffect(()=>{
     const canvas=canvasRef.current;if(!canvas)return;
     const ctx=canvas.getContext("2d");if(!ctx)return;
-    let raf=0,prev=0,lastUi=0;
+    let raf=0,prev=0,lastUi=0,renderedWidth=0,renderedHeight=0;
+    let pausedAt:number|null=null,disposed=false;
+    void Promise.all([document.fonts.ready,loadMapArt()]).then(()=>{if(!disposed){releaseSceneCaches();renderedWidth=0;}});
     const resize=()=>{
       const box=canvas.getBoundingClientRect();
       const width=Math.max(1,Math.round(box.width)),height=Math.max(1,Math.round(box.height));
       if(canvas.width!==width)canvas.width=width;
       if(canvas.height!==height)canvas.height=height;
-      ctx.imageSmoothingEnabled=false;
+      ctx.imageSmoothingEnabled=true;
     };
     resize();const observer=new ResizeObserver(resize);observer.observe(canvas);
     const frame=(time:number)=>{
+      const state=renderStateRef.current;
+      const paused=document.hidden||state.intro||state.journal||state.photoIndex!==null||state.dialogue||state.quizId||state.harvestOpen||state.cakeOpen||state.riverTraceOpen;
+      if(paused&&renderedWidth===canvas.width&&renderedHeight===canvas.height){
+        if(pausedAt===null)pausedAt=time;
+        prev=time;raf=requestAnimationFrame(frame);return;
+      }
+      if(pausedAt!==null){const elapsed=time-pausedAt;if(crossingRef.current)crossingRef.current.started+=elapsed;if(ceremonyRef.current!==null)ceremonyRef.current+=elapsed;pausedAt=null;}
       const dt=Math.min(40,time-prev||16)/1000;prev=time;
       const scene=renderStateRef.current;
       const inside=scene.inside;
@@ -245,12 +263,13 @@ export default function ExploreGame() {
           const byBoat=Math.hypot(dock.x-p.x,dock.y-p.y)<68;
           if(byBoat!==nearBoatRef.current){nearBoatRef.current=byBoat;setNearBoat(byBoat);}
         }
-        setPosition({x:p.x,y:p.y});
+        setPosition(last=>Math.abs(last.x-p.x)>.5||Math.abs(last.y-p.y)>.5?{x:p.x,y:p.y}:last);
       }
+      renderedWidth=canvas.width;renderedHeight=canvas.height;
       raf=requestAnimationFrame(frame);
     };
     raf=requestAnimationFrame(frame);
-    return()=>{cancelAnimationFrame(raf);observer.disconnect();};
+    return()=>{disposed=true;cancelAnimationFrame(raf);observer.disconnect();releaseSceneCaches();};
   },[]);
 
   const setDirection=(x:number,y:number)=>(event:React.PointerEvent<HTMLButtonElement>)=>{
@@ -315,8 +334,8 @@ export default function ExploreGame() {
         <button className={"ex-actionButton"} onClick={interact} disabled={inside?nearSpot===null&&nearWorker===null&&!nearQuiz&&(!nearActivity||!activity||activity.icon==="incense"||activity.icon==="boat"&&!desktopWeb)&&!nearExit:!near&&!nearBoat} aria-label="Tương tác với điểm đến">E</button>
         {toast&&<div className={"ex-activityToast"} role="status">✦ {toast}</div>}
         {dialogue&&inside&&<div className={"ex-dialogue"} role="dialog" aria-label={`Trò chuyện với ${WORKERS[inside.id][dialogue.worker].name}`}><div className={"ex-dialoguePortrait"}>☺</div><div><span>{WORKERS[inside.id][dialogue.worker].name} · {WORKERS[inside.id][dialogue.worker].role}</span><p>{WORKERS[inside.id][dialogue.worker].lines[dialogue.line]}</p><button onClick={interact}>{dialogue.line<WORKERS[inside.id][dialogue.worker].lines.length-1?"Nghe tiếp":"Tạm biệt"} <ArrowRight size={14}/></button></div></div>}
-        {harvestOpen&&<MangoHarvestDialog picked={pickedMangoes} onPick={pickMango} onClose={()=>setHarvestOpen(false)}/>}
-        {cakeOpen&&<CakeWrappingDialog step={activityProgress["cho-que"]??0} onAdvance={wrapCake} onClose={()=>setCakeOpen(false)}/>}
+        {harvestOpen&&<MangoHarvestDialog picked={pickedMangoes} onPick={pickMango} onReplay={()=>{setPickedMangoes([]);setActivityProgress(prev=>({...prev,"vuon-xoai":0}));}} onClose={()=>setHarvestOpen(false)}/>}
+        {cakeOpen&&<CakeWrappingDialog step={activityProgress["cho-que"]??0} onAdvance={wrapCake} onReplay={()=>setActivityProgress(prev=>({...prev,"cho-que":0}))} onClose={()=>setCakeOpen(false)}/>}
         {riverTraceOpen&&<RiverTraceDialog found={riverClues} onFind={findRiverClue} onClose={()=>setRiverTraceOpen(false)}/>}
         {quizId&&<div className="ex-quizBackdrop"><section className="ex-quizCard" role="dialog" aria-modal="true" aria-label={QUIZZES[quizId].title}><button className="ex-quizClose" onClick={()=>setQuizId(null)} aria-label="Đóng câu hỏi"><X size={18}/></button><span className="ex-quizKicker">THỬ THÁCH LỊCH SỬ · CÂU {quizIndex+1}/3</span><h2>{QUIZZES[quizId].title}</h2><div className="ex-quizProgress"><i style={{width:`${(quizIndex+1)/3*100}%`}}/></div><p className="ex-quizQuestion">{QUIZZES[quizId].questions[quizIndex].question}</p><div className="ex-quizOptions">{QUIZZES[quizId].questions[quizIndex].options.map((option,index)=><button key={option} className={quizChoice!==null?(index===QUIZZES[quizId].questions[quizIndex].answer?"ex-correct":index===quizChoice?"ex-wrong":""):""} disabled={quizChoice!==null} onClick={()=>chooseQuiz(index)}><b>{"ABCD"[index]}</b>{option}</button>)}</div>{quizChoice!==null&&<div className="ex-quizFeedback" role="status"><strong>{quizChoice===QUIZZES[quizId].questions[quizIndex].answer?"Chính xác!":"Chưa đúng."}</strong> {QUIZZES[quizId].questions[quizIndex].detail}<button onClick={nextQuiz}>{quizIndex===2?`Xem kết quả · ${quizScore}/3`:"Câu tiếp theo"}<ArrowRight size={15}/></button></div>}<a className="ex-quizSource" href={QUIZZES[quizId].source} target="_blank" rel="noopener noreferrer">Nguồn: Cổng thông tin Đồng Tháp ↗</a></section></div>}
         {selectedPhoto&&selectedSpot&&inside&&<div className={"ex-photoBackdrop"} onMouseDown={event=>{if(event.target===event.currentTarget)setPhotoIndex(null);}}><div className={"ex-photoCard"} role="dialog" aria-modal="true" aria-label={`Ảnh thật: ${selectedSpot.label}`}><button className={"ex-photoClose"} onClick={()=>setPhotoIndex(null)} aria-label="Đóng ảnh"><X size={18}/></button><div className={"ex-photoFrame"}><img src={selectedPhoto.src} alt={selectedPhoto.alt}/><span>ẢNH CHỤP TẠI ĐỊA ĐIỂM</span></div><div className={"ex-photoContent"}><span>GÓC KHÁM PHÁ {String((photoIndex??0)+1).padStart(2,"0")} / 03</span><h2>{selectedSpot.label}</h2><p>{selectedSpot.note}</p><small>{selectedPhoto.alt}</small><div className={"ex-photoThumbs"}>{PHOTO_SPOTS[inside.id].map((spot,i)=>{const photo=photos[spot.photoIndex];return <button key={spot.label} className={i===photoIndex?"ex-selected":""} onClick={()=>{seenRef.current.add(`${inside.id}:${i}`);setPhotoIndex(i);}} aria-label={`Xem ảnh ${spot.label}`}><img src={photo.thumbnail} alt=""/></button>;})}</div><button className={"ex-photoContinue"} onClick={()=>setPhotoIndex(null)}>Tiếp tục đi dạo <ArrowRight size={15}/></button></div></div></div>}

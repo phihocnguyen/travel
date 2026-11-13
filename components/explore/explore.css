@@ -87,3 +87,6 @@
 /* Keep Vietnamese glyphs and combining marks in the same local font. */
 .ex-page :is(button,input,textarea,select){font-family:"Manrope",Arial,sans-serif;letter-spacing:normal;word-spacing:normal}
 .ex-page :is(p,li,h1,h2,h3,h4){font-family:"Manrope",Arial,sans-serif;letter-spacing:normal;word-spacing:normal;font-kerning:normal}
+
+/* Illustrated map assets are already rasterized and cached by the renderer. */
+.ex-stage canvas{image-rendering:auto}
