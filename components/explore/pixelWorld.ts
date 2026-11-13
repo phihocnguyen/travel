@@ -1,5 +1,5 @@
 import { mapPattern, mapSprite, mapTexture } from "./mapArt";
-import { ACTIVITIES, HOMES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, XEO_QUYT_RIVER, isRiver, type Activity, type Stop, type Worker } from "./world";
+import { ACTIVITIES, HOMES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, WORLD_PONDS, XEO_QUYT_RIVER, foliageOverlapsWater, isRiver, type Activity, type Stop, type Worker } from "./world";
 
 type Point = { x: number; y: number };
 const paths: Point[][] = [
@@ -93,7 +93,7 @@ function drawStop(c: CanvasRenderingContext2D, s: Stop, t: number, visited: bool
   rect(c,x-9,y-66+bob,18,18,visited ? "#f2cb65" : "#fff3c5");
   c.fillStyle="#624c35"; c.font="bold 12px monospace"; c.textAlign="center"; c.fillText(visited ? "✓" : "!",x,y-52+bob);
   rect(c,x-54,y+42,108,20,"#f5e7ad");rect(c,x-54,y+42,108,3,"#745d3c");
-  c.fillStyle="#4e6040";c.font="bold 10px Manrope, Arial, sans-serif";c.fillText(s.short,x,y+55);
+  c.fillStyle="#4e6040";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText(s.short,x,y+55);
   rect(c,x-12,y+21,24,14,"#825a43");rect(c,x-8,y+23,16,12,"#2d4636");rect(c,x-4,y+27,8,8,"#e4bd61");
 }
 
@@ -113,16 +113,21 @@ function paintWorldBackground(c:CanvasRenderingContext2D){
     const h=hash(x,y);if(h>.8)rect(c,x,y,13,5,"#8fc37a");else if(h<.12)flower(c,x,y);
   }
   // Regional details: canals, lotus pond, paddies and orchard beds.
-  rect(c,70,400,260,140,"#79b99d");rect(c,77,407,246,126,"#63a9ad");
+  for(const pond of WORLD_PONDS){
+    c.save();
+    c.beginPath();c.roundRect(pond.x-9,pond.y-9,pond.width+18,pond.height+18,24);c.fillStyle="#c8bd8b";c.fill();
+    c.beginPath();c.roundRect(pond.x,pond.y,pond.width,pond.height,17);c.clip();
+    mapTexture(c,"water",pond.x,pond.y,pond.width,pond.height,"#72a9a2");c.restore();
+  }
   for(let i=0;i<24;i++){const x=87+(i*67)%224,y=420+(i*41)%101;rect(c,x,y,12,4,"#7da96c");if(i%3===0)flower(c,x+6,y);}
   rect(c,1110,505,245,180,"#a8bf6f");
   for(let x=1130;x<1340;x+=31)for(let y=518;y<676;y+=28){rect(c,x,y,19,4,"#6e9e5d");rect(c,x+4,y-3,3,6,"#5d945c");}
-  rect(c,530,945,420,105,"#87ad62");for(let x=555;x<940;x+=70){rect(c,x,950,5,95,"#c1ab78");for(let y=968;y<1030;y+=24)flower(c,x+27,y);}
-  rect(c,1190,970,190,90,"#6aaeb6");for(let i=0;i<7;i++)rect(c,1200+i*25,987+(i%3)*17,14,3,"#a5cdd0");
+  rect(c,590,945,360,105,"#87ad62");for(let x=615;x<920;x+=70){rect(c,x,950,5,95,"#c1ab78");for(let y=968;y<1030;y+=24)flower(c,x+27,y);}
+  for(let i=0;i<7;i++)rect(c,1200+i*25,987+(i%3)*17,14,3,"#a5cdd0");
   // New eastern lotus fields, southern orchards and a riverside memorial approach.
   for(let x=1480;x<2050;x+=92)for(let y=70;y<230;y+=75){rect(c,x,y,72,44,"#68aeb0");rect(c,x+8,y+7,17,5,"#79a46c");rect(c,x+43,y+24,16,5,"#78a56b");if((x+y)%3)flower(c,x+47,y+22);}
   for(let x=400;x<960;x+=135)for(let y=1190;y<1530;y+=122){tree(c,x,y);rect(c,x-9,y-18,6,7,"#eec260");rect(c,x+8,y-12,5,6,"#eec260");}
-  rect(c,1930,830,170,285,"#6aadb4");for(let y=850;y<1100;y+=31){rect(c,1945+(y%3)*11,y,34,4,"#a0d1cd");rect(c,2010,y+14,28,3,"#a0d1cd");}
+  for(let y=850;y<1100;y+=31){rect(c,1925+(y%3)*11,y,34,4,"#a0d1cd");rect(c,2000,y+14,28,3,"#a0d1cd");}
   for(let x=1510;x<1900;x+=80){rect(c,x,1270,5,90,"#c3a875");for(let y=1290;y<1360;y+=25)flower(c,x+27,y);}
   // A winding blue edge evokes the river without claiming geographic accuracy.
   for(let y=0;y<WORLD.height;y+=16){const edge=2160+Math.round(Math.sin(y/100)*29);rect(c,edge,y,WORLD.width-edge,16,"#60a9b4");rect(c,edge-10,y,10,16,"#d9c693"); if(y%64===0)rect(c,edge+25,y+4,16,3,"#83c5c7");}
@@ -134,7 +139,7 @@ function paintWorldBackground(c:CanvasRenderingContext2D){
   for(const [x,y] of [[780,560],[980,650],[540,480]]){rect(c,x-3,y-17,6,25,"#815e3e");rect(c,x-17,y-23,34,12,"#dfc587");rect(c,x+10,y-20,5,5,"#8d683f");}
   for(let y=minY;y<maxY;y++)for(let x=minX;x<maxX;x++){
     const px=x*tile+9+hash(x,y)*14,py=y*tile+9+hash(y,x)*14,h=hash(x+49,y+73);
-    if(px>2100 || isRiver(px,py) || HOMES.some(home=>Math.abs(home.x-px)<91&&Math.abs(home.y-py)<75) || STOPS.some(s=>Math.hypot(s.x-px,s.y-py)<105) || paths.some(path=>path.some((p,i)=>i>0&&distanceToSegment(px,py,path[i-1],p)<45))) continue;
+    if(foliageOverlapsWater(px,py) || HOMES.some(home=>Math.abs(home.x-px)<91&&Math.abs(home.y-py)<75) || STOPS.some(s=>Math.hypot(s.x-px,s.y-py)<105) || paths.some(path=>path.some((p,i)=>i>0&&distanceToSegment(px,py,path[i-1],p)<45))) continue;
     if(h>.94) tree(c,px,py,h>.975?1:0); else if(h>.91) palm(c,px,py); else if(h<.04) flower(c,px,py);
   }
   // Two piers face each other. The only crossing is the player-controlled rowboat.
@@ -142,7 +147,7 @@ function paintWorldBackground(c:CanvasRenderingContext2D){
   for(let x=550;x<605;x+=12)rect(c,x,796,2,17,"#cb9c66");
   for(let x=430;x<493;x+=12)rect(c,x,796,2,17,"#cb9c66");
   rect(c,565,768,5,26,"#73543b");rect(c,520,757,96,21,"#e5cd94");
-  c.fillStyle="#4c5f44";c.font="bold 9px Manrope, Arial, sans-serif";c.textAlign="center";c.fillText("BẾN XUỒNG",568,771);
+  c.fillStyle="#4c5f44";c.font="bold 9px Chakra Petch, Arial, sans-serif";c.textAlign="center";c.fillText("BẾN XUỒNG",568,771);
 }
 
 export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:number;w:number;h:number}, player: Point & {dir:number;moving:boolean}, visited: Set<string>, t:number, boatX:number, aboard=false) {
@@ -249,10 +254,10 @@ export function renderInterior(c:CanvasRenderingContext2D,view:{x:number;y:numbe
     rect(c,spot.x-21,spot.y+12,42,7,"#617e5b");rect(c,spot.x-15,spot.y-19,30,34,"#745b42");rect(c,spot.x-11,spot.y-15,22,20,"#f0e0ac");
     rect(c,spot.x-7,spot.y-11,14,12,i===0?"#6f9e86":i===1?"#b88566":"#7caeb3");
     rect(c,spot.x-4,spot.y-51+bob,8,8,done?"#edc561":"#fff3c5");
-    c.fillStyle="#344e3b";c.textAlign="center";c.font="bold 11px Manrope, Arial, sans-serif";c.fillText(spot.label,spot.x,spot.y+38);
+    c.fillStyle="#344e3b";c.textAlign="center";c.font="bold 11px Chakra Petch, Arial, sans-serif";c.fillText(spot.label,spot.x,spot.y+38);
   }
   rect(c,421,612,118,31,"#70533f");rect(c,429,615,102,25,"#2d533f");rect(c,464,625,32,6,"#e5bb74");
-  c.fillStyle="#fff0b9";c.textAlign="center";c.font="bold 11px Manrope, Arial, sans-serif";c.fillText("LỐI RA",480,660);
+  c.fillStyle="#fff0b9";c.textAlign="center";c.font="bold 11px Chakra Petch, Arial, sans-serif";c.fillText("LỐI RA",480,660);
   WORKERS[stop.id].forEach((worker,i)=>drawWorker(c,worker,t+i*600));
   if(QUIZZES[stop.id])drawQuizStand(c,QUIZZES[stop.id].x,QUIZZES[stop.id].y,t);
   const activity=ACTIVITIES[stop.id];if(activity)drawActivity(c,activity,activityProgress,t,ceremony);
@@ -268,8 +273,8 @@ function drawQuizStand(c:CanvasRenderingContext2D,x:number,y:number,t:number){
   rect(c,x-39,y+12,78,8,"#6b7b58");rect(c,x-28,y-1,56,15,"#815d41");rect(c,x-22,y-11,44,12,"#b58d61");
   rect(c,x-23,y-27,22,18,"#e5d4a5");rect(c,x+1,y-27,22,18,"#f1e2b7");rect(c,x-1,y-26,2,18,"#a5825e");
   for(let i=0;i<3;i++){rect(c,x-18,y-22+i*5,13,2,"#a48765");rect(c,x+5,y-22+i*5,12,2,"#a48765");}
-  rect(c,x-12,y-57+bob,24,20,"#fff0bd");c.fillStyle="#4b6445";c.textAlign="center";c.font="bold 13px Manrope, Arial, sans-serif";c.fillText("?",x,y-42+bob);
-  rect(c,x-49,y+25,98,19,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Manrope, Arial, sans-serif";c.fillText("3 CÂU HỎI",x,y+38);
+  rect(c,x-12,y-57+bob,24,20,"#fff0bd");c.fillStyle="#4b6445";c.textAlign="center";c.font="bold 13px Chakra Petch, Arial, sans-serif";c.fillText("?",x,y-42+bob);
+  rect(c,x-49,y+25,98,19,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText("3 CÂU HỎI",x,y+38);
 }
 
 function drawWorker(c:CanvasRenderingContext2D,w:Worker,t:number){
@@ -283,8 +288,8 @@ function drawWorker(c:CanvasRenderingContext2D,w:Worker,t:number){
   if(w.sprite==="caretaker"||w.sprite==="gardener"){rect(c,x+17,y-22,3,34,"#795c3c");rect(c,x+13,y+11,15,5,w.sprite==="caretaker"?"#c6a36c":"#6ba867");}
   if(w.sprite==="rower"){rect(c,x+17,y-26,3,47,"#795c3c");rect(c,x+12,y+19,14,4,"#bba47c");}
   if(w.sprite==="vendor"||w.sprite==="farmer"){rect(c,x+17,y-1,18,11,"#9a7049");for(let i=0;i<3;i++)rect(c,x+20+i*5,y-5,4,5,w.sprite==="farmer"?"#e9be5d":"#d2a969");}
-  rect(c,x-8,y-49,16,13,"#fff0bb");c.fillStyle="#4d5638";c.textAlign="center";c.font="bold 10px Manrope, Arial, sans-serif";c.fillText("…",x,y-39);
-  rect(c,x-48,y+21,96,18,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Manrope, Arial, sans-serif";c.fillText(w.name,x,y+34);
+  rect(c,x-8,y-49,16,13,"#fff0bb");c.fillStyle="#4d5638";c.textAlign="center";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText("…",x,y-39);
+  rect(c,x-48,y+21,96,18,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText(w.name,x,y+34);
 }
 
 function drawIncenseStick(c:CanvasRenderingContext2D,x:number,y:number,t:number,lit:boolean){
@@ -315,9 +320,9 @@ function drawActivity(c:CanvasRenderingContext2D,a:Activity|undefined,progress:n
   if(a.icon==="incense"){
     rect(c,x-19,y-64+bob,38,32,"#842f2d");rect(c,x-16,y-61+bob,32,26,"#c83e35");rect(c,x-11,y-56+bob,22,16,"#f66c4d");rect(c,x-5,y-53+bob,10,9,"#ffe6bd");
   } else {
-    rect(c,x-10,y-52+bob,20,17,"#fff0b9");c.fillStyle="#526842";c.textAlign="center";c.font="bold 11px Manrope, Arial, sans-serif";c.fillText(progress>=goal?"✓":"★",x,y-39+bob);
+    rect(c,x-10,y-52+bob,20,17,"#fff0b9");c.fillStyle="#526842";c.textAlign="center";c.font="bold 11px Chakra Petch, Arial, sans-serif";c.fillText(progress>=goal?"✓":"★",x,y-39+bob);
   }
-  rect(c,x-56,y+30,112,20,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Manrope, Arial, sans-serif";c.fillText(a.name,x,y+44);
+  rect(c,x-56,y+30,112,20,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText(a.name,x,y+44);
 }
 function drawSignatureScene(c:CanvasRenderingContext2D,stop:Stop,t:number,progress:number){
   if(stop.id==="sinh-sac"){

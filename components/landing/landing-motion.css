@@ -1,0 +1,13 @@
+/* Initial styles are in the server HTML, before effects run. No-JS and reduced
+   motion visitors keep readable content without waiting for an observer. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .landing-page :is([data-nav-item],[data-hero-kicker],[data-hero-title],[data-hero-script],[data-hero-support],[data-hero-bottom],[data-split-line],[data-fade-up],[data-destination],[data-image-frame],.photo-library-heading>div,.photo-library-filters,[data-library-photo],.photo-library-more,footer>div>div):not([data-revealed]) { opacity:0; }
+}
+.landing-page [data-section-heading] { overflow:clip; padding-bottom:.16em; margin-bottom:-.16em; }
+.landing-page [data-image-frame] img,.landing-page [data-destination-image] { transition:transform 1.2s cubic-bezier(.16,1,.3,1); }
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+  .landing-page [data-image-frame]:hover img,.landing-page [data-destination]:hover [data-destination-image] { transform:scale(1.035); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .landing-page :is([data-split-line],[data-fade-up],[data-destination],[data-library-photo],[data-image-frame]) { opacity:1; transform:none; filter:none; }
+}

@@ -1,5 +1,21 @@
 export const WORLD = { width: 2300, height: 1650 };
 export const XEO_QUYT_RIVER = { outer: {left:100,top:620,right:560,bottom:1050}, island: {left:150,top:690,right:480,bottom:990}, eastDock:{x:592,y:815}, westDock:{x:440,y:815}, eastBoatX:552, westBoatX:488 };
+export const WORLD_PONDS = [
+  {x:77,y:407,width:246,height:126},
+  {x:1190,y:970,width:190,height:90},
+  {x:1910,y:830,width:160,height:285},
+] as const;
+// Reserve the entire canopy footprint, not just the tree's trunk, around water.
+export function foliageOverlapsWater(x:number,y:number){
+  const left=x-42,right=x+42,top=y-78,bottom=y+18;
+  if(right>2110)return true;
+  if(WORLD_PONDS.some(p=>right>p.x-12&&left<p.x+p.width+12&&bottom>p.y-12&&top<p.y+p.height+12))return true;
+  if(right>1468&&left<2044&&bottom>58&&top<201)return true;
+  const {outer,island}=XEO_QUYT_RIVER;
+  const touchesRiver=right>outer.left&&left<outer.right&&bottom>outer.top&&top<outer.bottom;
+  const withinIsland=left>=island.left&&right<=island.right&&top>=island.top&&bottom<=island.bottom;
+  return touchesRiver&&!withinIsland;
+}
 export function isRiver(x:number,y:number){
   const {outer,island}=XEO_QUYT_RIVER;
   return x>=outer.left&&x<=outer.right&&y>=outer.top&&y<=outer.bottom&&!(x>=island.left&&x<=island.right&&y>=island.top&&y<=island.bottom);
@@ -124,11 +140,11 @@ export type Activity = { x:number;y:number; name:string; action:string; done:str
 export const ACTIVITIES: Partial<Record<string, Activity>> = {
   "sinh-sac": {x:480,y:355,name:"Thắp nhang cho cụ",action:"Thắp một nén nhang",done:"Bạn đã thắp nhang tưởng niệm cụ Nguyễn Sinh Sắc.",icon:"incense",goal:1},
   "do-cong-tuong": {x:480,y:420,name:"Xếp hoa sân miếu",action:"Xếp thêm một chậu hoa",done:"Sân miếu đã thêm sắc hoa!",icon:"flowers"},
-  "gao-giong": {x:480,y:420,name:"Cho cá ăn",action:"Rải một ít thức ăn",done:"Đàn cá đã bơi lại gần!",icon:"fish"},
-  "xeo-quyt": {x:480,y:420,name:"Tìm dấu tích Xẻo Quýt",action:"Tìm dấu tích từ xuồng",done:"Bạn đã tìm đủ ba dấu tích ven lạch!",icon:"boat",goal:3},
+  "gao-giong": {x:480,y:420,name:"Câu cá ao quê",action:"Thả cần câu cá",done:"Bạn đã hoàn thành ba lượt câu cá!",icon:"fish"},
+  "xeo-quyt": {x:480,y:420,name:"Chèo xuồng ba lá",action:"Lái xuồng qua lạch",done:"Bạn đã chèo xuồng tới bến!",icon:"boat",goal:1},
   "cho-que": {x:480,y:420,name:"Gói bánh quê",action:"Mở bàn gói bánh",done:"Mẻ bánh đã sẵn sàng!",icon:"cake"},
   "vuon-xoai": {x:480,y:420,name:"Hái xoài chín",action:"Mở cây xoài để hái",done:"Giỏ xoài đã đầy rồi!",icon:"mango"},
-  "my-phuoc-thanh": {x:480,y:420,name:"Ngắm sen nở",action:"Khám phá thêm một bông sen",done:"Bạn đã ngắm đủ ba sắc sen!",icon:"lotus"},
+  "my-phuoc-thanh": {x:480,y:420,name:"Tách tâm sen",action:"Chuẩn bị hạt sen",done:"Bạn đã tách xong ba hạt sen!",icon:"lotus"},
   "tap-ket": {x:480,y:355,name:"Dâng hoa tưởng niệm",action:"Đặt thêm một nhành hoa",done:"Bó hoa tưởng niệm đã hoàn thành.",icon:"flowers"},
 };
 

@@ -15,6 +15,8 @@ import {
 import { EVENT } from "@/components/campaign/campaignData";
 import HeaderAccount from "@/components/auth/HeaderAccount";
 import HeroVideo from "./HeroVideo";
+import { setupLandingReveals } from "./landingMotion";
+import "./landing-motion.css";
 
 const destinations = [
  {number:"01",title:"Khu di tích Xẻo Quýt",category:"THIÊN NHIÊN & LỊCH SỬ",location:"Cao Lãnh",image:PHOTO_FEATURES.xeoQuyt.src,description:"Theo lạch nước xanh, nghe rừng tràm kể chuyện."},
@@ -156,74 +158,7 @@ export default function LandingPage() {
     const el = root.current;
     if (!el) return;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const animations = new Set<Animation>();
-    const originalOpacity = new Map<HTMLElement, string>();
-    const prepare = (node: HTMLElement) => {
-      if (!originalOpacity.has(node)) originalOpacity.set(node, node.style.opacity);
-      node.style.opacity = "0";
-    };
-    const reveal = (node: HTMLElement, delay = 0, distance = 24, duration = 650) => {
-      const animation = node.animate([
-        { opacity: 0, transform: `translate3d(0, ${motion.matches ? 0 : distance}px, 0)` },
-        { opacity: 1, transform: "translate3d(0, 0, 0)" },
-      ], {
-        duration: motion.matches ? 180 : duration,
-        delay: motion.matches ? Math.min(delay, 100) : delay,
-        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-        fill: "both",
-      });
-      animations.add(animation);
-      const restore = () => {
-        node.style.opacity = originalOpacity.get(node) ?? "";
-        animations.delete(animation);
-      };
-      animation.oncancel = restore;
-      animation.onfinish = () => {
-        restore();
-        animation.cancel();
-      };
-    };
-
-    const groups = new Map<Element, { targets: HTMLElement[]; delay: number; distance: number }>();
-    // Queue the hero too: a restored scroll position must not reveal offscreen content.
-    const intro: [string, number, number][] = [
-      ["[data-nav-item]", 0, -10],
-      ["[data-hero-kicker]", 100, 18],
-      ["[data-hero-title]", 180, 48],
-      ["[data-hero-script]", 320, 32],
-      ["[data-hero-support]", 430, 20],
-      ["[data-hero-bottom]", 500, 16],
-    ];
-    for (const [selector, delay, distance] of intro) {
-      el.querySelectorAll<HTMLElement>(selector).forEach((node, index) => {
-        prepare(node);
-        groups.set(node, { targets: [node], delay: delay + index * 70, distance });
-      });
-    }
-
-    // Reveal when content reaches the visible area, not when its first pixel touches the bottom.
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting || entry.intersectionRatio < 0.1) continue;
-        observer.unobserve(entry.target);
-        const group = groups.get(entry.target);
-        group?.targets.forEach((node, index) => reveal(node, group.delay + index * 85, group.distance));
-      }
-    }, { rootMargin: `0px 0px -${Math.round(window.innerHeight * 0.12)}px 0px`, threshold: 0.1 });
-    const selector = "[data-section-heading], [data-fade-up], [data-destination], [data-image-frame]";
-    el.querySelectorAll<HTMLElement>(selector).forEach(node => {
-      // Observe individual blocks instead of revealing a whole parent section at once.
-      if (node.querySelector(selector)) return;
-      const lines = Array.from(node.querySelectorAll<HTMLElement>("[data-split-line]"));
-      const targets = node.hasAttribute("data-section-heading") && lines.length ? lines : [node];
-      targets.forEach(prepare);
-      groups.set(node, { targets, delay: 0, distance: 24 });
-    });
-    groups.forEach((_group, node) => observer.observe(node));
-    const reduceMotion = () => {
-      if (motion.matches) animations.forEach(animation => animation.cancel());
-    };
-    motion.addEventListener("change", reduceMotion);
+    const cleanupReveals = setupLandingReveals(el, motion);
     let scrollFrame = 0;
     const cancelScroll = () => {
       if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
@@ -242,6 +177,7 @@ export default function LandingPage() {
       const from = window.scrollY;
       const destination = Math.max(0, Math.min(top, document.documentElement.scrollHeight - window.innerHeight));
       const distance = destination - from;
+      if(motion.matches){window.scrollTo({top:destination,behavior:"instant"});return;}
       const duration = Math.min(900, Math.max(450, Math.abs(distance) * 0.2));
       const started = performance.now();
       // Animate only during a menu click; OS/CSS smooth-scroll settings cannot turn it into a jump.
@@ -259,10 +195,7 @@ export default function LandingPage() {
     window.addEventListener("keydown", cancelScroll);
     return () => {
       cancelScroll();
-      observer.disconnect();
-      animations.forEach(animation => animation.cancel());
-      originalOpacity.forEach((opacity, node) => { node.style.opacity = opacity; });
-      motion.removeEventListener("change", reduceMotion);
+      cleanupReveals();
       el.removeEventListener("click", scrollToSection);
       window.removeEventListener("wheel", cancelScroll);
       window.removeEventListener("touchstart", cancelScroll);
@@ -274,7 +207,7 @@ export default function LandingPage() {
   return (
     <main
       ref={root}
-      className="overflow-x-clip bg-[#f8f9f5] text-[#14342a]"
+      className="landing-page overflow-x-clip bg-[#f8f9f5] text-[#14342a]"
     >
       <style jsx global>{`
         html {
