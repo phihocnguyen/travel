@@ -38,6 +38,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!.env.docker.example
+
+# VPS deployment secrets and database backups
+/deploy/certs/
+/backups/
 
 # vercel
 .vercel
