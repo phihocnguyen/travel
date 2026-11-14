@@ -2,8 +2,6 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-export const dynamic = 'force-static';
-
 export async function GET() {
   const font = await readFile(join(process.cwd(), 'public/fonts/chakra-petch/ChakraPetch-Bold.ttf'));
 
