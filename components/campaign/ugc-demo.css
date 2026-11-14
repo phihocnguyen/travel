@@ -1,0 +1,9 @@
+.ugc-page .ugc-buttonDemo{border-color:#25493a40;background:#faf5e2;color:#25493a}
+.ugc-demoModal{width:min(900px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:auto;border:1px solid #d7dfca;border-radius:20px;background:#faf7ed;color:#25493a;box-shadow:0 25px 100px #11251b55}
+.ugc-demoModal::backdrop{background:#10281fbd;backdrop-filter:blur(7px)}
+.ugc-demoModal>header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 24px}
+.ugc-demoModal>header span{font-size:9px;letter-spacing:.08em;font-weight:700;color:#8e783f}
+.ugc-page .ugc-demoModal h2{font-size:20px;line-height:1.4;letter-spacing:-.03em;margin-top:5px}
+.ugc-demoModal>header button{display:grid;place-items:center;flex:none;width:36px;height:36px;border:1px solid #d5dcc9;border-radius:50%;background:#f0eddf;color:#25493a}
+.ugc-demoModal>video{display:block;width:100%;max-height:72dvh;background:#101b15;object-fit:contain}
+@media(max-width:640px){.ugc-demoModal{width:calc(100vw - 20px);border-radius:14px}.ugc-demoModal>header{padding:15px;gap:12px}.ugc-page .ugc-demoModal h2{font-size:16px}.ugc-demoModal>header span{font-size:8px}}

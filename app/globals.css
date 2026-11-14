@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/InterVariable.woff2") format("woff2");
+}
+
+/* One font across pages, widgets, forms and legacy component styles. */
+html, body, body * {
+  font-family: "Inter", Arial, sans-serif !important;
+}
+
+@font-face {
   font-family: "Helvetica";
   font-style: normal;
   font-weight: 400;
@@ -103,8 +116,8 @@
 }
 
 .landing-fonts {
-  --font-dm-sans: "Helvetica", Arial, sans-serif;
-  --font-editorial: "Playfair Display", Georgia, serif;
+  --font-dm-sans: "Inter", Arial, sans-serif;
+  --font-editorial: "Inter", Arial, sans-serif;
 }
 
 @theme {
@@ -120,9 +133,8 @@
   --color-earth: #93381f;
   --color-ink: #17331f;
 
-  /* Playfair Display includes the local Vietnamese font subset. */
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-sans: "Helvetica", Arial, sans-serif;
+  --font-display: "Inter", Arial, sans-serif;
+  --font-sans: "Inter", Arial, sans-serif;
 
   --shadow-brand: 0 30px 90px -30px rgba(8, 45, 27, 0.55);
   --shadow-card: 0 22px 60px -24px rgba(21, 96, 44, 0.4);

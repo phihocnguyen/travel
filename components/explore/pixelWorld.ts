@@ -91,9 +91,9 @@ function drawStop(c: CanvasRenderingContext2D, s: Stop, t: number, visited: bool
   }
   const bob = Math.sin(t/450 + x)*2;
   rect(c,x-9,y-66+bob,18,18,visited ? "#f2cb65" : "#fff3c5");
-  c.fillStyle="#624c35"; c.font="bold 12px monospace"; c.textAlign="center"; c.fillText(visited ? "✓" : "!",x,y-52+bob);
+  c.fillStyle="#624c35"; c.font="bold 12px Inter"; c.textAlign="center"; c.fillText(visited ? "✓" : "!",x,y-52+bob);
   rect(c,x-54,y+42,108,20,"#f5e7ad");rect(c,x-54,y+42,108,3,"#745d3c");
-  c.fillStyle="#4e6040";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText(s.short,x,y+55);
+  c.fillStyle="#4e6040";c.font="bold 10px Inter, Arial, sans-serif";c.fillText(s.short,x,y+55);
   rect(c,x-12,y+21,24,14,"#825a43");rect(c,x-8,y+23,16,12,"#2d4636");rect(c,x-4,y+27,8,8,"#e4bd61");
 }
 
@@ -147,7 +147,7 @@ function paintWorldBackground(c:CanvasRenderingContext2D){
   for(let x=550;x<605;x+=12)rect(c,x,796,2,17,"#cb9c66");
   for(let x=430;x<493;x+=12)rect(c,x,796,2,17,"#cb9c66");
   rect(c,565,768,5,26,"#73543b");rect(c,520,757,96,21,"#e5cd94");
-  c.fillStyle="#4c5f44";c.font="bold 9px Chakra Petch, Arial, sans-serif";c.textAlign="center";c.fillText("BẾN XUỒNG",568,771);
+  c.fillStyle="#4c5f44";c.font="bold 9px Inter, Arial, sans-serif";c.textAlign="center";c.fillText("BẾN XUỒNG",568,771);
 }
 
 export function renderWorld(c: CanvasRenderingContext2D, view: {x:number;y:number;w:number;h:number}, player: Point & {dir:number;moving:boolean}, visited: Set<string>, t:number, boatX:number, aboard=false) {
@@ -254,10 +254,10 @@ export function renderInterior(c:CanvasRenderingContext2D,view:{x:number;y:numbe
     rect(c,spot.x-21,spot.y+12,42,7,"#617e5b");rect(c,spot.x-15,spot.y-19,30,34,"#745b42");rect(c,spot.x-11,spot.y-15,22,20,"#f0e0ac");
     rect(c,spot.x-7,spot.y-11,14,12,i===0?"#6f9e86":i===1?"#b88566":"#7caeb3");
     rect(c,spot.x-4,spot.y-51+bob,8,8,done?"#edc561":"#fff3c5");
-    c.fillStyle="#344e3b";c.textAlign="center";c.font="bold 11px Chakra Petch, Arial, sans-serif";c.fillText(spot.label,spot.x,spot.y+38);
+    c.fillStyle="#344e3b";c.textAlign="center";c.font="bold 11px Inter, Arial, sans-serif";c.fillText(spot.label,spot.x,spot.y+38);
   }
   rect(c,421,612,118,31,"#70533f");rect(c,429,615,102,25,"#2d533f");rect(c,464,625,32,6,"#e5bb74");
-  c.fillStyle="#fff0b9";c.textAlign="center";c.font="bold 11px Chakra Petch, Arial, sans-serif";c.fillText("LỐI RA",480,660);
+  c.fillStyle="#fff0b9";c.textAlign="center";c.font="bold 11px Inter, Arial, sans-serif";c.fillText("LỐI RA",480,660);
   WORKERS[stop.id].forEach((worker,i)=>drawWorker(c,worker,t+i*600));
   if(QUIZZES[stop.id])drawQuizStand(c,QUIZZES[stop.id].x,QUIZZES[stop.id].y,t);
   const activity=ACTIVITIES[stop.id];if(activity)drawActivity(c,activity,activityProgress,t,ceremony);
@@ -273,8 +273,8 @@ function drawQuizStand(c:CanvasRenderingContext2D,x:number,y:number,t:number){
   rect(c,x-39,y+12,78,8,"#6b7b58");rect(c,x-28,y-1,56,15,"#815d41");rect(c,x-22,y-11,44,12,"#b58d61");
   rect(c,x-23,y-27,22,18,"#e5d4a5");rect(c,x+1,y-27,22,18,"#f1e2b7");rect(c,x-1,y-26,2,18,"#a5825e");
   for(let i=0;i<3;i++){rect(c,x-18,y-22+i*5,13,2,"#a48765");rect(c,x+5,y-22+i*5,12,2,"#a48765");}
-  rect(c,x-12,y-57+bob,24,20,"#fff0bd");c.fillStyle="#4b6445";c.textAlign="center";c.font="bold 13px Chakra Petch, Arial, sans-serif";c.fillText("?",x,y-42+bob);
-  rect(c,x-49,y+25,98,19,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText("3 CÂU HỎI",x,y+38);
+  rect(c,x-12,y-57+bob,24,20,"#fff0bd");c.fillStyle="#4b6445";c.textAlign="center";c.font="bold 13px Inter, Arial, sans-serif";c.fillText("?",x,y-42+bob);
+  rect(c,x-49,y+25,98,19,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Inter, Arial, sans-serif";c.fillText("3 CÂU HỎI",x,y+38);
 }
 
 function drawWorker(c:CanvasRenderingContext2D,w:Worker,t:number){
@@ -288,8 +288,8 @@ function drawWorker(c:CanvasRenderingContext2D,w:Worker,t:number){
   if(w.sprite==="caretaker"||w.sprite==="gardener"){rect(c,x+17,y-22,3,34,"#795c3c");rect(c,x+13,y+11,15,5,w.sprite==="caretaker"?"#c6a36c":"#6ba867");}
   if(w.sprite==="rower"){rect(c,x+17,y-26,3,47,"#795c3c");rect(c,x+12,y+19,14,4,"#bba47c");}
   if(w.sprite==="vendor"||w.sprite==="farmer"){rect(c,x+17,y-1,18,11,"#9a7049");for(let i=0;i<3;i++)rect(c,x+20+i*5,y-5,4,5,w.sprite==="farmer"?"#e9be5d":"#d2a969");}
-  rect(c,x-8,y-49,16,13,"#fff0bb");c.fillStyle="#4d5638";c.textAlign="center";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText("…",x,y-39);
-  rect(c,x-48,y+21,96,18,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText(w.name,x,y+34);
+  rect(c,x-8,y-49,16,13,"#fff0bb");c.fillStyle="#4d5638";c.textAlign="center";c.font="bold 10px Inter, Arial, sans-serif";c.fillText("…",x,y-39);
+  rect(c,x-48,y+21,96,18,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Inter, Arial, sans-serif";c.fillText(w.name,x,y+34);
 }
 
 function drawIncenseStick(c:CanvasRenderingContext2D,x:number,y:number,t:number,lit:boolean){
@@ -320,9 +320,9 @@ function drawActivity(c:CanvasRenderingContext2D,a:Activity|undefined,progress:n
   if(a.icon==="incense"){
     rect(c,x-19,y-64+bob,38,32,"#842f2d");rect(c,x-16,y-61+bob,32,26,"#c83e35");rect(c,x-11,y-56+bob,22,16,"#f66c4d");rect(c,x-5,y-53+bob,10,9,"#ffe6bd");
   } else {
-    rect(c,x-10,y-52+bob,20,17,"#fff0b9");c.fillStyle="#526842";c.textAlign="center";c.font="bold 11px Chakra Petch, Arial, sans-serif";c.fillText(progress>=goal?"✓":"★",x,y-39+bob);
+    rect(c,x-10,y-52+bob,20,17,"#fff0b9");c.fillStyle="#526842";c.textAlign="center";c.font="bold 11px Inter, Arial, sans-serif";c.fillText(progress>=goal?"✓":"★",x,y-39+bob);
   }
-  rect(c,x-56,y+30,112,20,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Chakra Petch, Arial, sans-serif";c.fillText(a.name,x,y+44);
+  rect(c,x-56,y+30,112,20,"#f5e8b9");c.fillStyle="#405b43";c.font="bold 10px Inter, Arial, sans-serif";c.fillText(a.name,x,y+44);
 }
 function drawSignatureScene(c:CanvasRenderingContext2D,stop:Stop,t:number,progress:number){
   if(stop.id==="sinh-sac"){

@@ -115,6 +115,7 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("#hero");
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     let previous = false;
@@ -288,13 +289,14 @@ export default function LandingPage() {
             <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className={`nav-color mt-1 block text-[10px] font-normal transition-colors ${scrolled ? "text-[#657361]" : "text-white/75"}`}>Cao Lãnh · Đồng Tháp</span></span>
           </a>
 
-          <nav className="hidden items-center gap-7 lg:flex xl:gap-10">
+          <nav className="hidden items-center gap-4 lg:flex xl:gap-6">
             {[
               ["Trang chủ", "#hero"],
               ["Câu chuyện", "#story"],
               ["Điểm đến", "#destinations"],
               ["Ảnh thật", "#photos"],
               ["Sự kiện", "#cta"],
+              ["UGC Cover", "/ugc"],
             ].map(([name, href]) => (
               <a
                 key={name}
@@ -322,20 +324,24 @@ export default function LandingPage() {
             <a
               href="/map"
               data-magnetic
-              className={`nav-color hidden items-center gap-2 rounded-full border px-5 py-3 text-[11px] font-semibold transition-colors sm:inline-flex ${scrolled ? "border-[#14342a]/30 hover:bg-[#14342a] hover:text-white" : "border-white/65 hover:bg-white hover:text-[#155277]"}`}
+              className={`nav-color hidden items-center gap-2 rounded-full border px-5 py-3 text-[11px] font-semibold transition-colors xl:inline-flex ${scrolled ? "border-[#14342a]/30 hover:bg-[#14342a] hover:text-white" : "border-white/65 hover:bg-white hover:text-[#155277]"}`}
             >
               Khám phá bản đồ
               <ArrowUpRight size={14} />
             </a>
 
-            <a
-              href="#destinations"
-              aria-label="Khám phá điểm đến"
+            <button
+              type="button"
+              aria-label="Mở menu điều hướng"
+              aria-expanded={mobileNavOpen}
+              aria-controls="landing-mobile-navigation"
+              onClick={()=>setMobileNavOpen(value=>!value)}
               className={`nav-color grid h-11 w-11 place-items-center rounded-full border transition-colors lg:hidden ${scrolled ? "border-[#14342a]/30" : "border-white/60"}`}
             >
               <Menu size={19} />
-            </a>
+            </button>
           </div>
+          {mobileNavOpen&&<nav id="landing-mobile-navigation" aria-label="Điều hướng trên điện thoại" className="absolute left-3 right-3 top-full mt-2 grid gap-1 rounded-2xl border border-[#14342a]/10 bg-[#fbfcf7] p-3 text-[#14342a] shadow-xl lg:hidden">{[["Trang chủ","#hero"],["Câu chuyện","#story"],["Điểm đến","#destinations"],["Ảnh thật","#photos"],["Sự kiện","#cta"],["UGC Cover Challenge","/ugc"]].map(([label,href])=><a key={href} href={href} onClick={()=>setMobileNavOpen(false)} className="rounded-lg px-4 py-3 text-xs font-semibold hover:bg-[#eaf0df]">{label}</a>)}</nav>}
         </header>
         <div aria-hidden="true" className="h-[104px] shrink-0" />
 

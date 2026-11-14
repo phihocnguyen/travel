@@ -1,7 +1,8 @@
 import Link from "next/link";
 import HeaderAccount from "@/components/auth/HeaderAccount";
+import { ArrowLeft } from "lucide-react";
 
-export default function SiteHeader({overlay=false,dark=false,active="home"}:{overlay?:boolean;dark?:boolean;active?:"home"|"blog"}){
+export default function SiteHeader({overlay=false,dark=false,active="home"}:{overlay?:boolean;dark?:boolean;active?:"home"|"blog"|"ugc"}){
   const text=dark?"text-white":"text-[#263f30]";
   const outline=dark?"border-white/40 hover:bg-white/10":"border-[#263f30]/20 hover:bg-[#263f30]/5";
   return <header data-site-header className={`${overlay?"absolute inset-x-0 top-0 z-[100]":"sticky top-0 z-30 border-b border-[#263f30]/10 bg-white/95 backdrop-blur-md"} ${text}`}>
@@ -11,8 +12,9 @@ export default function SiteHeader({overlay=false,dark=false,active="home"}:{ove
         <span className="hidden sm:block"><span className="block font-sans text-sm font-semibold leading-tight tracking-tight">Vị Xoài Dẫn Lối</span><span className={`mt-1 block text-[10px] ${dark?"text-white/70":"text-[#7b8576]"}`}>Cao Lãnh · Đồng Tháp</span></span>
       </Link>
       <nav aria-label="Điều hướng chính" className="flex shrink-0 items-center gap-2 sm:gap-3">
-        <Link href="/map" data-cursor-magnet className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline}`}>Khám phá bản đồ</Link>
-        <Link href="/blog" data-cursor-magnet aria-current={active==="blog"?"page":undefined} className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline} ${active==="blog"?(dark?"bg-white/15":"bg-[#263f30]/5 font-semibold"):""}`}>Bài viết</Link>
+        <Link href="/" aria-label="Về trang chủ" data-cursor-magnet className={`inline-flex h-9 items-center justify-center gap-2 rounded-md border px-2.5 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline}`}><ArrowLeft size={15}/><span className="hidden sm:inline">Trang chủ</span></Link>
+        <Link href="/map" data-cursor-magnet className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline}`}><span className="sm:hidden">Bản đồ</span><span className="hidden sm:inline">Khám phá bản đồ</span></Link>
+        <Link href="/ugc" data-cursor-magnet aria-current={active==="ugc"?"page":undefined} className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition-colors sm:h-10 sm:px-4 sm:text-xs ${outline} ${active==="ugc"?(dark?"bg-white/15":"bg-[#263f30]/5 font-semibold"):""}`}>UGC Cover</Link>
         <HeaderAccount dark={dark} />
       </nav>
     </div>

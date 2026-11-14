@@ -73,7 +73,7 @@ export function setupLandingReveals(root: HTMLElement, reducedMotion: boolean) {
   };
 }
 
-export function setupLandingButtons(root: HTMLElement, reducedMotion: boolean) {
+export function setupLandingButtons(root: HTMLElement, reducedMotion: boolean, selector = "[data-magnetic]") {
   const hover = window.matchMedia("(hover: hover) and (pointer: fine)");
   const buttons = new Set<HTMLElement>();
   let active: HTMLElement | null = null;
@@ -88,7 +88,7 @@ export function setupLandingButtons(root: HTMLElement, reducedMotion: boolean) {
   const move = (event: PointerEvent) => {
     if (reducedMotion || !hover.matches || event.pointerType === "touch") return;
     const button = event.target instanceof Element
-      ? event.target.closest<HTMLElement>("[data-magnetic]") : null;
+      ? event.target.closest<HTMLElement>(selector) : null;
     if (button !== active) { reset(); active = button; }
     if (!button) return;
     buttons.add(button);

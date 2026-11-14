@@ -7,14 +7,15 @@ export class AIError extends Error {
 }
 
 // Shared server client for AI features. Credentials never enter client bundles.
-export async function completeAI(messages: AIMessage[], signal?: AbortSignal): Promise<string> {
+export async function completeAI(messages: AIMessage[], signal?: AbortSignal, options: { maxTokens?: number } = {}): Promise<string> {
   const key = process.env.AI_API_KEY;
   if (!key) throw new AIError(503, "Xoài chưa được cấu hình kết nối AI.");
   const base = (process.env.AI_BASE_URL || "https://platform.beeknoee.com/v1").replace(/\/+$/, "");
+  const model = process.env.AI_MODEL || "glm-4.5-flash";
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST", cache: "no-store", redirect: "error",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: process.env.AI_MODEL || "glm-4.5-flash", messages, max_tokens: 3000, stream: false }),
+    body: JSON.stringify({ model, messages, max_tokens: options.maxTokens ?? 3000, stream: false, ...(model.startsWith("glm-") ? { thinking: { type: "disabled" } } : {}) }),
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(60_000)]) : AbortSignal.timeout(60_000),
   });
   if (!response.ok) {

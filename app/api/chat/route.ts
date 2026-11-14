@@ -1,8 +1,8 @@
 import { AIError, type AIMessage } from "@/lib/ai/client";
 import { answerChat } from "@/lib/chat/answer";
+import { localScope, SCOPE_REFUSAL, withinWebsiteScope } from "@/lib/chat/scope";
 
-export const runtime = "nodejs";
-export const maxDuration = 65;
+export const maxDuration = 90;
 const requests = new Map<string, { count: number; until: number }>();
 let inFlight = 0;
 
@@ -23,6 +23,10 @@ export async function POST(request: Request) {
   entry.count++; requests.set(ip, entry); inFlight++;
   try {
     const safeMessages: AIMessage[] = messages.map(message => ({ role: message.role, content: message.content }));
+    const scope = localScope(safeMessages);
+    if (scope === "block") return Response.json(SCOPE_REFUSAL, { headers: { "Cache-Control": "no-store" } });
+    if (scope === "greeting") return Response.json({text:"Chào bạn, mình là Xoài! 🥭 Mình có thể giúp bạn khám phá website Vị Xoài Dẫn Lối, lên lịch trình Cao Lãnh, tìm sự kiện và hướng dẫn tạo vé. Bạn muốn tìm hiểu phần nào?"}, { headers: { "Cache-Control": "no-store" } });
+    if (!await withinWebsiteScope(safeMessages, request.signal)) return Response.json(SCOPE_REFUSAL, { headers: { "Cache-Control": "no-store" } });
     return Response.json(await answerChat(safeMessages, request.signal), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return Response.json({ error: error instanceof AIError ? error.message : "Kết nối AI bị gián đoạn. Bạn thử lại nhé." }, { status: error instanceof AIError ? error.status : 502 });

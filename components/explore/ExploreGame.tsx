@@ -261,7 +261,7 @@ export default function ExploreGame() {
     let raf=0,prev=0,lastUi=0,renderedWidth=0,renderedHeight=0;
     let pausedAt:number|null=null,disposed=false;
     const readyTimer=window.setTimeout(()=>{if(!disposed)setSceneReady(true);},2500);
-    void Promise.allSettled([document.fonts.load('700 12px "Chakra Petch"',"Cao Lãnh, miền Tây"),document.fonts.ready,loadMapArt()]).then(()=>{if(!disposed){releaseSceneCaches();renderedWidth=0;setSceneReady(true);window.clearTimeout(readyTimer);}});
+    void Promise.allSettled([document.fonts.load('700 12px "Inter"',"Cao Lãnh, miền Tây"),document.fonts.ready,loadMapArt()]).then(()=>{if(!disposed){releaseSceneCaches();renderedWidth=0;setSceneReady(true);window.clearTimeout(readyTimer);}});
     const resize=()=>{
       const box=canvas.getBoundingClientRect();
       const width=Math.max(1,Math.round(box.width)),height=Math.max(1,Math.round(box.height));
@@ -393,12 +393,13 @@ export default function ExploreGame() {
   const activeCheckpoint=checkpoints.find(checkpoint=>checkpoint.active);
   const completedCheckpoints=checkpoints.filter(checkpoint=>checkpoint.done).length;
   const goToCheckpoint=()=>{
+    if(!activeCheckpoint)return;
     const stop=STOPS.find(s=>s.id===chapter.stop);if(!stop)return;
     setJournal(false);
     destinationRef.current=null;
     setGuiding(true);
   };
-  const targetStop=guiding?STOPS.find(stop=>stop.id===chapter.stop):undefined;
+  const targetStop=guiding&&activeCheckpoint?STOPS.find(stop=>stop.id===chapter.stop):undefined;
   const guidance=targetStop?checkpointGuidance(targetStop,chapter.id,inside,position):null;
   const mapSize=sceneSize(inside);
   const bearing=guidance?Math.atan2(guidance.y-position.y,guidance.x-position.x)*180/Math.PI:0;
@@ -414,7 +415,7 @@ export default function ExploreGame() {
     <section className={"ex-hero"}><div><div className={"ex-eyebrow"}><span/> CHƯƠNG 01 · CAO LÃNH, ĐỒNG THÁP</div><h1>Một chuyến đi <em>rất nhỏ,</em><br/>ngàn điều để khám phá</h1><p>Đi theo những con đường màu mật ong, ghé từng trạm dừng và sưu tầm dấu mộc Cao Lãnh.</p></div><div className={"ex-progress"}><span>HỘ CHIẾU HÀNH TRÌNH</span><strong>{String(visited.length).padStart(2,"0")}<small> / {String(STOPS.length).padStart(2,"0")}</small></strong><div className={"ex-progressTrack"}><i style={{width:`${visited.length/STOPS.length*100}%`}}/></div><button onClick={()=>setJournal(true)}>Mở sổ hành trình <ArrowRight size={14}/></button></div></section>
     <section className={"ex-gameShell"} aria-label="Trò chơi phiêu lưu Cao Lãnh">
       <div className={"ex-gameTop"}><span><i/> {inside?`ĐANG Ở TRONG · ${inside.short.toUpperCase()}`:"CAO LÃNH · THẾ GIỚI PIXEL"}</span><span className={"ex-gameTopRight"}><Compass size={14}/> {inside?"KHÁM PHÁ ẢNH THẬT":"TỰ DO KHÁM PHÁ"}</span></div>
-      {story.started&&!intro&&<div className="ex-checkpointBar" aria-label="Checkpoint nhiệm vụ">
+      {story.started&&activeCheckpoint&&!intro&&<div className="ex-checkpointBar" aria-label="Checkpoint nhiệm vụ">
         <div><span>CHECKPOINT {activeCheckpoint?.number??checkpoints.length} / {checkpoints.length} · {completedCheckpoints} ĐÃ XONG</span><strong>{chapter.title}{activeCheckpoint&&` · ${activeCheckpoint.progress}/${activeCheckpoint.goal}`}</strong></div>
         <button aria-label="Nhiệm vụ" onClick={()=>setJournal(true)}><BookOpen size={14}/></button>
       </div>}
@@ -430,7 +431,7 @@ export default function ExploreGame() {
             :nearExit?<button className={"ex-interact"} onClick={leaveStop}><DoorOpen size={15}/> Nhấn <kbd>E</kbd> trở ra bản đồ</button>:null}
           </>}
         </>:<>
-          {story.started&&!intro&&!ending&&!journal&&<div className="ex-storyObjective"><span>{chapter.chapter}</span><strong>{chapter.title}</strong><p>{chapter.hint}</p><button onClick={goToCheckpoint}>Đến checkpoint <ArrowRight size={13}/></button></div>}
+          {story.started&&activeCheckpoint&&!intro&&!ending&&!journal&&<div className="ex-storyObjective"><span>{chapter.chapter}</span><strong>{chapter.title}</strong><p>{chapter.hint}</p><button onClick={goToCheckpoint}>Đến checkpoint <ArrowRight size={13}/></button></div>}
           {nearBoat&&!intro&&!journal&&!crossing?<button className={"ex-interact"} onClick={interact}><span>🚣</span> Nhấn <kbd>E</kbd> lên xuồng qua sông <strong>{boatSide==="east"?"Đến Xẻo Quýt":"Về bờ"}</strong></button>
           :near&&!intro&&!journal&&!crossing?<button className={"ex-interact"} onClick={()=>enterStop(near)}><DoorOpen size={15}/> Nhấn <kbd>E</kbd> bước vào <strong>{near.short}</strong></button>:null}
           {crossing&&<div className={"ex-interact"}>🚣 Đang chèo xuồng qua sông…</div>}
