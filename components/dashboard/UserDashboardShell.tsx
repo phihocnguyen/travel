@@ -4,7 +4,7 @@ import Link, { useLinkStatus } from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ArrowUpRight, Clapperboard, Compass, House, Menu, MessageSquare, Mic2, PanelLeftClose, PanelLeftOpen, Search, Settings2, Sparkles, Ticket, X } from 'lucide-react';
+import { ArrowUpRight, Clapperboard, Compass, House, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, Search, Settings2, Sparkles, Ticket, X } from 'lucide-react';
 import { UserAvatar } from '@/components/auth/UserAvatar';
 import AccountMenu from '@/components/auth/AccountMenu';
 
@@ -14,7 +14,6 @@ const destinations = [
   { href: '/dashboard/tickets', label: 'Vé của tôi', icon: Ticket },
   { href: '/dashboard/posts', label: 'Bảng tin', icon: MessageSquare },
   { href: '/dashboard/videos', label: 'Video cộng đồng', icon: Clapperboard },
-  { href: '/ugc', label: 'UGC Cover Challenge', icon: Mic2 },
 ];
 const searchable = [...destinations, { href: '/dashboard/settings', label: 'Tài khoản', icon: Settings2 }, { href: '/map', label: 'Khám phá bản đồ', icon: Compass }];
 const fold = (value: string) => value.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');

@@ -16,7 +16,7 @@ type PageProps={params:Promise<{id:string}>};
 export async function generateMetadata({params}:PageProps):Promise<Metadata>{
   const {id}=await params,post=await getPost(id);if(!post||post.status!=="approved")return {title:"Không tìm thấy bài viết"};
   const description=post.excerpt||postPlainText(post.content).slice(0,160);
-  return {title:`${post.title} · Vị Xoài Dẫn Lối`,description,openGraph:{type:"article",title:post.title,description,authors:[post.author.name],publishedTime:post.reviewedAt??post.createdAt,modifiedTime:post.updatedAt,images:[{url:post.coverImageUrl||"/banner.jpg",width:post.coverImageUrl?1200:2034,height:post.coverImageUrl?675:773,alt:post.coverImageUrl?post.title:"Vị Xoài Dẫn Lối · Trạm Hẹn Cao Lãnh"}]}};
+  return {title:`${post.title} · Vị Xoài Dẫn Lối`,description,openGraph:{type:"article",title:post.title,description,authors:[post.author.name],publishedTime:post.reviewedAt??post.createdAt,modifiedTime:post.updatedAt,images:[{url:post.coverImageUrl||"/share-image?v=2",width:1200,height:post.coverImageUrl?675:630,alt:post.coverImageUrl?post.title:"Vị Xoài Dẫn Lối · Trạm Hẹn Cao Lãnh"}]}};
 }
 export default async function BlogPostPage({params}:PageProps){
   const {id}=await params,post=await getPost(id);if(!post||post.status!=="approved")notFound();

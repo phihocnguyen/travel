@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   title: "VỊ XOÀI DẪN LỐI · Trạm Hẹn Cao Lãnh",
   description:
     "Theo vị xoài Cát, mở lối chu du — chiến dịch du lịch trải nghiệm Cao Lãnh, Đồng Tháp và sự kiện Trạm Hẹn Cao Lãnh ngày 17/11/2026 tại Đại học FPT TP. Hồ Chí Minh.",
-  openGraph: { type: "website", locale: "vi_VN", siteName: "Vị Xoài Dẫn Lối", title: "VỊ XOÀI DẪN LỐI · Trạm Hẹn Cao Lãnh", description: "Theo vị xoài Cát, mở lối chu du. Khám phá Cao Lãnh, Đồng Tháp và Trạm Hẹn Cao Lãnh.", images: [{ url: "/banner.jpg", width: 2034, height: 773, alt: "Vị Xoài Dẫn Lối · Trạm Hẹn Cao Lãnh" }] },
-  twitter: { card: "summary_large_image", images: ["/banner.jpg"] },
+  openGraph: { type: "website", locale: "vi_VN", siteName: "Vị Xoài Dẫn Lối", title: "VỊ XOÀI DẪN LỐI · Trạm Hẹn Cao Lãnh", description: "Theo vị xoài Cát, mở lối chu du. Khám phá Cao Lãnh, Đồng Tháp và Trạm Hẹn Cao Lãnh.", images: [{ url: "/share-image?v=2", width: 1200, height: 630, alt: "Vị Xoài Dẫn Lối · Trạm Hẹn Cao Lãnh" }] },
+  twitter: { card: "summary_large_image", images: ["/share-image?v=2"] },
 };
 
 export const viewport: Viewport = {

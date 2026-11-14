@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "XOÀI CÓ GU, HÁT CÓ VIBE! · UGC Cover Challenge",
   description: "Cover BỨC TRANH RẠNG NGỜI theo vibe của bạn. Nhận bài 14–17/11/2026, bình chọn đến 12:00 ngày 18/11. Xem thể lệ và tham gia cùng Vị Xoài Dẫn Lối.",
   alternates: { canonical: "/ugc" },
-  openGraph: { title: event.name, description: event.tagline, url: "/ugc", images: ["/banner.jpg"] },
+  openGraph: { title: event.name, description: event.tagline, url: "/ugc", images: ["/share-image?v=2"] },
 };
 
 export default function UGCCoverPage() {
