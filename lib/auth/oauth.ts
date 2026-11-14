@@ -1,3 +1,5 @@
+import { siteOrigin } from "./origin";
+
 export const OAUTH_STATE_COOKIE = "dt_oauth_state";
 export const OAUTH_VERIFIER_COOKIE = "dt_oauth_verifier";
 export const OAUTH_NEXT_COOKIE = "dt_oauth_next";
@@ -28,5 +30,5 @@ export function safeNextPath(value: string | null | undefined): string {
 export function googleRedirectUri(requestUrl: string): string {
   const configured = process.env.GOOGLE_REDIRECT_URI;
   if (configured) return configured;
-  return new URL("/api/auth/google/callback", requestUrl).toString();
+  return new URL("/api/auth/google/callback", siteOrigin(requestUrl)).toString();
 }

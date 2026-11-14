@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteOrigin } from "@/lib/auth/origin";
 import { registerLogin } from "@/lib/auth/activity";
 import type { NextRequest } from "next/server";
 import {
@@ -27,7 +28,7 @@ type GoogleProfile = {
 
 function failure(request: NextRequest, code: string) {
   return NextResponse.redirect(
-    new URL(`/login?error=${encodeURIComponent(code)}`, request.url),
+    new URL(`/login?error=${encodeURIComponent(code)}`, siteOrigin(request.url)),
   );
 }
 
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
     const code=error&&typeof error==="object"&&"code" in error?error.code:null;
     return clearOAuthCookies(failure(request,code==="23505"?"account-conflict":"account-save-failed"));
   }
-  const response = NextResponse.redirect(new URL(next, request.url));
+  const response = NextResponse.redirect(new URL(next, siteOrigin(request.url)));
   response.cookies.set(
     SESSION_COOKIE,
     token,

@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
+import { siteOrigin } from "@/lib/auth/origin";
 import {
   GOOGLE_AUTH_ENDPOINT,
   OAUTH_COOKIE_MAX_AGE,
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 
   if (!clientId || !process.env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.redirect(
-      new URL("/login?error=google-not-configured", request.url),
+      new URL("/login?error=google-not-configured", siteOrigin(request.url)),
     );
   }
 

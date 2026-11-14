@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { siteOrigin } from "@/lib/auth/origin";
 import { authenticateAdmin } from "@/lib/auth/credentials";
 import { registerLogin } from "@/lib/auth/activity";
 import { createSession, SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
-  if (request.headers.get("origin") !== new URL(request.url).origin) return new Response(null, {status:403});
+  if (request.headers.get("origin") !== siteOrigin(request.url)) return new Response(null, {status:403});
   let body;
   try { body = await request.json(); } catch { return Response.json({error:"Yêu cầu không hợp lệ."},{status:400}); }
   const {username,password} = body ?? {};
