@@ -9,11 +9,13 @@ import CakeWrappingDialog from "./CakeWrappingDialog";
 import BoatRideDialog from "./BoatRideDialog";
 import FishingDialog from "./FishingDialog";
 import LotusPrepDialog from "./LotusPrepDialog";
+import MemorialDialog from "./MemorialDialog";
 import GameIntro, { StoryEnding } from "./GameIntro";
 import { EMPTY_STORY, STORY_SAVE_KEY, currentChapter, npcLines, parseStorySave, storyCheckpoints, type Story, type StorySave } from "./story";
-import { ACTIVITIES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, XEO_QUYT_RIVER, isHouse, isRiver, type Stop } from "./world";
+import { ACTIVITIES, INTERIOR, PHOTO_SPOTS, QUIZZES, STOPS, WORKERS, WORLD, XEO_QUYT_RIVER, isRiver, type Stop } from "./world";
 import { LOCAL_PHOTOS } from "@/lib/photos/catalog";
 import { loadMapArt } from "./mapArt";
+import { checkpointGuidance, isInteriorBlocked, isWorldBlocked, sceneSize } from "./navigation";
 import "./explore.css";
 import "./story.css";
 
@@ -45,8 +47,6 @@ export default function ExploreGame() {
   const nearBoatRef = useRef(false);
   const boatSideRef = useRef<"east"|"west">("east");
   const crossingRef = useRef<{from:"east"|"west";started:number}|null>(null);
-  const ceremonyRef = useRef<number|null>(null);
-  const ceremonyDoneRef = useRef(false);
   const seenRef = useRef<Set<string>>(new Set());
   const [inside,setInside] = useState<Stop|null>(null);
   const [nearSpot,setNearSpot] = useState<number|null>(null);
@@ -57,7 +57,6 @@ export default function ExploreGame() {
   const [nearBoat,setNearBoat] = useState(false);
   const [boatSide,setBoatSide] = useState<"east"|"west">("east");
   const [crossing,setCrossing] = useState(false);
-  const [ceremony,setCeremony] = useState(false);
   const [photoIndex,setPhotoIndex] = useState<number|null>(null);
   const [dialogue,setDialogue] = useState<{worker:number;line:number}|null>(null);
   const [activityProgress,setActivityProgress] = useState<Record<string,number>>({});
@@ -66,6 +65,7 @@ export default function ExploreGame() {
   const [boatOpen,setBoatOpen] = useState(false);
   const [fishingOpen,setFishingOpen] = useState(false);
   const [lotusOpen,setLotusOpen] = useState(false);
+  const [ritualOpen,setRitualOpen] = useState(false);
   const [story,setStory] = useState<Story>(EMPTY_STORY);
   const [ending,setEnding] = useState(false);
   const [saveFailed,setSaveFailed] = useState(false);
@@ -85,26 +85,45 @@ export default function ExploreGame() {
   const [mounted,setMounted] = useState(false);
   const [sceneReady,setSceneReady] = useState(false);
   const [position,setPosition] = useState({x:START.x,y:START.y});
+  const [guiding,setGuiding] = useState(false);
+  const guidanceRef = useRef<ReturnType<typeof checkpointGuidance> | null>(null);
   const audioRef = useRef<AudioContext|null>(null);
   const checkpointRef = useRef<string|null>(null);
-  const renderStateRef=useRef({inside:inside as Stop|null,photoIndex:photoIndex as number|null,dialogue:dialogue as {worker:number;line:number}|null,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ending});
-  useEffect(()=>{renderStateRef.current={inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ending};},[inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ending]);
+  const renderStateRef=useRef({inside:inside as Stop|null,photoIndex:photoIndex as number|null,dialogue:dialogue as {worker:number;line:number}|null,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ritualOpen,ending});
+  useEffect(()=>{renderStateRef.current={inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ritualOpen,ending};},[inside,photoIndex,dialogue,intro,journal,activityProgress,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ritualOpen,ending]);
 
   useEffect(()=>{
     const read=(key:string)=>{try{return JSON.parse(localStorage.getItem(key)||"null");}catch{return null;}};
     const saved=parseStorySave(read(STORY_SAVE_KEY));
     if(saved){setStory(saved.story);setVisited(saved.visited);visitedRef.current=new Set(saved.visited);setActivityProgress(saved.activities);setPickedMangoes(saved.mangoes);setQuizResults(saved.quizzes);}
+    if(saved?.location){
+      const location=saved.location;
+      const stop=STOPS.find(stop=>stop.id===location.scene)??null;
+      playerRef.current={x:location.x,y:location.y,dir:location.dir,moving:false};
+      renderStateRef.current.inside=stop;setInside(stop);setPosition({x:location.x,y:location.y});
+      boatSideRef.current=location.boatSide;setBoatSide(location.boatSide);
+      viewRef.current.x=Math.max(0,location.x-viewRef.current.w/2);viewRef.current.y=Math.max(0,location.y-viewRef.current.h/2);
+    }
     else{const legacy=read(SAVE_KEY);if(Array.isArray(legacy)){const clean=STOPS.filter(stop=>legacy.includes(stop.id)).map(stop=>stop.id);setVisited(clean);visitedRef.current=new Set(clean);}}
     setMounted(true);
   },[]);
   useEffect(()=>{
     if(!mounted)return;
     const snapshot:StorySave={version:1,story,visited,activities:activityProgress,mangoes:pickedMangoes,quizzes:quizResults};
-    const save=(notify=true)=>{try{localStorage.setItem(STORY_SAVE_KEY,JSON.stringify(snapshot));if(notify)setSaveFailed(false);}catch{if(notify)setSaveFailed(true);}};
+    const save=(notify=true)=>{
+      try{
+        // A crossing resumes at its departure dock, never stranded in the river.
+        const trip=crossingRef.current;
+        const point=trip?XEO_QUYT_RIVER[trip.from==="east"?"eastDock":"westDock"]:playerRef.current;
+        const location={scene:renderStateRef.current.inside?.id??null,x:point.x,y:point.y,dir:playerRef.current.dir,boatSide:boatSideRef.current};
+        localStorage.setItem(STORY_SAVE_KEY,JSON.stringify({...snapshot,location}));
+        if(notify)setSaveFailed(false);
+      }catch{if(notify)setSaveFailed(true);}
+    };
     const flush=()=>save();const timer=window.setTimeout(flush,300);
     window.addEventListener("pagehide",flush);document.addEventListener("visibilitychange",flush);
     return()=>{window.clearTimeout(timer);window.removeEventListener("pagehide",flush);document.removeEventListener("visibilitychange",flush);save(false);};
-  },[mounted,story,visited,activityProgress,pickedMangoes,quizResults]);
+  },[mounted,story,visited,activityProgress,pickedMangoes,quizResults,inside,intro]);
   useEffect(()=>{if(!toast)return;const timer=window.setTimeout(()=>setToast(""),3500);return()=>window.clearTimeout(timer);},[toast]);
   useEffect(()=>{
     if(!mounted||!story.started)return;
@@ -114,8 +133,8 @@ export default function ExploreGame() {
   },[mounted,story]);
 
   useEffect(()=>{
-    if(intro||dialogue||harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ending){keysRef.current.clear();touchRef.current=[0,0];destinationRef.current=null;}
-  },[intro,dialogue,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ending]);
+    if(intro||journal||dialogue||harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ritualOpen||ending){keysRef.current.clear();touchRef.current=[0,0];destinationRef.current=null;}
+  },[intro,journal,dialogue,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ritualOpen,ending]);
 
   const blip = useCallback(()=>{
     if(!sound) return;
@@ -126,8 +145,9 @@ export default function ExploreGame() {
     if(!stop) return;
     if(crossingRef.current)return;
     renderStateRef.current.inside=stop;
-    setInside(stop);setIntro(false);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setNear(null);nearRef.current=null;spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;
+    setInside(stop);setIntro(false);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setRitualOpen(false);setNear(null);nearRef.current=null;spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;
     playerRef.current={x:INTERIOR.entry.x,y:INTERIOR.entry.y,dir:0,moving:false};
+    setPosition({x:INTERIOR.entry.x,y:INTERIOR.entry.y});
     destinationRef.current=null;
     viewRef.current.x=Math.max(0,Math.min(INTERIOR.width-viewRef.current.w,INTERIOR.entry.x-viewRef.current.w/2));
     viewRef.current.y=Math.max(0,Math.min(INTERIOR.height-viewRef.current.h,INTERIOR.entry.y-viewRef.current.h/2));blip();
@@ -140,9 +160,9 @@ export default function ExploreGame() {
   const leaveStop = useCallback(()=>{
     if(!inside)return;
     renderStateRef.current.inside=null;
-    ceremonyRef.current=null;setCeremony(false);
     playerRef.current={x:inside.x,y:inside.y+104,dir:0,moving:false};
-    destinationRef.current=null;setInside(null);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setNearSpot(null);setNearWorker(null);setNearActivity(false);setNearQuiz(false);setNearExit(false);
+    setPosition({x:inside.x,y:inside.y+104});
+    destinationRef.current=null;setInside(null);setPhotoIndex(null);setDialogue(null);setQuizId(null);setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setRitualOpen(false);setNearSpot(null);setNearWorker(null);setNearActivity(false);setNearQuiz(false);setNearExit(false);
     spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;
     viewRef.current.x=Math.max(0,Math.min(WORLD.width-viewRef.current.w,playerRef.current.x-viewRef.current.w/2));
     viewRef.current.y=Math.max(0,Math.min(WORLD.height-viewRef.current.h,playerRef.current.y-viewRef.current.h/2));blip();
@@ -153,7 +173,7 @@ export default function ExploreGame() {
   const nextQuiz=()=>{if(!quizId||quizChoice===null)return;if(quizIndex<2){setQuizIndex(index=>index+1);setQuizChoice(null);}else{setQuizResults(prev=>({...prev,[quizId]:quizScore}));setQuizId(null);setToast(`Hoàn thành 3 câu hỏi · đúng ${quizScore}/3`);}};
 
   const interact=useCallback(()=>{
-    if(crossingRef.current||ceremonyRef.current!==null||quizId||harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ending)return;
+    if(crossingRef.current||quizId||harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ritualOpen||ending)return;
     if(photoIndex!==null){setPhotoIndex(null);return;}
     if(dialogue&&inside){
       const lines=npcLines(inside.id,dialogue.worker,story);
@@ -174,7 +194,7 @@ export default function ExploreGame() {
       if(activityRef.current){
         const activity=ACTIVITIES[inside.id];
         if(!activity)return;
-        if(activity.icon==="incense")return;
+        if(activity.icon==="incense"||activity.icon==="flowers"){destinationRef.current=null;setRitualOpen(true);blip();return;}
         if(activity.icon==="mango"){destinationRef.current=null;setHarvestOpen(true);blip();return;}
         if(activity.icon==="cake"){destinationRef.current=null;setCakeOpen(true);blip();return;}
         if(activity.icon==="boat"){destinationRef.current=null;setBoatOpen(true);blip();return;}
@@ -190,7 +210,7 @@ export default function ExploreGame() {
     else if(boatSideRef.current==="east"&&Math.hypot(playerRef.current.x-XEO_QUYT_RIVER.eastDock.x,playerRef.current.y-XEO_QUYT_RIVER.eastDock.y)<68){crossingRef.current={from:"east",started:performance.now()};destinationRef.current=null;setCrossing(true);blip();}
     else if(boatSideRef.current==="west"&&Math.hypot(playerRef.current.x-XEO_QUYT_RIVER.westDock.x,playerRef.current.y-XEO_QUYT_RIVER.westDock.y)<68){crossingRef.current={from:"west",started:performance.now()};destinationRef.current=null;setCrossing(true);blip();}
     else if(nearRef.current)enterStop(nearRef.current);
-  },[photoIndex,dialogue,intro,journal,inside,leaveStop,enterStop,blip,activityProgress,quizId,openQuiz,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ending,story]);
+  },[photoIndex,dialogue,intro,journal,inside,leaveStop,enterStop,blip,activityProgress,quizId,openQuiz,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ritualOpen,ending,story]);
 
   const pickMango=(index:number)=>{
     if(pickedMangoes.includes(index)||pickedMangoes.length>=3)return;
@@ -215,8 +235,13 @@ export default function ExploreGame() {
   useEffect(()=>{
     const down=(event:KeyboardEvent)=>{
       if(intro||ending)return;
-      if(harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ending){
-        if(event.code==="Escape"){event.preventDefault();setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);}
+      if(journal){
+        if(event.code==="Escape"){event.preventDefault();setJournal(false);}
+        else if(event.code in MOVE_KEYS||event.code==="KeyE"||event.code==="Space")event.preventDefault();
+        return;
+      }
+      if(harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ritualOpen||ending){
+        if(event.code==="Escape"){event.preventDefault();setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setRitualOpen(false);}
         else if(event.code in MOVE_KEYS||event.code==="KeyE"||(event.code==="Space"&&!(event.target instanceof HTMLElement&&event.target.closest("button"))))event.preventDefault();
         return;
       }
@@ -228,7 +253,7 @@ export default function ExploreGame() {
     const blur=()=>{keysRef.current.clear();touchRef.current=[0,0];};
     window.addEventListener("keydown",down);window.addEventListener("keyup",up);window.addEventListener("blur",blur);
     return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up);window.removeEventListener("blur",blur);};
-  },[interact,photoIndex,dialogue,journal,inside,leaveStop,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ending,intro]);
+  },[interact,photoIndex,dialogue,journal,inside,leaveStop,quizId,harvestOpen,cakeOpen,boatOpen,fishingOpen,lotusOpen,ritualOpen,ending,intro]);
 
   useEffect(()=>{
     const canvas=canvasRef.current;if(!canvas)return;
@@ -247,12 +272,12 @@ export default function ExploreGame() {
     resize();const observer=new ResizeObserver(resize);observer.observe(canvas);
     const frame=(time:number)=>{
       const state=renderStateRef.current;
-      const paused=document.hidden||state.intro||state.journal||state.photoIndex!==null||state.dialogue||state.quizId||state.harvestOpen||state.cakeOpen||state.boatOpen||state.fishingOpen||state.lotusOpen||state.ending;
+      const paused=document.hidden||state.intro||state.journal||state.photoIndex!==null||state.dialogue||state.quizId||state.harvestOpen||state.cakeOpen||state.boatOpen||state.fishingOpen||state.lotusOpen||state.ritualOpen||state.ending;
       if(paused&&renderedWidth===canvas.width&&renderedHeight===canvas.height){
         if(pausedAt===null)pausedAt=time;
         prev=time;raf=requestAnimationFrame(frame);return;
       }
-      if(pausedAt!==null){const elapsed=time-pausedAt;if(crossingRef.current)crossingRef.current.started+=elapsed;if(ceremonyRef.current!==null)ceremonyRef.current+=elapsed;pausedAt=null;}
+      if(pausedAt!==null){const elapsed=time-pausedAt;if(crossingRef.current)crossingRef.current.started+=elapsed;pausedAt=null;}
       const dt=Math.min(40,time-prev||16)/1000;prev=time;
       const scene=renderStateRef.current;
       const inside=scene.inside;
@@ -261,26 +286,39 @@ export default function ExploreGame() {
       if(dx||dy)destinationRef.current=null;
       const target=destinationRef.current;
       if(!dx&&!dy&&target){const dist=Math.hypot(target.x-p.x,target.y-p.y);if(dist<7)destinationRef.current=null;else{dx=(target.x-p.x)/dist;dy=(target.y-p.y)/dist;}}
-      const len=Math.hypot(dx,dy);p.moving=len>.05&&scene.photoIndex===null&&!scene.dialogue&&!scene.intro&&!scene.journal&&!scene.quizId&&!scene.harvestOpen&&!scene.cakeOpen&&!scene.boatOpen&&!scene.fishingOpen&&!scene.lotusOpen&&!scene.ending&&!crossingRef.current&&ceremonyRef.current===null;
+      const len=Math.hypot(dx,dy);p.moving=len>.05&&scene.photoIndex===null&&!scene.dialogue&&!scene.intro&&!scene.journal&&!scene.quizId&&!scene.harvestOpen&&!scene.cakeOpen&&!scene.boatOpen&&!scene.fishingOpen&&!scene.lotusOpen&&!scene.ritualOpen&&!scene.ending&&!crossingRef.current;
       const world=inside?INTERIOR:WORLD;
       if(p.moving){const speed=190*dt;const nx=Math.max(35,Math.min((inside?world.width-35:WORLD.width-160),p.x+dx/len*speed));const ny=Math.max(45,Math.min(world.height-36,p.y+dy/len*speed));
-        if(inside){p.x=nx;p.y=ny;}else{if(!isRiver(nx,p.y)&&!isHouse(nx,p.y))p.x=nx;if(!isRiver(p.x,ny)&&!isHouse(p.x,ny))p.y=ny;}
+        const blocked = (x:number,y:number) => inside ? isInteriorBlocked(inside,x,y) : isWorldBlocked(x,y);
+        if(!blocked(nx,p.y))p.x=nx;
+        if(!blocked(p.x,ny))p.y=ny;
         p.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?1:-1):0;}
       const crossingNow=crossingRef.current;
       if(crossingNow){const river=XEO_QUYT_RIVER;const progress=Math.min(1,(time-crossingNow.started)/1900);const eased=progress<.5?2*progress*progress:1-Math.pow(-2*progress+2,2)/2;
         const start=crossingNow.from==="east"?river.eastDock:river.westDock;const end=crossingNow.from==="east"?river.westDock:river.eastDock;
         p.x=start.x+(end.x-start.x)*eased;p.y=start.y-9*Math.sin(progress*Math.PI);p.moving=false;
         if(progress>=1){boatSideRef.current=crossingNow.from==="east"?"west":"east";setBoatSide(boatSideRef.current);crossingRef.current=null;setCrossing(false);setToast(crossingNow.from==="east"?"Đã cập bến Xẻo Quýt!":"Đã trở lại bờ bên này.");}}
-      if(inside?.id==="sinh-sac"&&ceremonyRef.current!==null&&time-ceremonyRef.current>=2100){ceremonyRef.current=null;ceremonyDoneRef.current=true;setCeremony(false);setActivityProgress(prev=>({...prev,"sinh-sac":1}));setToast(ACTIVITIES["sinh-sac"]!.done);}
       const view=viewRef.current;
       const scale=Math.max(1,canvas.width/world.width,canvas.height/world.height);
       view.w=canvas.width/scale;view.h=canvas.height/scale;
       const tx=Math.max(0,Math.min(Math.max(0,world.width-view.w),p.x-view.w/2));const ty=Math.max(0,Math.min(Math.max(0,world.height-view.h),p.y-view.h/2));
       view.x+=(tx-view.x)*Math.min(1,dt*6);view.y+=(ty-view.y)*Math.min(1,dt*6);
       ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(scale,0,0,scale,0,0);
-      if(inside)renderInterior(ctx,view,p,inside,time,seenRef.current,scene.activityProgress[inside.id]??0,ceremonyRef.current===null?null:Math.min(1,(time-ceremonyRef.current)/2100));else {
+      if(inside)renderInterior(ctx,view,p,inside,time,seenRef.current,scene.activityProgress[inside.id]??0,null);else {
         const trip=crossingRef.current;const river=XEO_QUYT_RIVER;const boatX=trip?river[trip.from==="east"?"eastBoatX":"westBoatX"]+(river[trip.from==="east"?"westBoatX":"eastBoatX"]-river[trip.from==="east"?"eastBoatX":"westBoatX"])*Math.min(1,(time-trip.started)/1900):river[boatSideRef.current==="east"?"eastBoatX":"westBoatX"];
         renderWorld(ctx,view,p,visitedRef.current,time,boatX,!!trip);
+      }
+      const guide=guidanceRef.current;
+      if(guide&&guide.scene===(inside?.id??null)){
+        ctx.save();ctx.translate(-view.x,-view.y);
+        ctx.strokeStyle="#de433b";ctx.fillStyle="#de433b";ctx.lineWidth=3;
+        ctx.beginPath();ctx.ellipse(guide.x,guide.y,18+Math.sin(time/250)*2,9,0,0,Math.PI*2);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(guide.x,guide.y-14);ctx.lineTo(guide.x-7,guide.y-26);ctx.lineTo(guide.x+7,guide.y-26);ctx.closePath();ctx.fill();
+        if(Math.hypot(guide.x-p.x,guide.y-p.y)>55){
+          ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(guide.y-p.y,guide.x-p.x));
+          ctx.beginPath();ctx.moveTo(47,0);ctx.lineTo(33,-7);ctx.lineTo(36,0);ctx.lineTo(33,7);ctx.closePath();ctx.fill();
+        }
+        ctx.restore();
       }
       if(time-lastUi>100){
         lastUi=time;
@@ -293,7 +331,6 @@ export default function ExploreGame() {
           if(activityRef.current!==byActivity){activityRef.current=byActivity;setNearActivity(byActivity);}
           const quiz=QUIZZES[inside.id];const byQuiz=!!quiz&&Math.hypot(quiz.x-p.x,quiz.y-p.y)<65;
           if(quizRef.current!==byQuiz){quizRef.current=byQuiz;setNearQuiz(byQuiz);}
-          if(inside.id==="sinh-sac"&&activity&&byActivity&&ceremonyRef.current===null&&!ceremonyDoneRef.current&&(scene.activityProgress[inside.id]??0)===0){ceremonyRef.current=time;destinationRef.current=null;p.x=activity.x;p.y=activity.y+54;p.dir=2;p.moving=false;setCeremony(true);setToast("Đang thắp nhang tưởng niệm…");}
           const byExit=Math.hypot(INTERIOR.exit.x-p.x,INTERIOR.exit.y-p.y)<64;
           if(exitRef.current!==byExit){exitRef.current=byExit;setNearExit(byExit);}
         } else {
@@ -317,7 +354,7 @@ export default function ExploreGame() {
   };
   const stopDirection=(event:React.PointerEvent<HTMLButtonElement>)=>{event.preventDefault();touchRef.current=[0,0];};
   const clickMap=(event:React.MouseEvent<HTMLCanvasElement>)=>{
-    if(photoIndex!==null||dialogue||intro||journal||crossing||ceremony||quizId||harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ending)return;
+    if(photoIndex!==null||dialogue||intro||journal||crossing||quizId||harvestOpen||cakeOpen||boatOpen||fishingOpen||lotusOpen||ritualOpen||ending)return;
     const bounds=event.currentTarget.getBoundingClientRect();const view=viewRef.current;
     const x=view.x+(event.clientX-bounds.left)/bounds.width*view.w;
     const y=view.y+(event.clientY-bounds.top)/bounds.height*view.h;
@@ -328,7 +365,7 @@ export default function ExploreGame() {
       const quiz=QUIZZES[inside.id];
       if(quiz&&Math.hypot(quiz.x-x,quiz.y-y)<43&&Math.hypot(playerRef.current.x-quiz.x,playerRef.current.y-quiz.y)<68){openQuiz(inside.id);return;}
       if(worker>=0&&Math.hypot(playerRef.current.x-WORKERS[inside.id][worker].x,playerRef.current.y-WORKERS[inside.id][worker].y)<65)setDialogue({worker,line:0});
-      else if(activity&&activity.icon!=="incense"&&Math.hypot(activity.x-x,activity.y-y)<43&&Math.hypot(playerRef.current.x-activity.x,playerRef.current.y-activity.y)<72)interact();
+      else if(activity&&Math.hypot(activity.x-x,activity.y-y)<43&&Math.hypot(playerRef.current.x-activity.x,playerRef.current.y-activity.y)<72)interact();
       else if(spot>=0&&Math.hypot(playerRef.current.x-PHOTO_SPOTS[inside.id][spot].x,playerRef.current.y-PHOTO_SPOTS[inside.id][spot].y)<70){seenRef.current.add(`${inside.id}:${spot}`);setPhotoIndex(spot);}
       else destinationRef.current={x:Math.max(35,Math.min(INTERIOR.width-35,x)),y:Math.max(45,Math.min(INTERIOR.height-36,y))};
     } else {
@@ -340,16 +377,17 @@ export default function ExploreGame() {
   };
   const reset=()=>{
     checkpointRef.current=null;
-    visitedRef.current=new Set();seenRef.current=new Set();boatSideRef.current="east";crossingRef.current=null;ceremonyRef.current=null;ceremonyDoneRef.current=false;
+    setGuiding(false);
+    visitedRef.current=new Set();seenRef.current=new Set();boatSideRef.current="east";crossingRef.current=null;
     nearRef.current=null;spotRef.current=null;workerRef.current=null;activityRef.current=false;quizRef.current=false;exitRef.current=false;nearBoatRef.current=false;
     keysRef.current.clear();touchRef.current=[0,0];destinationRef.current=null;playerRef.current={...START};renderStateRef.current.inside=null;
     setVisited([]);setActivityProgress({});setPickedMangoes([]);setQuizResults({});setQuizId(null);setToast("");setEnding(false);
-    setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setJournal(false);setInside(null);setPhotoIndex(null);setDialogue(null);
+    setHarvestOpen(false);setCakeOpen(false);setBoatOpen(false);setFishingOpen(false);setLotusOpen(false);setRitualOpen(false);setJournal(false);setInside(null);setPhotoIndex(null);setDialogue(null);
     setNear(null);setNearSpot(null);setNearWorker(null);setNearActivity(false);setNearQuiz(false);setNearExit(false);setNearBoat(false);
-    setBoatSide("east");setCrossing(false);setCeremony(false);setStory({...EMPTY_STORY,started:true});setIntro(false);
+    setBoatSide("east");setCrossing(false);setStory({...EMPTY_STORY,started:true});setIntro(false);
     try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(STORY_SAVE_KEY);}catch{}
   };
-  const resume=()=>{setIntro(false);setStory(prev=>({...prev,started:true}));if(!inside){const stop=STOPS.find(s=>s.id===currentChapter(story).stop);if(stop)enterStop(stop);}};
+  const resume=()=>{setIntro(false);setStory(prev=>({...prev,started:true}));};
   const chapter=currentChapter(story);
   const checkpoints=storyCheckpoints(story,activityProgress);
   const activeCheckpoint=checkpoints.find(checkpoint=>checkpoint.active);
@@ -357,33 +395,35 @@ export default function ExploreGame() {
   const goToCheckpoint=()=>{
     const stop=STOPS.find(s=>s.id===chapter.stop);if(!stop)return;
     setJournal(false);
-    if(inside?.id!==stop.id)enterStop(stop);
-    const target=chapter.id==="meet"||chapter.id==="homecoming"?WORKERS[stop.id][0]:ACTIVITIES[stop.id];
-    if(target)destinationRef.current={x:target.x,y:target.y+45};
+    destinationRef.current=null;
+    setGuiding(true);
   };
+  const targetStop=guiding?STOPS.find(stop=>stop.id===chapter.stop):undefined;
+  const guidance=targetStop?checkpointGuidance(targetStop,chapter.id,inside,position):null;
+  const mapSize=sceneSize(inside);
+  const bearing=guidance?Math.atan2(guidance.y-position.y,guidance.x-position.x)*180/Math.PI:0;
+  useEffect(()=>{guidanceRef.current=guidance;},[guidance]);
   const dialogueLines=inside&&dialogue?npcLines(inside.id,dialogue.worker,story):[];
   const photos=inside?LOCAL_PHOTOS.filter(p=>p.group===inside.photoGroup):[];
   const selectedSpot=inside&&photoIndex!==null?PHOTO_SPOTS[inside.id][photoIndex]:null;
   const selectedPhoto=selectedSpot?photos[selectedSpot.photoIndex]:null;
   const activity=inside?ACTIVITIES[inside.id]:undefined;
 
-  return <main className={"ex-page"} data-intro={intro}>
+  return <main className={"ex-page"} data-intro={intro} data-scene={inside?.id??"world"} data-player-x={Math.round(position.x)} data-player-y={Math.round(position.y)}>
     <header className={"ex-header"}><Link href="/" className={"ex-back"}><ArrowLeft size={16}/> Về trang chủ</Link><button className="ex-storyMenu" onClick={()=>setIntro(true)}>☰ Menu</button><span className={"ex-brand"}>VỊ XOÀI DẪN LỐI <span>✦</span> PIXEL ADVENTURE</span><button className={"ex-sound"} onClick={()=>setSound(v=>!v)} aria-label={sound?"Tắt âm thanh":"Bật âm thanh"}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button></header>
     <section className={"ex-hero"}><div><div className={"ex-eyebrow"}><span/> CHƯƠNG 01 · CAO LÃNH, ĐỒNG THÁP</div><h1>Một chuyến đi <em>rất nhỏ,</em><br/>ngàn điều để khám phá</h1><p>Đi theo những con đường màu mật ong, ghé từng trạm dừng và sưu tầm dấu mộc Cao Lãnh.</p></div><div className={"ex-progress"}><span>HỘ CHIẾU HÀNH TRÌNH</span><strong>{String(visited.length).padStart(2,"0")}<small> / {String(STOPS.length).padStart(2,"0")}</small></strong><div className={"ex-progressTrack"}><i style={{width:`${visited.length/STOPS.length*100}%`}}/></div><button onClick={()=>setJournal(true)}>Mở sổ hành trình <ArrowRight size={14}/></button></div></section>
     <section className={"ex-gameShell"} aria-label="Trò chơi phiêu lưu Cao Lãnh">
       <div className={"ex-gameTop"}><span><i/> {inside?`ĐANG Ở TRONG · ${inside.short.toUpperCase()}`:"CAO LÃNH · THẾ GIỚI PIXEL"}</span><span className={"ex-gameTopRight"}><Compass size={14}/> {inside?"KHÁM PHÁ ẢNH THẬT":"TỰ DO KHÁM PHÁ"}</span></div>
       {story.started&&!intro&&<div className="ex-checkpointBar" aria-label="Checkpoint nhiệm vụ">
         <div><span>CHECKPOINT {activeCheckpoint?.number??checkpoints.length} / {checkpoints.length} · {completedCheckpoints} ĐÃ XONG</span><strong>{chapter.title}{activeCheckpoint&&` · ${activeCheckpoint.progress}/${activeCheckpoint.goal}`}</strong></div>
-        <button onClick={()=>setJournal(true)}>Nhiệm vụ <BookOpen size={14}/></button>
+        <button aria-label="Nhiệm vụ" onClick={()=>setJournal(true)}><BookOpen size={14}/></button>
       </div>}
       <div className={"ex-stage"}><canvas ref={canvasRef} onClick={clickMap} aria-label="Bản đồ trò chơi; dùng phím mũi tên hoặc W A S D để di chuyển, E để tương tác"/>
         {inside?<>
           <div className={"ex-insideGuide"}><span className={"ex-insideKicker"}><Camera size={13}/> KHU KHÁM PHÁ</span><strong>{inside.name}</strong><p>{inside.prompt}</p>{story.started&&inside.id===chapter.stop&&<p className="ex-storyLocal">{chapter.hint}</p>}<div>{PHOTO_SPOTS[inside.id].map((spot,i)=><button key={spot.label} onClick={()=>{destinationRef.current={x:spot.x,y:spot.y};setPhotoIndex(null);setDialogue(null);}}><span>{seenRef.current.has(`${inside.id}:${i}`)?"✓":"○"}</span>{spot.label}<ArrowRight size={11}/></button>)}</div>{activity&&<button className={"ex-activityJump"} onClick={()=>{destinationRef.current={x:activity.x,y:activity.y+50};setPhotoIndex(null);setDialogue(null);}}>✦ {activity.name} <b>{activityProgress[inside.id]??0}/{activity.goal??3}</b></button>}{QUIZZES[inside.id]&&<button className={"ex-activityJump"} onClick={()=>{const quiz=QUIZZES[inside.id];destinationRef.current={x:quiz.x,y:quiz.y};setPhotoIndex(null);setDialogue(null);}}>▣ Trả lời 3 câu hỏi <b>{quizResults[inside.id]===undefined?"MỚI":`${quizResults[inside.id]}/3`}</b></button>}<p className={"ex-npcHint"}>Gặp người dân có dấu … để nghe kể chuyện.</p></div>
           <button className={"ex-exitTop"} onClick={leaveStop}><DoorOpen size={15}/> Ra bản đồ</button>
           {photoIndex===null&&!journal&&!dialogue&&<>
-            {nearActivity&&activity?.icon==="incense"&&ceremony?<div className={"ex-interact"}><span>✦</span> Đang thắp và cắm nhang…</div>
-            :nearQuiz?<button className={"ex-interact"} onClick={()=>openQuiz(inside.id)}><BookOpen size={15}/> Nhấn <kbd>E</kbd> trả lời 3 câu hỏi <strong>{quizResults[inside.id]===undefined?"BẮT ĐẦU":`${quizResults[inside.id]}/3 · LÀM LẠI`}</strong></button>
-            :nearActivity&&activity?.icon==="incense"?<div className={"ex-interact"}><span>✦</span> {activityProgress[inside.id]?"Đã cắm nhang tưởng niệm":"Bước vào vùng đỏ để thắp nhang"}</div>
+            {nearQuiz?<button className={"ex-interact"} onClick={()=>openQuiz(inside.id)}><BookOpen size={15}/> Nhấn <kbd>E</kbd> trả lời 3 câu hỏi <strong>{quizResults[inside.id]===undefined?"BẮT ĐẦU":`${quizResults[inside.id]}/3 · LÀM LẠI`}</strong></button>
             :nearActivity&&activity?<button className={"ex-interact"} onClick={interact}><span>✦</span> Nhấn <kbd>E</kbd> {activity.icon==="mango"?"mở cây xoài để hái":activity.action} <strong>{activityProgress[inside.id]??0}/{activity.goal??3}</strong></button>
             :nearWorker!==null?<button className={"ex-interact"} onClick={interact}><span>…</span> Nhấn <kbd>E</kbd> trò chuyện <strong>{WORKERS[inside.id][nearWorker].name}</strong></button>
             :nearSpot!==null?<button className={"ex-interact"} onClick={interact}><Camera size={15}/> Nhấn <kbd>E</kbd> xem ảnh thật <strong>{PHOTO_SPOTS[inside.id][nearSpot].label}</strong></button>
@@ -391,13 +431,19 @@ export default function ExploreGame() {
           </>}
         </>:<>
           {story.started&&!intro&&!ending&&!journal&&<div className="ex-storyObjective"><span>{chapter.chapter}</span><strong>{chapter.title}</strong><p>{chapter.hint}</p><button onClick={goToCheckpoint}>Đến checkpoint <ArrowRight size={13}/></button></div>}
-          <div className={"ex-miniMap"} aria-label="Bản đồ thu nhỏ"><span>BẢN ĐỒ</span><div className={"ex-miniInner"}>{STOPS.map(s=><i key={s.id} className={(visited.includes(s.id)?"ex-done ":"")+(s.id===chapter.stop?"ex-target":"")} style={{left:`${s.x/WORLD.width*100}%`,top:`${s.y/WORLD.height*100}%`}}/>)}<b style={{left:`${position.x/WORLD.width*100}%`,top:`${position.y/WORLD.height*100}%`}}/></div></div>
           {nearBoat&&!intro&&!journal&&!crossing?<button className={"ex-interact"} onClick={interact}><span>🚣</span> Nhấn <kbd>E</kbd> lên xuồng qua sông <strong>{boatSide==="east"?"Đến Xẻo Quýt":"Về bờ"}</strong></button>
           :near&&!intro&&!journal&&!crossing?<button className={"ex-interact"} onClick={()=>enterStop(near)}><DoorOpen size={15}/> Nhấn <kbd>E</kbd> bước vào <strong>{near.short}</strong></button>:null}
           {crossing&&<div className={"ex-interact"}>🚣 Đang chèo xuồng qua sông…</div>}
         </>}
+        <div className="ex-miniMap" aria-label="Bản đồ thu nhỏ"><span>{inside?"KHU THAM QUAN":"BẢN ĐỒ"}</span><div className="ex-miniInner">
+          {!inside&&STOPS.map(stop=><i key={stop.id} className={(visited.includes(stop.id)?"ex-done ":"")+(targetStop?.id===stop.id?"ex-target":"")} style={{left:`${stop.x/WORLD.width*100}%`,top:`${stop.y/WORLD.height*100}%`}}/>)}
+          {guidance&&<i className="ex-waypoint" aria-label={`Điểm dẫn đường: ${guidance.label}`} style={{left:`${guidance.x/mapSize.width*100}%`,top:`${guidance.y/mapSize.height*100}%`}}/>}
+          <b style={{left:`${position.x/mapSize.width*100}%`,top:`${position.y/mapSize.height*100}%`}}/>
+          {guidance&&<ArrowRight className="ex-mapArrow" size={15} aria-hidden="true" style={{left:`${position.x/mapSize.width*100}%`,top:`${position.y/mapSize.height*100}%`,transform:`translate(-50%,-50%) rotate(${bearing}deg)`}}/>}
+        </div></div>
+        {guidance&&!intro&&!journal&&<div className="ex-routeGuide" role="status"><ArrowRight size={22} style={{transform:`rotate(${bearing}deg)`}}/><div><strong>{guidance.label}</strong><span>{Math.hypot(guidance.x-position.x,guidance.y-position.y)<60?"Đã đến · Nhấn E để tương tác":`${Math.ceil(Math.hypot(guidance.x-position.x,guidance.y-position.y)/20)} bước · Đi theo mũi tên đỏ`}</span></div><button aria-label="Tắt chỉ dẫn checkpoint" onClick={()=>setGuiding(false)}><X size={14}/></button></div>}
         <div className={"ex-dpad"} aria-label="Điều khiển nhân vật"><button className={"ex-up"} aria-label="Đi lên" onPointerDown={setDirection(0,-1)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>▲</button><button className={"ex-left"} aria-label="Đi trái" onPointerDown={setDirection(-1,0)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>◀</button><button className={"ex-down"} aria-label="Đi xuống" onPointerDown={setDirection(0,1)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>▼</button><button className={"ex-right"} aria-label="Đi phải" onPointerDown={setDirection(1,0)} onPointerUp={stopDirection} onPointerCancel={stopDirection}>▶</button></div>
-        <button className={"ex-actionButton"} onClick={interact} disabled={inside?nearSpot===null&&nearWorker===null&&!nearQuiz&&(!nearActivity||!activity||activity.icon==="incense")&&!nearExit:!near&&!nearBoat} aria-label="Tương tác với điểm đến">E</button>
+        <button className={"ex-actionButton"} onClick={interact} disabled={inside?nearSpot===null&&nearWorker===null&&!nearQuiz&&(!nearActivity||!activity)&&!nearExit:!near&&!nearBoat} aria-label="Tương tác với điểm đến">E</button>
         {toast&&<div className={"ex-activityToast"} role="status">✦ {toast}</div>}
         {dialogue&&inside&&<div className={"ex-dialogue"} role="dialog" aria-label={`Trò chuyện với ${WORKERS[inside.id][dialogue.worker].name}`}><div className={"ex-dialoguePortrait"}>☺</div><div><span>{WORKERS[inside.id][dialogue.worker].name} · {WORKERS[inside.id][dialogue.worker].role}</span><p>{dialogueLines[dialogue.line]}</p><button onClick={interact}>{dialogue.line<dialogueLines.length-1?"Nghe tiếp":inside.id==="cho-que"&&dialogue.worker===0&&chapter.id==="homecoming"?"Hẹn gặp lại, Cao Lãnh":"Tạm biệt"} <ArrowRight size={14}/></button></div></div>}
         {harvestOpen&&<MangoHarvestDialog picked={pickedMangoes} onPick={pickMango} onReplay={()=>{setPickedMangoes([]);setActivityProgress(prev=>({...prev,"vuon-xoai":0}));}} onClose={()=>setHarvestOpen(false)}/>}
@@ -405,6 +451,7 @@ export default function ExploreGame() {
         {boatOpen&&<BoatRideDialog completed={(activityProgress["xeo-quyt"]??0)>=1} onComplete={finishBoat} onClose={()=>setBoatOpen(false)}/>}
         {fishingOpen&&<FishingDialog caught={activityProgress["gao-giong"]??0} onCatch={catchFish} onReplay={()=>setActivityProgress(prev=>({...prev,"gao-giong":0}))} onClose={()=>setFishingOpen(false)}/>}
         {lotusOpen&&<LotusPrepDialog prepared={activityProgress["my-phuoc-thanh"]??0} onPrepare={prepareLotus} onReplay={()=>setActivityProgress(prev=>({...prev,"my-phuoc-thanh":0}))} onClose={()=>setLotusOpen(false)}/>}
+        {ritualOpen&&inside&&activity&&(activity.icon==="incense"||activity.icon==="flowers")&&<MemorialDialog kind={activity.icon} title={activity.name} progress={activityProgress[inside.id]??0} onAdvance={()=>{setActivityProgress(prev=>({...prev,[inside.id]:Math.min(activity.goal??3,(prev[inside.id]??0)+1)}));blip();}} onReplay={()=>setActivityProgress(prev=>({...prev,[inside.id]:0}))} onClose={()=>setRitualOpen(false)}/>}
         {quizId&&<div className="ex-quizBackdrop"><section className="ex-quizCard" role="dialog" aria-modal="true" aria-label={QUIZZES[quizId].title}><button className="ex-quizClose" onClick={()=>setQuizId(null)} aria-label="Đóng câu hỏi"><X size={18}/></button><span className="ex-quizKicker">THỬ THÁCH LỊCH SỬ · CÂU {quizIndex+1}/3</span><h2>{QUIZZES[quizId].title}</h2><div className="ex-quizProgress"><i style={{width:`${(quizIndex+1)/3*100}%`}}/></div><p className="ex-quizQuestion">{QUIZZES[quizId].questions[quizIndex].question}</p><div className="ex-quizOptions">{QUIZZES[quizId].questions[quizIndex].options.map((option,index)=><button key={option} className={quizChoice!==null?(index===QUIZZES[quizId].questions[quizIndex].answer?"ex-correct":index===quizChoice?"ex-wrong":""):""} disabled={quizChoice!==null} onClick={()=>chooseQuiz(index)}><b>{"ABCD"[index]}</b>{option}</button>)}</div>{quizChoice!==null&&<div className="ex-quizFeedback" role="status"><strong>{quizChoice===QUIZZES[quizId].questions[quizIndex].answer?"Chính xác!":"Chưa đúng."}</strong> {QUIZZES[quizId].questions[quizIndex].detail}<button onClick={nextQuiz}>{quizIndex===2?`Xem kết quả · ${quizScore}/3`:"Câu tiếp theo"}<ArrowRight size={15}/></button></div>}<a className="ex-quizSource" href={QUIZZES[quizId].source} target="_blank" rel="noopener noreferrer">Nguồn: Cổng thông tin Đồng Tháp ↗</a></section></div>}
         {selectedPhoto&&selectedSpot&&inside&&<div className={"ex-photoBackdrop"} onMouseDown={event=>{if(event.target===event.currentTarget)setPhotoIndex(null);}}><div className={"ex-photoCard"} role="dialog" aria-modal="true" aria-label={`Ảnh thật: ${selectedSpot.label}`}><button className={"ex-photoClose"} onClick={()=>setPhotoIndex(null)} aria-label="Đóng ảnh"><X size={18}/></button><div className={"ex-photoFrame"}><img src={selectedPhoto.src} alt={selectedPhoto.alt}/><span>ẢNH CHỤP TẠI ĐỊA ĐIỂM</span></div><div className={"ex-photoContent"}><span>GÓC KHÁM PHÁ {String((photoIndex??0)+1).padStart(2,"0")} / 03</span><h2>{selectedSpot.label}</h2><p>{selectedSpot.note}</p><small>{selectedPhoto.alt}</small><div className={"ex-photoThumbs"}>{PHOTO_SPOTS[inside.id].map((spot,i)=>{const photo=photos[spot.photoIndex];return <button key={spot.label} className={i===photoIndex?"ex-selected":""} onClick={()=>{seenRef.current.add(`${inside.id}:${i}`);setPhotoIndex(i);}} aria-label={`Xem ảnh ${spot.label}`}><img src={photo.thumbnail} alt=""/></button>;})}</div><button className={"ex-photoContinue"} onClick={()=>setPhotoIndex(null)}>Tiếp tục đi dạo <ArrowRight size={15}/></button></div></div></div>}
         {intro&&<GameIntro ready={mounted&&sceneReady} hasSave={story.started||visited.length>0} chapter={chapter.chapter} onStart={reset} onResume={resume} desktop={desktopWeb}/>}

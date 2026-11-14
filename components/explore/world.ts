@@ -138,14 +138,14 @@ export const WORKERS: Record<string, Worker[]> = {
 
 export type Activity = { x:number;y:number; name:string; action:string; done:string; icon:"incense"|"flowers"|"fish"|"boat"|"cake"|"mango"|"lotus"; goal?:number };
 export const ACTIVITIES: Partial<Record<string, Activity>> = {
-  "sinh-sac": {x:480,y:355,name:"Thắp nhang cho cụ",action:"Thắp một nén nhang",done:"Bạn đã thắp nhang tưởng niệm cụ Nguyễn Sinh Sắc.",icon:"incense",goal:1},
+  "sinh-sac": {x:480,y:320,name:"Thắp nhang cho cụ",action:"Thắp một nén nhang",done:"Bạn đã thắp nhang tưởng niệm cụ Nguyễn Sinh Sắc.",icon:"incense",goal:1},
   "do-cong-tuong": {x:480,y:420,name:"Xếp hoa sân miếu",action:"Xếp thêm một chậu hoa",done:"Sân miếu đã thêm sắc hoa!",icon:"flowers"},
   "gao-giong": {x:480,y:420,name:"Câu cá ao quê",action:"Thả cần câu cá",done:"Bạn đã hoàn thành ba lượt câu cá!",icon:"fish"},
   "xeo-quyt": {x:480,y:420,name:"Chèo xuồng ba lá",action:"Lái xuồng qua lạch",done:"Bạn đã chèo xuồng tới bến!",icon:"boat",goal:1},
   "cho-que": {x:480,y:420,name:"Gói bánh quê",action:"Mở bàn gói bánh",done:"Mẻ bánh đã sẵn sàng!",icon:"cake"},
   "vuon-xoai": {x:480,y:420,name:"Hái xoài chín",action:"Mở cây xoài để hái",done:"Giỏ xoài đã đầy rồi!",icon:"mango"},
   "my-phuoc-thanh": {x:480,y:420,name:"Tách tâm sen",action:"Chuẩn bị hạt sen",done:"Bạn đã tách xong ba hạt sen!",icon:"lotus"},
-  "tap-ket": {x:480,y:355,name:"Dâng hoa tưởng niệm",action:"Đặt thêm một nhành hoa",done:"Bó hoa tưởng niệm đã hoàn thành.",icon:"flowers"},
+  "tap-ket": {x:480,y:320,name:"Dâng hoa tưởng niệm",action:"Đặt thêm một nhành hoa",done:"Bó hoa tưởng niệm đã hoàn thành.",icon:"flowers"},
 };
 
 export type QuizQuestion = { question:string; options:[string,string,string,string]; answer:number; detail:string };

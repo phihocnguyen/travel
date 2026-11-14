@@ -15,7 +15,7 @@ import {
 import { EVENT } from "@/components/campaign/campaignData";
 import HeaderAccount from "@/components/auth/HeaderAccount";
 import HeroVideo from "./HeroVideo";
-import { setupLandingReveals } from "./landingMotion";
+import { setupLandingButtons, setupLandingReveals } from "./landingMotion";
 import "./landing-motion.css";
 
 const destinations = [
@@ -114,6 +114,7 @@ export default function LandingPage() {
   const root = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("#hero");
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
     let previous = false;
@@ -157,8 +158,8 @@ export default function LandingPage() {
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const cleanupReveals = setupLandingReveals(el, motion);
+    const cleanupReveals = setupLandingReveals(el, reducedMotion);
+    const cleanupButtons = setupLandingButtons(el, reducedMotion);
     let scrollFrame = 0;
     const cancelScroll = () => {
       if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
@@ -177,7 +178,7 @@ export default function LandingPage() {
       const from = window.scrollY;
       const destination = Math.max(0, Math.min(top, document.documentElement.scrollHeight - window.innerHeight));
       const distance = destination - from;
-      if(motion.matches){window.scrollTo({top:destination,behavior:"instant"});return;}
+      if(reducedMotion){window.scrollTo({top:destination,behavior:"instant"});return;}
       const duration = Math.min(900, Math.max(450, Math.abs(distance) * 0.2));
       const started = performance.now();
       // Animate only during a menu click; OS/CSS smooth-scroll settings cannot turn it into a jump.
@@ -196,17 +197,19 @@ export default function LandingPage() {
     return () => {
       cancelScroll();
       cleanupReveals();
+      cleanupButtons();
       el.removeEventListener("click", scrollToSection);
       window.removeEventListener("wheel", cancelScroll);
       window.removeEventListener("touchstart", cancelScroll);
       window.removeEventListener("keydown", cancelScroll);
     };
-  }, []);
+  }, [reducedMotion]);
 
 
   return (
     <main
       ref={root}
+      data-landing-motion={reducedMotion ? "reduced" : "full"}
       className="landing-page overflow-x-clip bg-[#f8f9f5] text-[#14342a]"
     >
       <style jsx global>{`
@@ -241,15 +244,13 @@ export default function LandingPage() {
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
-        @media (prefers-reduced-motion: reduce) {
-          *,
-          *::before,
-          *::after {
+          .landing-page[data-landing-motion="reduced"] *,
+          .landing-page[data-landing-motion="reduced"] *::before,
+          .landing-page[data-landing-motion="reduced"] *::after {
             scroll-behavior: auto !important;
             animation-duration: 0.01ms !important;
             transition-duration: 0.01ms !important;
           }
-        }
 
         .landing-nav,
         .landing-nav .nav-color,
@@ -308,6 +309,15 @@ export default function LandingPage() {
           </nav>
 
           <div data-nav-item className="flex items-center gap-3 [&_a]:transition-colors [&_a]:duration-[650ms]">
+            <button
+              type="button"
+              aria-label="Bật hiệu ứng chuyển động"
+              aria-pressed={!reducedMotion}
+              onClick={() => setReducedMotion(value => !value)}
+              className="rounded-full border border-current/30 px-3 py-2 text-[10px] font-semibold"
+            >
+              Hiệu ứng: {reducedMotion ? "Tắt" : "Bật"}
+            </button>
             <HeaderAccount dark={!scrolled} />
             <a
               href="/map"

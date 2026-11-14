@@ -4,9 +4,9 @@ import { ArrowLeft, ArrowRight, Heart, RotateCcw, X } from "lucide-react";
 import "./minigames.css";
 
 const OBSTACLES = [
-  { at: 14, lane: 1, kind: "branch" }, { at: 26, lane: 0, kind: "weed" }, { at: 35, lane: 2, kind: "branch" },
-  { at: 45, lane: 1, kind: "weed" }, { at: 55, lane: 0, kind: "branch" }, { at: 64, lane: 2, kind: "weed" },
-  { at: 74, lane: 1, kind: "branch" }, { at: 83, lane: 0, kind: "weed" }, { at: 92, lane: 2, kind: "branch" },
+  { at: 18, lane: 1, kind: "branch" }, { at: 36, lane: 0, kind: "weed" },
+  { at: 54, lane: 2, kind: "branch" }, { at: 72, lane: 1, kind: "weed" },
+  { at: 90, lane: 0, kind: "branch" },
 ];
 type Props = { completed: boolean; onComplete: () => void; onClose: () => void };
 export default function BoatRideDialog({ completed, onComplete, onClose }: Props) {
@@ -35,7 +35,7 @@ export default function BoatRideDialog({ completed, onComplete, onClose }: Props
       if (hitUntil && time > hitUntil) { setHit(false); hitUntil = 0; }
       OBSTACLES.forEach((item, index) => {
         const node = obstacles.current[index];
-        if (node) { const top = 82 - (item.at - distance) * 1.65; node.style.top = `${top}%`; node.style.visibility = top > -8 && top < 108 ? "visible" : "hidden"; }
+        if (node) { const top = 82 - (item.at - distance) * 3.2; node.style.top = `${top}%`; node.style.visibility = top > -8 && top < 108 ? "visible" : "hidden"; }
         if (!node || !hull || passed.has(index)) return;
         const obstacle = node.getBoundingClientRect();
         // Test the visible hull throughout contact, including while changing lanes.

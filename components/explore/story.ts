@@ -1,4 +1,4 @@
-import { ACTIVITIES, STOPS, WORKERS } from "./world";
+import { ACTIVITIES, INTERIOR, STOPS, WORKERS, WORLD } from "./world";
 
 export const STORY_SAVE_KEY = "cao-lanh-story-v1";
 export type Story = { started: boolean; metFarmer: boolean; harvested: boolean; preparedLotus: boolean; wrapped: boolean; boated: boolean; fished: boolean; finished: boolean };
@@ -56,7 +56,7 @@ export function npcLines(stop: string, worker: number, story: Story): string[] {
   return WORKERS[stop][worker].lines;
 }
 
-export type StorySave = { version: 1; story: Story; visited: string[]; activities: Record<string, number>; mangoes: number[]; quizzes: Record<string, number> };
+export type StorySave = { version: 1; story: Story; visited: string[]; activities: Record<string, number>; mangoes: number[]; quizzes: Record<string, number>; location?: {scene:string|null;x:number;y:number;dir:number;boatSide:"east"|"west"} };
 export function parseStorySave(value: unknown): StorySave | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<StorySave>;
@@ -80,5 +80,9 @@ export function parseStorySave(value: unknown): StorySave | null {
   story.preparedLotus ||= activities["my-phuoc-thanh"] === 3 || legacyEnding;
   story.fished ||= activities["gao-giong"] === 3 || legacyEnding;
   if (CHECKPOINTS.slice(0, -1).some(checkpoint => !story[checkpoint.key])) story.finished = false;
-  return { version: 1, story, visited: STOPS.filter(s => Array.isArray(raw.visited) && raw.visited.includes(s.id)).map(s => s.id), activities, mangoes, quizzes };
+  const location=raw.location;
+  const validScene=location&&(location.scene===null||STOPS.some(stop=>stop.id===location.scene));
+  const bounds=location?.scene?INTERIOR:WORLD;
+  const validLocation=validScene&&Number.isFinite(location.x)&&Number.isFinite(location.y)&&location.x>=35&&location.x<=bounds.width-35&&location.y>=45&&location.y<=bounds.height-36&&[-1,0,1,2].includes(location.dir)&&(location.boatSide==="east"||location.boatSide==="west");
+  return { version: 1, story, visited: STOPS.filter(s => Array.isArray(raw.visited) && raw.visited.includes(s.id)).map(s => s.id), activities, mangoes, quizzes, ...(validLocation?{location}: {}) };
 }

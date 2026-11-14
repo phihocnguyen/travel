@@ -1,6 +1,6 @@
 # Deploy lên VPS Ubuntu bằng Docker, PostgreSQL và Cloudflare
 
-Hướng dẫn dành cho dự án này: Next.js 16, PostgreSQL, đăng nhập Google và tài khoản admin. VPS: **103.252.137.103**. Ví dụ tên miền: **travel.example.com** — thay bằng tên miền thật trong mọi bước.
+Hướng dẫn dành cho dự án này: Next.js 16, PostgreSQL, đăng nhập Google và tài khoản admin. VPS: **103.252.137.103**. Tên miền: **vixoaidanloi.com**.
 
 ```text
 Trình duyệt → Cloudflare (HTTPS) → VPS:443 / Nginx (HTTPS)
@@ -31,8 +31,6 @@ chmod 600 .env
 sudo docker compose -f docker-compose.ip.yml config --quiet
 sudo docker compose -f docker-compose.ip.yml build app
 sudo docker compose -f docker-compose.ip.yml run --rm migrate
-# Chỉ chạy seed cho DB mới; bỏ qua nếu đang dùng dữ liệu production cũ.
-sudo docker compose -f docker-compose.ip.yml run --rm --no-deps app npm run db:seed
 sudo docker compose -f docker-compose.ip.yml up -d
 sudo docker compose -f docker-compose.ip.yml ps -a
 curl -I http://103.252.137.103
@@ -129,10 +127,10 @@ POSTGRES_DB=travel
 POSTGRES_USER=travel
 POSTGRES_PASSWORD=
 AUTH_SECRET=
-NEXT_PUBLIC_SITE_URL=https://travel.example.com
+NEXT_PUBLIC_SITE_URL=https://vixoaidanloi.com
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GOOGLE_REDIRECT_URI=https://travel.example.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://vixoaidanloi.com/api/auth/google/callback
 ADMIN_EMAILS=
 EOF
 ```
@@ -161,7 +159,7 @@ chmod 644 deploy/certs/origin.pem
 nano deploy/nginx.conf
 ```
 
-Dán certificate vào `origin.pem`, private key vào `origin.key`, giữ nguyên dòng BEGIN/END. Thay **tất cả** `travel.example.com` trong `deploy/nginx.conf` bằng hostname thật. Không commit key/certificate vào Git; thư mục này đã được loại khỏi Git và Docker build context.
+Dán certificate vào `origin.pem`, private key vào `origin.key`, giữ nguyên dòng BEGIN/END. File `deploy/nginx.conf` đã cấu hình hostname `vixoaidanloi.com`. Không commit key/certificate vào Git; thư mục này đã được loại khỏi Git và Docker build context.
 
 Origin Certificate chỉ được Cloudflare tin cậy. Truy cập IP trực tiếp, tắt mây cam hoặc pause Cloudflare có thể gây cảnh báo chứng chỉ trên trình duyệt. Đặt lịch thay certificate trước khi hết hạn; cách này không có Certbot tự gia hạn.
 
@@ -185,10 +183,10 @@ POSTGRES_DB=travel
 POSTGRES_USER=travel
 POSTGRES_PASSWORD=CHUOI_HEX_NGAU_NHIEN_THU_NHAT
 AUTH_SECRET=CHUOI_HEX_NGAU_NHIEN_THU_HAI
-NEXT_PUBLIC_SITE_URL=https://travel.example.com
+NEXT_PUBLIC_SITE_URL=https://vixoaidanloi.com
 GOOGLE_CLIENT_ID=CLIENT_ID_CUA_BAN
 GOOGLE_CLIENT_SECRET=CLIENT_SECRET_CUA_BAN
-GOOGLE_REDIRECT_URI=https://travel.example.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://vixoaidanloi.com/api/auth/google/callback
 ADMIN_EMAILS=email-quan-tri@example.com
 ```
 
@@ -204,8 +202,8 @@ Trong Google Cloud Console / Google Auth Platform:
 
 1. Cấu hình Branding/Consent và Audience cho ứng dụng.
 2. Tạo OAuth client loại **Web application**.
-3. Authorized JavaScript origin: `https://travel.example.com`.
-4. Authorized redirect URI: `https://travel.example.com/api/auth/google/callback` — phải khớp tuyệt đối với `.env`.
+3. Authorized JavaScript origin: `https://vixoaidanloi.com`.
+4. Authorized redirect URI: `https://vixoaidanloi.com/api/auth/google/callback` — phải khớp tuyệt đối với `.env`.
 5. Nếu còn Testing, thêm email thử vào Test users; khi mở cho người dùng thật, cấu hình trạng thái phát hành phù hợp.
 
 Điền client ID/secret vào `.env`. Google OAuth yêu cầu domain HTTPS cho production, không dùng raw IP của VPS. Có thể để trống thông tin Google trong lần kiểm tra hạ tầng đầu tiên, nhưng nút đăng nhập Google sẽ chưa hoạt động.
@@ -218,10 +216,11 @@ sudo docker compose -f docker-compose.yml config --quiet
 sudo docker compose build app
 sudo docker compose up -d db
 sudo docker compose run --rm migrate
-sudo docker compose run --rm --no-deps app npm run db:seed
 ```
 
-Chỉ tiếp tục nếu từng lệnh thành công. Service `migrate` chạy `db:migrate` để tạo/cập nhật schema, sau đó `images:migrate` để chuyển ảnh cũ từ DB sang disk và kiểm tra bản sao trước khi xóa bytes khỏi DB. Một số migration hiện có cũng thêm video mẫu. `db:seed` nạp nội dung khởi đầu và quyền. Không cần tự viết SQL tạo bảng.
+Chỉ tiếp tục nếu từng lệnh thành công. Service `migrate` chạy `db:migrate` để tạo/cập nhật schema, sau đó `images:migrate` để chuyển ảnh cũ từ DB sang disk và kiểm tra bản sao trước khi xóa bytes khỏi DB. Production không chạy `db:seed`: script này thêm quyền, mùa, danh mục, chiến dịch, sự kiện và điểm đến khởi đầu. Không cần tự viết SQL tạo bảng.
+
+Lưu ý: migration `008_video_samples.sql` hiện chứa cả thay đổi schema lẫn dữ liệu mẫu (user, video, lượt bình chọn). Nếu migration này chưa được áp dụng, `db:migrate` vẫn thêm dữ liệu mẫu dù không chạy seed. Kiểm tra lịch sử migration trước khi triển khai; không sửa trực tiếp file SQL đã áp dụng vì runner kiểm tra checksum. Nếu đã áp dụng, runner bỏ qua và không thêm lại dữ liệu của migration đó.
 
 Tạo tài khoản admin ban đầu với mật khẩu bạn nhập, tránh mật khẩu mặc định `admin` của script:
 
@@ -242,10 +241,10 @@ sudo docker compose up -d
 sudo docker compose ps -a
 sudo docker compose logs --tail=100 migrate app nginx
 sudo docker compose exec nginx nginx -t
-curl -I https://travel.example.com
+curl -I https://vixoaidanloi.com
 ```
 
-Kết quả mong đợi: DB/app healthy, Nginx running, migrate **Exited (0)** là bình thường. Compose chờ DB sẵn sàng và migration thành công trước khi chạy app. Truy cập `https://travel.example.com`, thử Google login, admin login tại `/login`, dashboard, bản đồ, ảnh và upload video.
+Kết quả mong đợi: DB/app healthy, Nginx running, migrate **Exited (0)** là bình thường. Compose chờ DB sẵn sàng và migration thành công trước khi chạy app. Truy cập `https://vixoaidanloi.com`, thử Google login, admin login tại `/login`, dashboard, bản đồ, ảnh và upload video.
 
 Image giữ TypeScript và các script để chạy seed/migration bằng cùng image; ưu tiên dễ vận hành, chưa tối ưu kích thước bằng standalone. App chạy bằng user `node`, không chạy root. Build không nhận secret DB/OAuth; các secret chỉ đưa vào container lúc chạy. File `.env.local` bị loại khỏi image.
 
@@ -327,7 +326,7 @@ sudo --preserve-env=APP_IMAGE_TAG docker compose run --rm migrate
 # Chỉ chạy bước tiếp nếu migration thành công.
 sudo --preserve-env=APP_IMAGE_TAG docker compose up -d --force-recreate app nginx
 sudo docker compose ps -a
-curl -I https://travel.example.com
+curl -I https://vixoaidanloi.com
 ```
 
 Lưu tag thành công vào `.env`: thêm/cập nhật `APP_IMAGE_TAG=TAG_VUA_DEPLOY` rồi `unset APP_IMAGE_TAG` để các lần vận hành sau dùng đúng image. Nếu upload source bằng tar, thay bước `git pull` bằng upload/giải nén bản mới, giữ `.env` và `deploy/certs`.
