@@ -1,6 +1,6 @@
 import { AIError, type AIMessage } from "@/lib/ai/client";
 import { answerChat } from "@/lib/chat/answer";
-import { localScope, SCOPE_REFUSAL, withinWebsiteScope } from "@/lib/chat/scope";
+import { localScope, SCOPE_REFUSAL } from "@/lib/chat/scope";
 import { tripIntake } from "@/lib/chat/research";
 
 export const maxDuration = 120;
@@ -30,7 +30,6 @@ export async function POST(request: Request) {
     if (scope === "greeting") return Response.json({text:"Chào bạn, mình là Xoài! 🥭 Mình có thể giúp bạn khám phá website Vị Xoài Dẫn Lối, lên lịch trình Cao Lãnh, tìm sự kiện và hướng dẫn tạo vé. Bạn muốn tìm hiểu phần nào?"}, { headers: { "Cache-Control": "no-store" } });
     const intake=tripIntake(safeMessages);
     if(intake)return Response.json(intake,{headers:{"Cache-Control":"no-store"}});
-    if (!await withinWebsiteScope(safeMessages, request.signal)) return Response.json(SCOPE_REFUSAL, { headers: { "Cache-Control": "no-store" } });
     stage="answer";
     return Response.json(await answerChat(safeMessages, request.signal), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

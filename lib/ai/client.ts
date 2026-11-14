@@ -22,7 +22,15 @@ export async function completeAI(messages: AIMessage[], signal?: AbortSignal, op
     signal: deadline,
   });
   if (!response.ok) {
-    // Do not expose upstream bodies, which may contain account or key details.
+    // Only log known error codes, never upstream messages or response bodies:
+    // providers may include account or key details in them.
+    const failure = await response.json().catch(() => null);
+    const knownCodes = ["concurrent_limit_exceeded", "rate_limit_exceeded", "insufficient_quota", "invalid_api_key", "model_not_found"];
+    const code = knownCodes.includes(failure?.error?.code) ? failure.error.code : "unknown";
+    console.warn("AI upstream request failed", { status: response.status, code, model });
+    if (response.status === 429 && code === "concurrent_limit_exceeded") {
+      throw new AIError(429, "Dịch vụ AI đang đạt giới hạn xử lý đồng thời. Bạn chờ yêu cầu trước hoàn tất rồi thử lại nhé.");
+    }
     throw new AIError(response.status === 429 ? 429 : 502, response.status === 429 ? "Xoài đang nhận nhiều câu hỏi. Bạn thử lại sau một chút nhé." : "Xoài chưa kết nối được dịch vụ AI. Bạn thử lại sau nhé.");
   }
   const result = await response.json();

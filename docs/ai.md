@@ -26,11 +26,11 @@ Lần đầu triển khai mã chatbot mới cần build lại image trước. M�
 - Ngữ cảnh lấy từ dữ liệu chiến dịch, sự kiện và điểm đến trong dự án. Chưa truy cập dữ liệu tài khoản, tồn vé hoặc đặt chỗ.
 - Giữ giao diện lịch trình với ảnh và liên kết nội bộ được kiểm tra ở server.
 - Khi upstream lỗi, hiển thị lỗi để người dùng gửi lại; không âm thầm dùng câu trả lời mẫu.
-- Câu hỏi ngoài phạm vi rõ ràng bị từ chối ngay bằng bộ lọc server, không gọi AI. Câu hỏi có từ khóa website được kiểm tra phạm vi riêng trước khi sinh câu trả lời; yêu cầu trộn chủ đề ngoài phạm vi hoặc đổi vai trò cũng bị từ chối. Khi bộ phân loại không trả đúng `ALLOW`, server không sinh câu trả lời.
+- Câu hỏi ngoài phạm vi rõ ràng bị từ chối ngay bằng bộ lọc server, không gọi AI. Các câu còn lại được kiểm tra phạm vi trong cùng lượt AI tạo câu trả lời; yêu cầu trộn chủ đề ngoài phạm vi hoặc đổi vai trò cũng bị từ chối. Server chỉ hiển thị nội dung khi JSON trả về có `scope: ALLOW`.
 - Khi mở chat hoặc bắt đầu lại, Xoài hiện dấu ba chấm trước lời chào; dấu ba chấm tiếp tục hiển thị trong lúc chờ phản hồi thật.
 - Giới hạn 12 yêu cầu/phút/IP, tối đa 8 yêu cầu đang xử lý trên mỗi process. Bộ đếm nằm trong bộ nhớ, không dùng chung giữa nhiều replica.
 - Các tính năng AI phía server khác có thể dùng lại `completeAI()`; không gọi nhà cung cấp từ trình duyệt.
-- Bộ phân loại dùng ngân sách 1024 token vì GLM có thể vẫn sinh reasoning dù yêu cầu tắt thinking. Phản hồi hết token được thử lại tối đa một lần với ngân sách lớn hơn, trong cùng thời hạn chờ; reasoning không được hiển thị cho người dùng.
+- Kiểm tra phạm vi và tạo câu trả lời dùng chung một lượt Chat Completions để tránh chờ hai lượt AI nối tiếp. Phản hồi hết token được thử lại tối đa một lần trong cùng thời hạn chờ; reasoning không được hiển thị cho người dùng.
 
 ## Lịch trình, ngân sách và khách sạn
 
@@ -44,3 +44,10 @@ Lần đầu triển khai mã chatbot mới cần build lại image trước. M�
 Tài liệu tìm kiếm: https://platform.beeknoee.com/docs/web-search
 
 Tài liệu nhà cung cấp: https://platform.beeknoee.com/docs/chat-completions
+
+## Chẩn đoán giới hạn platform
+
+- HTTP 429 với mã `concurrent_limit_exceeded` nghĩa là platform đã nhận yêu cầu nhưng hết lượt xử lý đồng thời của tài khoản/key. Nếu giới hạn là 1, một yêu cầu từ ứng dụng khác dùng chung hạn mức cũng có thể chặn chatbot. Chờ yêu cầu đó hoàn tất; nếu trạng thái bận kéo dài, kiểm tra yêu cầu đang chạy trên platform hoặc liên hệ hỗ trợ nhà cung cấp.
+- Server ghi `AI upstream request failed` kèm HTTP status, model và mã lỗi thuộc danh sách cho phép; không ghi API key hoặc nội dung lỗi gốc. Chatbot hiển thị thông báo riêng cho giới hạn đồng thời.
+- Lời chào và bước hỏi thông tin chuyến đi có thể trả lời tại server mà chưa gọi platform; dùng câu hỏi như “Tạo vé ở đâu?” để kiểm tra luồng AI thật.
+- Kiểm tra xử lý phản hồi bằng `node --test tests/ai-client.test.mjs`.
