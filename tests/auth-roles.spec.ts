@@ -6,8 +6,7 @@ test("admin credentials and dashboard role boundaries", async ({page,request,con
   const origin="http://localhost:3000";
   expect((await request.post("/api/auth/login",{headers:{Origin:origin},data:{username:"admin",password:"wrong-password"}})).status()).toBe(401);
   expect((await request.post("/api/auth/login",{headers:{Origin:"https://example.invalid"},data:{username:"admin",password:"admin"}})).status()).toBe(403);
-  await page.goto("/login");
-  await page.getByText("Đăng nhập quản trị viên",{exact:true}).click();
+  await page.goto("/admin/login");
   await page.getByLabel("Tài khoản",{exact:true}).fill("admin");
   await page.getByLabel("Mật khẩu",{exact:true}).fill("admin");
   await page.getByRole("button",{name:"Đăng nhập quản trị",exact:true}).click();

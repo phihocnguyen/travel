@@ -128,6 +128,7 @@ POSTGRES_USER=travel
 POSTGRES_PASSWORD=
 AUTH_SECRET=
 NEXT_PUBLIC_SITE_URL=https://vixoaidanloi.com
+SITE_URL=https://vixoaidanloi.com
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=https://vixoaidanloi.com/api/auth/google/callback
@@ -244,7 +245,7 @@ sudo docker compose exec nginx nginx -t
 curl -I https://vixoaidanloi.com
 ```
 
-Kết quả mong đợi: DB/app healthy, Nginx running, migrate **Exited (0)** là bình thường. Compose chờ DB sẵn sàng và migration thành công trước khi chạy app. Truy cập `https://vixoaidanloi.com`, thử Google login, admin login tại `/login`, dashboard, bản đồ, ảnh và upload video.
+Kết quả mong đợi: DB/app healthy, Nginx running, migrate **Exited (0)** là bình thường. Compose chờ DB sẵn sàng và migration thành công trước khi chạy app. Truy cập `https://vixoaidanloi.com`, thử Google login, admin login tại `/admin/login`, dashboard, bản đồ, ảnh và upload video.
 
 Image giữ TypeScript và các script để chạy seed/migration bằng cùng image; ưu tiên dễ vận hành, chưa tối ưu kích thước bằng standalone. App chạy bằng user `node`, không chạy root. Build không nhận secret DB/OAuth; các secret chỉ đưa vào container lúc chạy. File `.env.local` bị loại khỏi image.
 
@@ -307,6 +308,25 @@ Giữ DB/volume cũ đến khi xác minh dữ liệu. Không test restore đè l
 Đổi `POSTGRES_PASSWORD` trong `.env` không đổi mật khẩu của DB đã khởi tạo. Muốn rotate phải đổi password role bằng PostgreSQL rồi cập nhật môi trường app tương ứng.
 
 ## 9. Cập nhật website
+
+Dockerfile giữ cache npm và `.next/cache` bằng BuildKit. Cập nhật bình thường dùng `docker compose build app`, không thêm `--no-cache` và không xóa build cache sau mỗi lần deploy. Lần đầu đổi Dockerfile sẽ phải tạo lại một số layer; các lần sau dependencies được tái sử dụng khi `package-lock.json` không đổi. Đổi source app vẫn cần chạy bước build Next.js; sửa README, tests hoặc cấu hình Nginx đã được loại khỏi context app nên không tự làm mất cache source.
+
+Biến `SITE_URL=https://vixoaidanloi.com` được server đọc lúc container chạy để tạo redirect đăng nhập. Compose mặc định lấy `SITE_URL` từ `NEXT_PUBLIC_SITE_URL` nếu chưa khai báo riêng. Trang thành viên là `/login`, trang tài khoản quản trị là `/admin/login`.
+
+Nếu chỉ cập nhật giao diện/AI và database đang đúng phiên bản, sau khi build thành công có thể tạo lại riêng app:
+
+```bash
+sudo docker compose up -d --no-deps --force-recreate app
+```
+
+Nếu thay đổi `deploy/nginx.conf`, áp dụng riêng Nginx:
+
+```bash
+sudo docker compose run --rm --no-deps nginx nginx -t
+sudo docker compose up -d --no-deps --force-recreate nginx
+```
+
+Không dùng `--no-deps` để bỏ qua migration khi bản cập nhật có thay đổi schema; trường hợp đó dùng quy trình dưới đây.
 
 Cách này có downtime ngắn, không phải rolling deployment. Backup DB trước mỗi lần có migration. Build image mới trước khi dừng app để lỗi build không ảnh hưởng bản đang chạy.
 

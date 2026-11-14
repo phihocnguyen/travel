@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { EVENT } from "@/components/campaign/campaignData";
 import HeaderAccount from "@/components/auth/HeaderAccount";
+import BrandMark from "@/components/layout/BrandMark";
 import HeroVideo from "./HeroVideo";
 import { setupLandingButtons, setupLandingReveals } from "./landingMotion";
 import "./landing-motion.css";
@@ -285,8 +286,7 @@ export default function LandingPage() {
             aria-label="Vị Xoài Dẫn Lối · Trang chủ"
             className="flex items-center gap-3"
           >
-            <span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-md bg-[#f8f5df] sm:h-12 sm:w-12" style={{ backgroundImage: "url(/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg)", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
-            <span className="hidden text-sm font-semibold leading-tight sm:block">Vị Xoài Dẫn Lối<span className={`nav-color mt-1 block text-[10px] font-normal transition-colors ${scrolled ? "text-[#657361]" : "text-white/75"}`}>Cao Lãnh · Đồng Tháp</span></span>
+            <BrandMark dark={!scrolled} hideWordmarkOnMobile/>
           </a>
 
           <nav className="hidden items-center gap-4 lg:flex xl:gap-6">

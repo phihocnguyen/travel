@@ -6,7 +6,7 @@ import AdminTickets from "@/components/dashboard/AdminTickets";
 export const instant=false;
 export const metadata={title:"Quản lý vé · Vị Xoài Dẫn Lối"};
 export default async function AdminTicketsPage(){
-  const session=await getSession();if(!session)redirect("/login?next=/dashboard/admin/tickets");
+  const session=await getSession();if(!session)redirect("/admin/login");
   if(!await canManageTickets(session))redirect("/dashboard");
   return <AdminTickets initialTickets={await listAdminTickets()}/>;
 }

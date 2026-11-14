@@ -1,0 +1,3 @@
+export default function BrandMark({dark=false,hideWordmarkOnMobile=false}:{dark?:boolean;hideWordmarkOnMobile?:boolean}) {
+  return <><span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-md bg-[#f8f5df] sm:h-12 sm:w-12" style={{backgroundImage:"url(/76cb5fbe-2b41-4e96-a4ee-00344fc4e9f2.jpg)",backgroundSize:"contain",backgroundPosition:"center",backgroundRepeat:"no-repeat"}}/><span className={`${hideWordmarkOnMobile?"hidden sm:block":"block"} text-sm font-semibold leading-tight`}>Vị Xoài Dẫn Lối<span className={`nav-color mt-1 block text-[10px] font-normal transition-colors ${dark?"text-white/75":"text-[#657361]"}`}>Cao Lãnh · Đồng Tháp</span></span></>;
+}

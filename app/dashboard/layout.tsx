@@ -1,10 +1,10 @@
 import TravelChatbot from '@/components/chat/TravelChatbot';
-import { redirect } from 'next/navigation';
 import { Suspense, type ReactNode } from 'react';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { DashboardFrameLoading } from '@/components/dashboard/DashboardLoading';
 import { getSession, isAdmin } from '@/lib/auth/session';
 import { countPendingPosts } from '@/lib/posts/store';
+import DashboardSignInRedirect from '@/components/auth/DashboardSignInRedirect';
 
 async function PendingPostBadge() {
   const count = await countPendingPosts();
@@ -13,7 +13,7 @@ async function PendingPostBadge() {
 
 async function AuthenticatedDashboard({ children }: { children: ReactNode }) {
   const session = await getSession();
-  if (!session) redirect('/login?next=/dashboard');
+  if (!session) return <DashboardSignInRedirect/>;
   const admin = isAdmin(session);
   return <>
     <DashboardShell

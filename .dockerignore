@@ -12,3 +12,20 @@ test-results
 playwright-report
 *.log
 *.tsbuildinfo
+
+# These do not affect the app image; changing docs or Nginx must not rebuild Next.
+docs
+tests
+README*.md
+AGENTS.md
+*.plan.md
+playwright.config.ts
+eslint.config.mjs
+Dockerfile
+docker-compose*.yml
+deploy
+.agents
+.codex
+.aws
+.vscode
+.idea

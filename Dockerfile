@@ -1,12 +1,13 @@
+# syntax=docker/dockerfile:1
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,id=travel-npm,target=/root/.npm npm ci --prefer-offline --no-audit --no-fund
 COPY . .
 ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-RUN npm run build
+RUN --mount=type=cache,id=travel-next-build,target=/app/.next/cache npm run build
 
 # Keep the project and dev dependencies: the seed script needs TypeScript,
 # and the same image runs database maintenance commands.

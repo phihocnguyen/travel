@@ -9,7 +9,7 @@ export const instant=false;
 export const metadata={title:"Tổng quan quản trị · Vị Xoài Dẫn Lối"};
 export default async function AdminOverviewPage(){
   const session=await getSession();
-  if(!session)redirect("/login?next=/dashboard/admin/overview");
+  if(!session)redirect("/admin/login");
   if(!isAdmin(session))redirect("/dashboard");
   const [summary,posts,insights]=await Promise.all([
     getDatabase().query("SELECT coalesce(sum(tickets_created),0) AS created,coalesce(sum(tickets_printed),0) AS printed,coalesce(sum(tickets_collected),0) AS collected FROM campaign_ticket_stats"),

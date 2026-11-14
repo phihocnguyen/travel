@@ -22,7 +22,7 @@ Lần đầu triển khai mã chatbot mới cần build lại image trước. M�
 
 ## Hành vi
 
-- Gửi tối đa sáu tin nhắn gần nhất cùng câu hỏi mới đến nhà cung cấp AI.
+- Gửi tối đa sáu tin nhắn gần nhất cùng câu hỏi mới và phần văn bản giới hạn độ dài từ câu hỏi cũ, để giữ thông tin ngân sách/ngày đi/số khách khi hội thoại dài.
 - Ngữ cảnh lấy từ dữ liệu chiến dịch, sự kiện và điểm đến trong dự án. Chưa truy cập dữ liệu tài khoản, tồn vé hoặc đặt chỗ.
 - Giữ giao diện lịch trình với ảnh và liên kết nội bộ được kiểm tra ở server.
 - Khi upstream lỗi, hiển thị lỗi để người dùng gửi lại; không âm thầm dùng câu trả lời mẫu.
@@ -30,5 +30,17 @@ Lần đầu triển khai mã chatbot mới cần build lại image trước. M�
 - Khi mở chat hoặc bắt đầu lại, Xoài hiện dấu ba chấm trước lời chào; dấu ba chấm tiếp tục hiển thị trong lúc chờ phản hồi thật.
 - Giới hạn 12 yêu cầu/phút/IP, tối đa 8 yêu cầu đang xử lý trên mỗi process. Bộ đếm nằm trong bộ nhớ, không dùng chung giữa nhiều replica.
 - Các tính năng AI phía server khác có thể dùng lại `completeAI()`; không gọi nhà cung cấp từ trình duyệt.
+- Bộ phân loại dùng ngân sách 1024 token vì GLM có thể vẫn sinh reasoning dù yêu cầu tắt thinking. Phản hồi hết token được thử lại tối đa một lần với ngân sách lớn hơn, trong cùng thời hạn chờ; reasoning không được hiển thị cho người dùng.
+
+## Lịch trình, ngân sách và khách sạn
+
+- Khi lên kế hoạch, hỏi ngân sách (mỗi người hay cả nhóm), số khách, ngày đi và thời lượng trước khi tìm kiếm. Người dùng có thể nói ngày linh hoạt.
+- Server gọi `POST /v1/search` của Beeknoee, giữ nguyên `glm-4.5-flash` cho phần tư vấn. Search có phí riêng theo nhà cung cấp.
+- Kết quả web và nguồn được đưa vào ngữ cảnh dưới dạng dữ liệu tham khảo, không phải chỉ dẫn. Link nguồn lấy từ kết quả thật; không lấy URL do model tự tạo.
+- Ảnh web lấy từ metadata của một số nguồn du lịch công khai được cho phép. Nếu ảnh không tải được, thẻ khách sạn hiển thị liên kết xem ảnh tại nguồn; không lấy ảnh điểm đến để giả làm ảnh khách sạn.
+- Giá được ghi là tham khảo và có link nguồn, thời điểm tra cứu; không có API đặt phòng/tồn phòng. Thiếu giá trong nguồn thì hiển thị chưa xác minh được, không tự đặt số tiền.
+- Khi tra cứu lỗi, chatbot có thể gợi ý lịch trình từ dữ liệu website nhưng phải thông báo không xác minh được giá hiện tại.
+
+Tài liệu tìm kiếm: https://platform.beeknoee.com/docs/web-search
 
 Tài liệu nhà cung cấp: https://platform.beeknoee.com/docs/chat-completions

@@ -12,18 +12,34 @@ export async function completeAI(messages: AIMessage[], signal?: AbortSignal, op
   if (!key) throw new AIError(503, "Xoài chưa được cấu hình kết nối AI.");
   const base = (process.env.AI_BASE_URL || "https://platform.beeknoee.com/v1").replace(/\/+$/, "");
   const model = process.env.AI_MODEL || "glm-4.5-flash";
+  const deadline = signal ? AbortSignal.any([signal, AbortSignal.timeout(90_000)]) : AbortSignal.timeout(90_000);
+  let maxTokens = options.maxTokens ?? 3000;
+  for (let attempt = 0; attempt < 2; attempt++) {
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST", cache: "no-store", redirect: "error",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, messages, max_tokens: options.maxTokens ?? 3000, stream: false, ...(model.startsWith("glm-") ? { thinking: { type: "disabled" } } : {}) }),
-    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(60_000)]) : AbortSignal.timeout(60_000),
+    body: JSON.stringify({ model, messages, max_tokens: maxTokens, stream: false, ...(model.startsWith("glm-") ? { thinking: { type: "disabled" } } : {}) }),
+    signal: deadline,
   });
   if (!response.ok) {
     // Do not expose upstream bodies, which may contain account or key details.
     throw new AIError(response.status === 429 ? 429 : 502, response.status === 429 ? "Xoài đang nhận nhiều câu hỏi. Bạn thử lại sau một chút nhé." : "Xoài chưa kết nối được dịch vụ AI. Bạn thử lại sau nhé.");
   }
   const result = await response.json();
-  const content = result?.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) throw new AIError(502, "Xoài chưa nhận được câu trả lời. Bạn thử lại nhé.");
+  const choice = result?.choices?.[0];
+  const content = choice?.message?.content;
+  if (choice?.finish_reason === "length") {
+    // Retry once with room for a complete verdict/JSON answer. Never expose
+    // reasoning_content or return truncated JSON as the assistant's answer.
+    if (attempt === 0) { maxTokens = Math.min(8192, Math.max(2048, maxTokens * 2)); continue; }
+    console.warn("AI completion truncated", { model, maxTokens });
+    throw new AIError(502, "Phản hồi AI bị ngắt trước khi hoàn tất. Bạn thử hỏi ngắn hơn nhé.");
+  }
+  if (typeof content !== "string" || !content.trim()) {
+    console.warn("AI completion empty", { model, finishReason: choice?.finish_reason ?? "missing" });
+    throw new AIError(502, "Dịch vụ AI trả về phản hồi rỗng. Câu hỏi của bạn đã được gửi; vui lòng thử lại nhé.");
+  }
   return content.trim();
+  }
+  throw new AIError(502, "Xoài chưa nhận được phản hồi hoàn chỉnh từ dịch vụ AI.");
 }
