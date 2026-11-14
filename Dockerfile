@@ -3,7 +3,18 @@ FROM node:24-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,id=travel-npm,target=/root/.npm npm ci --prefer-offline --no-audit --no-fund
+# Retry the install as well as individual fetches: a connection can reset
+# after a package response has started streaming. Keep cached downloads.
+RUN --mount=type=cache,id=travel-npm,target=/root/.npm \
+    attempt=1; \
+    until npm ci --prefer-offline --no-audit --no-fund \
+        --fetch-retries=5 --fetch-retry-mintimeout=10000 \
+        --fetch-retry-maxtimeout=60000 --maxsockets=5; do \
+        if [ "$attempt" -ge 3 ]; then exit 1; fi; \
+        echo "npm ci failed (attempt $attempt/3); retrying in 10 seconds..."; \
+        attempt=$((attempt + 1)); \
+        sleep 10; \
+    done
 COPY . .
 ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
