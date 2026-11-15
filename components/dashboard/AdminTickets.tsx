@@ -39,6 +39,7 @@ export default function AdminTickets({initialTickets}:{initialTickets:AdminTicke
       <input aria-label="Mã vé" value={code} onChange={event=>setCode(event.target.value.toUpperCase())} placeholder="VXDL000" maxLength={7} pattern="VXDL[0-9]{3}" className="w-36 rounded-md border border-black/15 bg-white px-3 py-2 font-mono text-sm uppercase"/>
       <button disabled={busy} className={button}>Kiểm tra ID</button>
       <button type="button" disabled={busy} className={button} onClick={async()=>{setCode("");setBusy(true);try{await refresh("");}catch{setMessage("Không tải được danh sách.");}finally{setBusy(false);}}}>Tải lại danh sách</button>
+      <a className={button} href="/print/tickets/back" target="_blank" rel="noreferrer">In mặt sau / A4 ↗</a>
       <select aria-label="Lọc trạng thái vé" value={filter} onChange={event=>{setFilter(event.target.value);setPage(0);}} className="ml-auto rounded-md border border-black/15 bg-white px-3 py-2 text-xs"><option value="all">Tất cả trạng thái</option>{["Chưa in","Đang in","Đã in","Đã trao"].map(value=><option key={value}>{value}</option>)}</select>
     </form>
     {message&&!ticket&&<p role="status" className="shrink-0 rounded-md border border-black/10 bg-white p-2 text-xs">{message}</p>}
