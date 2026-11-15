@@ -13,6 +13,11 @@ html, body, body * {
   font-family: "Inter", Arial, sans-serif !important;
 }
 
+/* Keep the chosen ticket name font in previews and PNG export clones. */
+[data-ticket-name] {
+  font-family: var(--ticket-name-font) !important;
+}
+
 @font-face {
   font-family: "Helvetica";
   font-style: normal;
