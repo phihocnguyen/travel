@@ -15,6 +15,8 @@ async function load(path,overrides={}) {
 const settings=await load("../lib/tickets/print-settings.ts");
 const {colorPrintPng}=await load("../lib/tickets/print-image.ts",{"./print-settings":settings});
 const {PRINT_WIDTH:width,PRINT_HEIGHT:height,PRINT_DPI:dpi}=settings;
+assert.equal(settings.TICKET_BACKS_PER_A4,2);
+assert.ok(Math.abs(settings.TICKET_PAPER_WIDTH_MM/settings.TICKET_PAPER_HEIGHT_MM-width/height)<0.005);
 const source=await sharp(Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="${width/2}" height="${height}" fill="#ff0000"/><rect x="${width/2}" width="${width/2}" height="${height}" fill="#00aa66"/><text x="120" y="200" font-size="100" fill="black">VXDL000</text></svg>`)).png().toBuffer();
 const output=await colorPrintPng(source);
 const {pngWithDensity}=await load("../lib/tickets/png-density.ts");
@@ -25,6 +27,10 @@ assert.deepEqual(await sharp(browserPng).raw().toBuffer(),await sharp(source).ra
 assert.equal((await sharp(Buffer.from(pngWithDensity(browserPng,dpi))).metadata()).density,dpi);
 const meta=await sharp(output).metadata();
 assert.equal(meta.width,width);assert.equal(meta.height,height);assert.equal(meta.density,dpi);
+const highSource=await sharp({create:{width:width*2,height:height*2,channels:3,background:"white"}}).png().toBuffer();
+const highMeta=await sharp(await colorPrintPng(highSource)).metadata();
+assert.equal(highMeta.width,Math.round(settings.TICKET_PAPER_WIDTH_MM/25.4*dpi));
+assert.ok(highMeta.height>height);
 assert.equal(width,1417);assert.equal(height,827);
 assert.ok(Math.abs(width/dpi*2.54-12)<0.01);
 assert.ok(Math.abs(height/dpi*2.54-7)<0.01);
@@ -37,4 +43,4 @@ await assert.rejects(()=>colorPrintPng(low),/PRINT_RESOLUTION_TOO_LOW/);
 await assert.rejects(()=>colorPrintPng(Buffer.from("broken image")));
 const wrongRatio=await sharp({create:{width:1417,height:1417,channels:3,background:"red"}}).png().toBuffer();
 await assert.rejects(()=>colorPrintPng(wrongRatio),/PRINT_ASPECT_RATIO/);
-console.log(`Print verified: ${width} x ${height}, ${dpi} DPI, sRGB colors preserved, no transparency; rejects low-resolution, corrupt and wrong-ratio input.`);
+console.log(`Print verified: ${highMeta.width} x ${highMeta.height} at full width, ${dpi} DPI, matching front/back dimensions and 2 backs per A4; rejects low-resolution, corrupt and wrong-ratio input.`);

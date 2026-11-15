@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   TICKET_PAPER_WIDTH_MM,
   TICKET_PAPER_HEIGHT_MM,
@@ -11,6 +11,15 @@ import {
 export default function TicketBackPrintSheet() {
   const [loaded, setLoaded] = useState(0);
   const [error, setError] = useState(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  function syncImages() {
+    const images = Array.from(pageRef.current?.querySelectorAll("img") ?? []);
+    setLoaded(images.filter(image => image.complete && image.naturalWidth > 0).length);
+    setError(images.some(image => image.complete && image.naturalWidth === 0));
+  }
+
+  useEffect(() => { syncImages(); }, []);
 
   return <main className="ticket-back-print min-h-dvh bg-white p-6 text-black">
     <style>{`
@@ -46,10 +55,10 @@ export default function TicketBackPrintSheet() {
       </p>
       <p className="w-full text-xs text-black/60">Chọn A4 dọc, tỷ lệ 100%, lề Không, tắt đầu trang/chân trang và bật in không viền nếu máy hỗ trợ. Khi in mặt trước lên giấy đã cắt, giữ tỷ lệ 100%.</p>
     </div>
-    <div className="ticket-back-page" aria-label={`${TICKET_BACKS_PER_A4} mặt sau vé trên một tờ A4`}>
+    <div ref={pageRef} className="ticket-back-page" aria-label={`${TICKET_BACKS_PER_A4} mặt sau vé trên một tờ A4`}>
       {Array.from({ length: TICKET_BACKS_PER_A4 }, (_, index) => (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={index} src="/matsau.jpg" alt={`Mặt sau vé ${index + 1}`} onLoad={() => setLoaded(count => count + 1)} onError={() => setError(true)} className="ticket-back-image" />
+        <img key={index} src="/matsau.jpg" alt={`Mặt sau vé ${index + 1}`} onLoad={syncImages} onError={syncImages} className="ticket-back-image" />
       ))}
     </div>
     {error && <p role="alert" className="ticket-back-error mt-4 text-red-700">Không tải được ảnh mặt sau. Hãy tải lại trang trước khi in.</p>}
