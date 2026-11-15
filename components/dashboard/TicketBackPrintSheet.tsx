@@ -43,12 +43,14 @@ export default function TicketBackPrintSheet() {
         }
       }
     `}</style>
-    <div className="ticket-back-controls mb-6 flex flex-wrap items-center gap-4">
+    <div className="ticket-back-controls mb-6 flex flex-wrap items-center justify-between gap-4">
       <h1 className="text-xl font-semibold">In mặt sau vé</h1>
-      <button type="button" disabled={loaded < TICKET_BACKS_PER_A4 || error} onClick={() => window.print()} className="rounded-full border px-5 py-2 disabled:opacity-40">
-        In {TICKET_BACKS_PER_A4} mặt sau / A4
-      </button>
       <a href="/dashboard/admin/tickets" className="text-sm underline">Quản lý vé</a>
+      <div className="flex w-full justify-center">
+        <button type="button" disabled={loaded < TICKET_BACKS_PER_A4 || error} onClick={() => window.print()} className="rounded-full border px-5 py-2 disabled:opacity-40">
+          In {TICKET_BACKS_PER_A4} mặt sau / A4
+        </button>
+      </div>
       <p className="w-full text-sm text-black/60">
         {TICKET_BACKS_PER_A4} mặt sau từ sát mép trên và hai bên giấy, mỗi vé rộng 21 cm × cao {(TICKET_PAPER_HEIGHT_MM / 10).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} cm, khớp khổ mặt trước.
         {" "}Ảnh mặt sau đã xoay 180° để khớp chiều khi lật giấy in mặt trước. Khoảng cách giữa các vé {TICKET_BACK_GAP_MM / 10} cm để cắt; không chừa khoảng cách sau vé cuối.
