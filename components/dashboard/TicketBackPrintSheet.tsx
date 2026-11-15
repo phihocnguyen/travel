@@ -25,7 +25,7 @@ export default function TicketBackPrintSheet() {
     <style>{`
       .ticket-back-page { position: relative; display: grid; gap: ${TICKET_BACK_GAP_MM}mm; width: min(100%, ${TICKET_PAPER_WIDTH_MM}mm); margin: 0 auto; }
       .ticket-back-page::after { content: ""; position: absolute; top: 50%; left: 0; right: 0; border-top: 1px dashed rgba(0, 0, 0, .5); pointer-events: none; print-color-adjust: exact; }
-      .ticket-back-image { display: block; width: 100%; aspect-ratio: ${TICKET_PAPER_WIDTH_MM} / ${TICKET_PAPER_HEIGHT_MM}; object-fit: fill; transform: rotate(180deg); }
+      .ticket-back-image { display: block; width: 100%; aspect-ratio: ${TICKET_PAPER_WIDTH_MM} / ${TICKET_PAPER_HEIGHT_MM}; object-fit: fill; transform: translateY(-9mm) rotate(180deg); }
       @media print {
         @page { size: A4 portrait; margin: 0; }
         html, body { margin: 0 !important; padding: 0 !important; }
@@ -54,7 +54,7 @@ export default function TicketBackPrintSheet() {
       </div>
       <p className="w-full text-sm text-black/60">
         {TICKET_BACKS_PER_A4} mặt sau từ sát mép trên và hai bên giấy, mỗi vé rộng 21 cm × cao {(TICKET_PAPER_HEIGHT_MM / 10).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} cm, khớp khổ mặt trước.
-        {" "}Ảnh mặt sau đã xoay 180° để khớp chiều khi lật giấy in mặt trước. Đường nét đứt nằm giữa khoảng cách {TICKET_BACK_GAP_MM / 10} cm của hai vé để dễ cắt.
+        {" "}Ảnh mặt sau đã xoay 180° và căn lại phần hình để khớp mép trên của mặt trước. Đường nét đứt nằm giữa khoảng cách {TICKET_BACK_GAP_MM / 10} cm của hai vé để dễ cắt.
       </p>
       <p className="w-full text-xs text-black/60">Chọn A4 dọc, tỷ lệ 100%, lề Không, tắt đầu trang/chân trang và bật in không viền nếu máy hỗ trợ. Khi in mặt trước lên giấy đã cắt, giữ tỷ lệ 100%.</p>
     </div>
