@@ -16,6 +16,8 @@ const settings=await load("../lib/tickets/print-settings.ts");
 const {colorPrintPng}=await load("../lib/tickets/print-image.ts",{"./print-settings":settings});
 const {PRINT_WIDTH:width,PRINT_HEIGHT:height,PRINT_DPI:dpi}=settings;
 assert.equal(settings.TICKET_BACKS_PER_A4,2);
+assert.equal(settings.TICKET_HALF_A4_HEIGHT_MM*settings.TICKET_BACKS_PER_A4,297);
+assert.ok(settings.TICKET_PAPER_HEIGHT_MM<settings.TICKET_HALF_A4_HEIGHT_MM);
 assert.ok(Math.abs(settings.TICKET_PAPER_WIDTH_MM/settings.TICKET_PAPER_HEIGHT_MM-width/height)<0.005);
 const source=await sharp(Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="${width/2}" height="${height}" fill="#ff0000"/><rect x="${width/2}" width="${width/2}" height="${height}" fill="#00aa66"/><text x="120" y="200" font-size="100" fill="black">VXDL000</text></svg>`)).png().toBuffer();
 const output=await colorPrintPng(source);
