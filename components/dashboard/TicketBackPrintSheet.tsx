@@ -24,7 +24,7 @@ export default function TicketBackPrintSheet() {
   return <main className="ticket-back-print min-h-dvh bg-white p-6 text-black">
     <style>{`
       .ticket-back-page { display: grid; gap: ${TICKET_BACK_GAP_MM}mm; width: min(100%, ${TICKET_PAPER_WIDTH_MM}mm); margin: 0 auto; }
-      .ticket-back-image { display: block; width: 100%; aspect-ratio: ${TICKET_PAPER_WIDTH_MM} / ${TICKET_PAPER_HEIGHT_MM}; object-fit: fill; }
+      .ticket-back-image { display: block; width: 100%; aspect-ratio: ${TICKET_PAPER_WIDTH_MM} / ${TICKET_PAPER_HEIGHT_MM}; object-fit: fill; transform: rotate(180deg); }
       @media print {
         @page { size: A4 portrait; margin: 0; }
         html, body { margin: 0 !important; padding: 0 !important; }
@@ -51,7 +51,7 @@ export default function TicketBackPrintSheet() {
       <a href="/dashboard/admin/tickets" className="text-sm underline">Quản lý vé</a>
       <p className="w-full text-sm text-black/60">
         {TICKET_BACKS_PER_A4} mặt sau từ sát mép trên và hai bên giấy, mỗi vé rộng 21 cm × cao {(TICKET_PAPER_HEIGHT_MM / 10).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} cm, khớp khổ mặt trước.
-        {" "}Ảnh co giãn đầy khung. Khoảng cách giữa các vé {TICKET_BACK_GAP_MM / 10} cm để cắt; không chừa khoảng cách sau vé cuối.
+        {" "}Ảnh mặt sau đã xoay 180° để khớp chiều khi lật giấy in mặt trước. Khoảng cách giữa các vé {TICKET_BACK_GAP_MM / 10} cm để cắt; không chừa khoảng cách sau vé cuối.
       </p>
       <p className="w-full text-xs text-black/60">Chọn A4 dọc, tỷ lệ 100%, lề Không, tắt đầu trang/chân trang và bật in không viền nếu máy hỗ trợ. Khi in mặt trước lên giấy đã cắt, giữ tỷ lệ 100%.</p>
     </div>
